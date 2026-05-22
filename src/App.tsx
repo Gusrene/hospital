@@ -741,7 +741,7 @@ const ChecklistModal = ({
           <div className="mt-8 flex justify-end gap-3">
             <button onClick={onClose} className="px-6 py-2.5 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition-colors">Cancelar</button>
             <button onClick={() => {
-              // Cierra al instante para mejor experiencia
+              // MEJORA: CIERRE INMEDIATO AL GUARDAR
               onClose();
               onSubmit(answers, selectedRoom);
             }} className="px-6 py-2.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
@@ -849,12 +849,12 @@ export default function App() {
 
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
   const handleVacateRoom = (roomId: string) => {
-    setSelectedRoom(null); // CIERRE INMEDIATO
+    setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
     setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
   };
 
   const handleOccupyRoom = (roomId: string) => {
-    setSelectedRoom(null); // CIERRE INMEDIATO
+    setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
     setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
   };
 
@@ -1016,9 +1016,27 @@ export default function App() {
       <header className="bg-indigo-900 text-white shadow-md relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
-            <div className="flex items-center space-x-3 mb-3 md:mb-0">
-              <Activity className="w-8 h-8 text-indigo-300" />
-              <span className="font-bold text-xl tracking-tight">MediRoom Control</span>
+            {/* --- SECCIÓN DE BRANDING (LOGO Y URL) ACTUALIZADA --- */}
+            <div className="flex items-center gap-4 mb-3 md:mb-0">
+              {/* Contenedor del Logo con Placeholder instruccional */}
+              <div className="flex items-center gap-3">
+                {/* REEMPLAZA ESTE div CON TU LOGO REAL: <img src="path/to/logo.png" alt="Logo Hospital Herrera Llerandi" className="w-12 h-12 rounded-full" /> */}
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 text-indigo-900 font-bold border-2 border-white">
+                  HL
+                </div>
+                <div className="flex flex-col">
+                  {/* Asegúrate de que el URL y el nombre completo sean correctos */}
+                  <span className="font-bold text-lg leading-tight text-white">Hospital Herrera Llerandi</span>
+                  <a 
+                    href="http://www.herrerallerandi.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-xs text-indigo-300 hover:text-white transition-colors"
+                  >
+                    www.herrerallerandi.com
+                  </a>
+                </div>
+              </div>
             </div>
             
             <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
@@ -1146,7 +1164,7 @@ export default function App() {
                       <div className="mt-4 pt-4 border-t border-blue-200">
                         <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta habitación</p>
                         <button onClick={() => {
-                          setSelectedRoom(null); // CIERRE INMEDIATO
+                          setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
                           setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
                         }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm">
                           Liberar Habitación
