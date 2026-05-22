@@ -769,12 +769,12 @@ export default function App() {
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
   const handleVacateRoom = async (roomId: string) => {
     await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
-    setSelectedRoom(null);
+    setSelectedRoom(null); // Esto cierra la ventana automáticamente
   };
 
   const handleOccupyRoom = async (roomId: string) => {
     await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
-    setSelectedRoom(null);
+    setSelectedRoom(null); // Esto cierra la ventana automáticamente
   };
 
   const handleCompleteTask = async (taskId: string) => {
@@ -782,9 +782,20 @@ export default function App() {
     if(!task) return;
     await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
+    // MEJORA 1: Liberación automática estricta cuando ya no hay tareas pendientes en esa habitación
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
     if (pendingRoomTasks.length === 0) {
       await setDoc(getDocRef('h_rooms', task.roomId), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+      
+      // Notificamos al staff
+      if(currentUser) {
+        await setDoc(getDocRef('h_notifications', Date.now().toString()), {
+          userId: currentUser.id, 
+          message: `¡Habitación ${task.roomId} completamente lista y disponible!`, 
+          read: false, 
+          createdAt: Date.now()
+        });
+      }
     }
   };
 
@@ -822,6 +833,8 @@ export default function App() {
 
     promises.push(setDoc(getDocRef('h_rooms', room.id), { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
     await Promise.all(promises);
+    
+    // MEJORA 3: Cierra automáticamente todo al guardar el checklist
     setIsChecklistModalOpen(false);
     setSelectedRoom(null);
   };
@@ -962,7 +975,10 @@ export default function App() {
                   </button>
                   {isNotifOpen && (
                     <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden text-gray-800 z-50">
-                      <div className="bg-gray-50 p-3 border-b font-bold text-sm">Notificaciones</div>
+                      <div className="bg-gray-50 p-3 border-b font-bold text-sm flex justify-between items-center">
+                        Notificaciones
+                        <button onClick={() => setIsNotifOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4"/></button>
+                      </div>
                       <div className="max-h-64 overflow-y-auto">
                         {userNotifs.length === 0 ? <div className="p-4 text-sm text-gray-500 text-center">Sin notificaciones</div> : 
                           userNotifs.sort((a,b) => b.createdAt - a.createdAt).map(n => (
@@ -1043,11 +1059,28 @@ export default function App() {
                 {selectedRoom.status === ROOM_STATUS.DISPONIBLE && (
                   <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Marcar como Ocupada</button>
                 )}
+                
+                {/* MEJORA 2: Nuevo botón manual de liberación si la habitación se queda atascada pero sin tareas */}
                 {selectedRoom.status === ROOM_STATUS.MANTENIMIENTO && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                     <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                     <p className="text-blue-800 font-medium text-sm">Acondicionando habitación.</p>
-                    <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 text-sm font-bold underline hover:text-blue-900">Ver tareas</button>
+                    
+                    {tasks.filter(t => t.roomId === selectedRoom.id && t.status !== 'Completada').length === 0 ? (
+                      <div className="mt-4 pt-4 border-t border-blue-200">
+                        <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta habitación</p>
+                        <button onClick={async () => {
+                          await setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+                          setSelectedRoom(null);
+                        }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm">
+                          Liberar Habitación
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 text-sm font-bold underline hover:text-blue-900">
+                        Ir a Tareas Pendientes
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
