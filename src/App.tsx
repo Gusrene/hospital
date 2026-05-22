@@ -7,19 +7,25 @@ import {
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
+import { getAuth, signInAnonymously, onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
-// --- 2. CONFIGURACIÓN DE FIREBASE ---
-const w = window as any;
-const firebaseConfig = w.__firebase_config ? JSON.parse(w.__firebase_config) : {};
+// --- 2. TU CONFIGURACIÓN REAL DE FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
+  authDomain: "mediroom-eb9ef.firebaseapp.com",
+  projectId: "mediroom-eb9ef",
+  storageBucket: "mediroom-eb9ef.firebasestorage.app",
+  messagingSenderId: "313648219875",
+  appId: "1:313648219875:web:ad87f0fcc6c714844227d6"
+};
+
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const rawAppId = w.__app_id || 'hospital-manager-app';
-const safeAppId = rawAppId.split('_src')[0].split('/')[0];
-
+const safeAppId = 'mediroom_db';
 const getColRef = (colName: string) => collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
 const getDocRef = (colName: string, docId: string) => doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
 
@@ -107,9 +113,7 @@ const INITIAL_USERS: AppUser[] = [
   { id: 'u3', name: 'Luis (Mantenimiento)', email: 'luis@hospital.com', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff' },
 ];
 
-// --- 5. COMPONENTES EXTRAÍDOS (Para evitar re-renders innecesarios) ---
-
-// Helpers de tiempo
+// --- 5. COMPONENTES EXTRAÍDOS ---
 const getMinutesDifference = (start: number, end: number) => {
   if (!start || !end) return 0;
   return Math.round((end - start) / 60000);
@@ -705,11 +709,7 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        if (w.__initial_auth_token) {
-          await signInWithCustomToken(auth, w.__initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
+        await signInAnonymously(auth);
       } catch (err) {
         console.error("Auth Error:", err);
         setDbReady(true);
