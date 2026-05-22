@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Activity, AlertTriangle, Bed, CheckCircle, Clock, 
   Droplets, LayoutDashboard, Settings, User, Wrench, X, 
-  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2, Key
+  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2, Key, Download, Calendar
 } from 'lucide-react';
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -321,13 +321,33 @@ const TasksTab = ({ tasks, users, currentUser, slas, onAssign, onComplete }: any
   );
 };
 
+// --- PESTAÑA DE BITÁCORAS ACTUALIZADA (CON FILTROS Y EXCEL) ---
 const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], slas: Slas }) => {
-  const completedTasks = tasks.filter(t => t.status === 'Completada');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // 1. Filtrar por fechas
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => {
+      let pass = true;
+      if (startDate) {
+        const start = new Date(startDate + 'T00:00:00').getTime();
+        if (task.createdAt < start) pass = false;
+      }
+      if (endDate) {
+        const end = new Date(endDate + 'T23:59:59').getTime();
+        if (task.createdAt > end) pass = false;
+      }
+      return pass;
+    });
+  }, [tasks, startDate, endDate]);
+
+  const completedTasks = filteredTasks.filter(t => t.status === 'Completada');
   
   let totalSlaCumplido = 0;
   let totalSlaIncumplido = 0;
 
-  const reportData = tasks.map(task => {
+  const reportData = filteredTasks.map(task => {
     const isCompleted = task.status === 'Completada';
     const timeTaken = isCompleted && task.completedAt ? getMinutesDifference(task.createdAt, task.completedAt) : null;
     const sla = slas[task.dept] || 0;
@@ -343,17 +363,72 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
   const totalFinalizadas = completedTasks.length;
   const slaPercent = totalFinalizadas > 0 ? Math.round((totalSlaCumplido / totalFinalizadas) * 100) : 0;
 
+  // 2. Función para descargar en Excel (CSV)
+  const handleExportCSV = () => {
+    const headers = ["Habitacion", "Area", "Descripcion", "Responsable", "Fecha Creacion", "Fecha Cierre", "Minutos Tomados", "SLA (min)", "Cumplio SLA", "Estatus"];
+    
+    const rows = reportData.sort((a, b) => b.createdAt - a.createdAt).map(row => {
+      const responsable = users.find(u => u.id === row.assignedTo)?.name || 'Sin Asignar';
+      const fCreacion = new Date(row.createdAt).toLocaleString('es-ES');
+      const fCierre = row.completedAt ? new Date(row.completedAt).toLocaleString('es-ES') : 'N/A';
+      
+      return [
+        row.roomId,
+        row.dept,
+        `"${row.description.replace(/"/g, '""')}"`, // Evita errores si la descripción tiene comas
+        `"${responsable}"`,
+        `"${fCreacion}"`,
+        `"${fCierre}"`,
+        row.timeTaken !== null ? row.timeTaken : 'N/A',
+        row.sla,
+        row.status === 'Completada' ? (row.cumplioSla ? 'SI' : 'NO') : 'N/A',
+        row.status
+      ].join(',');
+    });
+
+    // \uFEFF asegura que Excel reconozca los acentos correctamente (UTF-8 BOM)
+    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `MediRoom_Bitacora_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <h2 className="text-xl font-bold text-gray-800 flex items-center">
-        <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Bitácora y Estadísticas
-      </h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center">
+          <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Bitácora y Estadísticas
+        </h2>
+        
+        {/* Controles de Filtro y Exportación */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-gray-500"/>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border rounded-md p-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Fecha de inicio" />
+            <span className="text-gray-400 text-sm">a</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border rounded-md p-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-indigo-500 outline-none" title="Fecha de fin" />
+            {(startDate || endDate) && (
+              <button onClick={() => {setStartDate(''); setEndDate('');}} className="p-1.5 hover:bg-gray-100 rounded-full" title="Limpiar filtros">
+                <X className="w-4 h-4 text-gray-500"/>
+              </button>
+            )}
+          </div>
+          <div className="hidden sm:block w-px h-8 bg-gray-200"></div>
+          <button onClick={handleExportCSV} className="w-full sm:w-auto flex items-center justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-1.5 px-4 rounded-lg transition-colors border border-indigo-200">
+            <Download className="w-4 h-4 mr-2"/> Exportar Excel
+          </button>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm text-gray-500 font-medium">Total Creadas</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{tasks.length}</p>
+            <p className="text-2xl font-bold text-gray-800 mt-1">{filteredTasks.length}</p>
           </div>
           <div className="bg-gray-100 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600"/></div>
         </div>
@@ -431,7 +506,7 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
                 </tr>
               ))}
               {reportData.length === 0 && (
-                <tr><td colSpan={7} className="p-6 text-center text-gray-500">No hay registros generados.</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-gray-500">No hay registros generados en estas fechas.</td></tr>
               )}
             </tbody>
           </table>
@@ -665,7 +740,13 @@ const ChecklistModal = ({
           </div>
           <div className="mt-8 flex justify-end gap-3">
             <button onClick={onClose} className="px-6 py-2.5 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition-colors">Cancelar</button>
-            <button onClick={() => onSubmit(answers, selectedRoom)} className="px-6 py-2.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">Guardar y Asignar</button>
+            <button onClick={() => {
+              // Cierra al instante para mejor experiencia
+              onClose();
+              onSubmit(answers, selectedRoom);
+            }} className="px-6 py-2.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
+              Guardar y Asignar
+            </button>
           </div>
         </div>
       </div>
@@ -767,14 +848,14 @@ export default function App() {
 
 
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
-  const handleVacateRoom = async (roomId: string) => {
-    await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
-    setSelectedRoom(null); // Esto cierra la ventana automáticamente
+  const handleVacateRoom = (roomId: string) => {
+    setSelectedRoom(null); // CIERRE INMEDIATO
+    setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
   };
 
-  const handleOccupyRoom = async (roomId: string) => {
-    await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
-    setSelectedRoom(null); // Esto cierra la ventana automáticamente
+  const handleOccupyRoom = (roomId: string) => {
+    setSelectedRoom(null); // CIERRE INMEDIATO
+    setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
   };
 
   const handleCompleteTask = async (taskId: string) => {
@@ -782,12 +863,11 @@ export default function App() {
     if(!task) return;
     await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
-    // MEJORA 1: Liberación automática estricta cuando ya no hay tareas pendientes en esa habitación
+    // Liberación automática cuando no quedan tareas pendientes en la habitación
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
     if (pendingRoomTasks.length === 0) {
       await setDoc(getDocRef('h_rooms', task.roomId), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
       
-      // Notificamos al staff
       if(currentUser) {
         await setDoc(getDocRef('h_notifications', Date.now().toString()), {
           userId: currentUser.id, 
@@ -833,10 +913,6 @@ export default function App() {
 
     promises.push(setDoc(getDocRef('h_rooms', room.id), { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
     await Promise.all(promises);
-    
-    // MEJORA 3: Cierra automáticamente todo al guardar el checklist
-    setIsChecklistModalOpen(false);
-    setSelectedRoom(null);
   };
 
   // --- CAMBIO DE CONTRASEÑA INTERNO ---
@@ -1060,7 +1136,7 @@ export default function App() {
                   <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Marcar como Ocupada</button>
                 )}
                 
-                {/* MEJORA 2: Nuevo botón manual de liberación si la habitación se queda atascada pero sin tareas */}
+                {/* Botón manual de liberación */}
                 {selectedRoom.status === ROOM_STATUS.MANTENIMIENTO && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                     <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
@@ -1069,9 +1145,9 @@ export default function App() {
                     {tasks.filter(t => t.roomId === selectedRoom.id && t.status !== 'Completada').length === 0 ? (
                       <div className="mt-4 pt-4 border-t border-blue-200">
                         <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta habitación</p>
-                        <button onClick={async () => {
-                          await setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
-                          setSelectedRoom(null);
+                        <button onClick={() => {
+                          setSelectedRoom(null); // CIERRE INMEDIATO
+                          setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
                         }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm">
                           Liberar Habitación
                         </button>
