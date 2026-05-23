@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Activity, AlertTriangle, Bed, CheckCircle, Clock, 
   Droplets, LayoutDashboard, Settings, User, Wrench, X, 
-  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2, Key, Download, Calendar
+  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2, Key, Download, Calendar, BookOpen
 } from 'lucide-react';
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -321,12 +321,10 @@ const TasksTab = ({ tasks, users, currentUser, slas, onAssign, onComplete }: any
   );
 };
 
-// --- PESTAÑA DE BITÁCORAS ACTUALIZADA (CON FILTROS Y EXCEL) ---
 const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], slas: Slas }) => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // 1. Filtrar por fechas
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       let pass = true;
@@ -363,7 +361,6 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
   const totalFinalizadas = completedTasks.length;
   const slaPercent = totalFinalizadas > 0 ? Math.round((totalSlaCumplido / totalFinalizadas) * 100) : 0;
 
-  // 2. Función para descargar en Excel (CSV)
   const handleExportCSV = () => {
     const headers = ["Habitacion", "Area", "Descripcion", "Responsable", "Fecha Creacion", "Fecha Cierre", "Minutos Tomados", "SLA (min)", "Cumplio SLA", "Estatus"];
     
@@ -375,7 +372,7 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
       return [
         row.roomId,
         row.dept,
-        `"${row.description.replace(/"/g, '""')}"`, // Evita errores si la descripción tiene comas
+        `"${row.description.replace(/"/g, '""')}"`,
         `"${responsable}"`,
         `"${fCreacion}"`,
         `"${fCierre}"`,
@@ -386,7 +383,6 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
       ].join(',');
     });
 
-    // \uFEFF asegura que Excel reconozca los acentos correctamente (UTF-8 BOM)
     const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -404,7 +400,6 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
           <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Bitácora y Estadísticas
         </h2>
         
-        {/* Controles de Filtro y Exportación */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-gray-500"/>
@@ -696,6 +691,89 @@ const ConfigTab = ({
   );
 };
 
+// --- PESTAÑA MANUAL DE USUARIO ---
+const ManualTab = ({ currentUser }: { currentUser: AppUser }) => {
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center border-b pb-4">
+          <BookOpen className="w-8 h-8 mr-3 text-indigo-600"/>
+          Manual de Usuario - MediRoom
+        </h2>
+
+        {/* SECCIÓN OPERATIVA (Visible para todos) */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-bold text-indigo-900 bg-indigo-50 p-3 rounded-lg flex items-center">
+            <User className="w-5 h-5 mr-2" /> Módulo Operativo (Ejecución de Tareas)
+          </h3>
+          <div className="space-y-5 px-2">
+            <p className="text-sm text-gray-600">Este módulo está diseñado para que el personal de Limpieza, Enfermería y Mantenimiento reciba y complete las tareas generadas al desocupar una habitación.</p>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><ListTodo className="w-5 h-5 text-indigo-500 mr-2"/> 1. Visualizar sus Tareas</h4>
+              <p className="text-sm text-gray-600">En la pestaña <strong>"Tareas"</strong>, usted verá automáticamente las actividades correspondientes a su departamento. Cada tarjeta indica el número de la habitación y la descripción exacta del trabajo a realizar.</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><Clock className="w-5 h-5 text-amber-500 mr-2"/> 2. Tiempos de Respuesta (SLA)</h4>
+              <p className="text-sm text-gray-600">En la esquina superior derecha de cada tarea, verá un indicador con el ícono de un reloj. Ese es el <strong>SLA (Service Level Agreement)</strong>, que indica los minutos esperados para terminar la tarea. Trate de completar el trabajo antes de que ese tiempo expire para mantener un buen rendimiento en el sistema.</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><CheckCircle className="w-5 h-5 text-emerald-500 mr-2"/> 3. Completar una Tarea</h4>
+              <p className="text-sm text-gray-600">Una vez que termine su trabajo físico en la habitación, haga clic en el botón verde <strong>"Marcar Completada"</strong> en su dispositivo móvil. El sistema registrará la hora exacta y, si es la última tarea pendiente, liberará la habitación automáticamente y se lo notificará al administrador.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* SECCIÓN ADMINISTRATIVA (Solo visible para admins) */}
+        {currentUser.role === 'admin' && (
+          <div className="space-y-6 mt-10">
+            <h3 className="text-lg font-bold text-rose-900 bg-rose-50 p-3 rounded-lg flex items-center">
+              <Settings className="w-5 h-5 mr-2" /> Módulo de Supervisión y Administración
+            </h3>
+            
+            <div className="space-y-5 px-2">
+              <p className="text-sm text-gray-600">Como supervisor, usted tiene control total sobre el flujo del hospital, las asignaciones, reportes y configuraciones maestras.</p>
+              
+              <div className="border-l-4 border-indigo-500 pl-4 py-1">
+                <h4 className="font-semibold text-gray-800 flex items-center"><LayoutDashboard className="w-4 h-4 mr-2"/> Tablero Central</h4>
+                <p className="text-sm text-gray-600 mt-1 mb-2">Es el mapa en vivo del hospital. Muestra el estatus de cada habitación.</p>
+                <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
+                  <li><strong>Liberar habitación:</strong> Seleccione una habitación ocupada y haga clic en "Desocupar Habitación". Esto la pasará a estado "Pendiente de Evaluación".</li>
+                  <li><strong>Ocupar habitación:</strong> Si está en verde (Disponible), haga clic para registrar un nuevo ingreso.</li>
+                  <li><strong>Cierre de emergencia:</strong> Si una habitación se queda en azul (Mantenimiento) pero ya no tiene tareas reales pendientes, el sistema le habilitará un botón para forzar su liberación a Disponible.</li>
+                </ul>
+              </div>
+
+              <div className="border-l-4 border-amber-500 pl-4 py-1">
+                <h4 className="font-semibold text-gray-800 flex items-center"><CheckSquare className="w-4 h-4 mr-2"/> Evaluaciones (Checklist)</h4>
+                <p className="text-sm text-gray-600 mt-1">Al hacer clic en una habitación "Pendiente de Evaluación", se abrirá un formulario. Al marcar un punto como "Falla", el sistema genera automáticamente una tarea asignada al departamento responsable (ej. si la TV falla, genera una tarea para mantenimiento). Al guardar, la habitación se bloquea en Mantenimiento hasta que el personal termine.</p>
+              </div>
+
+              <div className="border-l-4 border-emerald-500 pl-4 py-1">
+                <h4 className="font-semibold text-gray-800 flex items-center"><BarChart className="w-4 h-4 mr-2"/> Bitácora y Reportes</h4>
+                <p className="text-sm text-gray-600 mt-1">Aquí se registra cada movimiento del personal. Puede utilizar los calendarios en la parte superior para filtrar las tareas por rango de fechas. Si necesita procesar estos datos, haga clic en "Exportar Excel" para descargar un archivo CSV que puede abrir en Excel y realizar gráficas de cumplimiento.</p>
+              </div>
+
+              <div className="border-l-4 border-gray-500 pl-4 py-1">
+                <h4 className="font-semibold text-gray-800 flex items-center"><Settings className="w-4 h-4 mr-2"/> Menú de Configuración</h4>
+                <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1 mt-1">
+                  <li><strong>SLAs:</strong> Modifique los minutos máximos que tiene cada departamento para resolver problemas antes de ser penalizados en el reporte.</li>
+                  <li><strong>Habitaciones:</strong> Añada nuevas habitaciones (ej. 301) o elimine las que estén fuera de servicio.</li>
+                  <li><strong>Usuarios:</strong> Cree las cuentas (correos y contraseñas) para todo su personal. Elija correctamente su departamento para que las tareas se les asignen de forma inteligente.</li>
+                  <li><strong>Checklist:</strong> Puede agregar nuevas preguntas dinámicas al formulario de evaluación y asignarlas al área correspondiente.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 const ChecklistModal = ({ 
   isOpen, onClose, selectedRoom, checklistItems, onSubmit 
 }: { 
@@ -741,7 +819,6 @@ const ChecklistModal = ({
           <div className="mt-8 flex justify-end gap-3">
             <button onClick={onClose} className="px-6 py-2.5 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition-colors">Cancelar</button>
             <button onClick={() => {
-              // MEJORA: CIERRE INMEDIATO AL GUARDAR
               onClose();
               onSubmit(answers, selectedRoom);
             }} className="px-6 py-2.5 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors">
@@ -849,12 +926,12 @@ export default function App() {
 
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
   const handleVacateRoom = (roomId: string) => {
-    setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
+    setSelectedRoom(null);
     setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
   };
 
   const handleOccupyRoom = (roomId: string) => {
-    setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
+    setSelectedRoom(null);
     setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
   };
 
@@ -1016,16 +1093,12 @@ export default function App() {
       <header className="bg-indigo-900 text-white shadow-md relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
-            {/* --- SECCIÓN DE BRANDING (LOGO Y URL) ACTUALIZADA --- */}
             <div className="flex items-center gap-4 mb-3 md:mb-0">
-              {/* Contenedor del Logo con Placeholder instruccional */}
               <div className="flex items-center gap-3">
-                {/* REEMPLAZA ESTE div CON TU LOGO REAL: <img src="path/to/logo.png" alt="Logo Hospital Herrera Llerandi" className="w-12 h-12 rounded-full" /> */}
                 <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 text-indigo-900 font-bold border-2 border-white">
                   HL
                 </div>
                 <div className="flex flex-col">
-                  {/* Asegúrate de que el URL y el nombre completo sean correctos */}
                   <span className="font-bold text-lg leading-tight text-white">Hospital Herrera Llerandi</span>
                   <a 
                     href="http://www.herrerallerandi.com" 
@@ -1059,6 +1132,10 @@ export default function App() {
                     </button>
                   </>
                 )}
+                {/* BOTÓN MANUAL DE USUARIO */}
+                <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                  <BookOpen className="w-4 h-4 mr-1.5" /> Manual
+                </button>
               </nav>
 
               <div className="flex items-center space-x-4 border-l border-indigo-700 pl-4">
@@ -1128,6 +1205,9 @@ export default function App() {
             onRemoveChecklist={(id: string) => deleteDoc(getDocRef('h_checklistItems', id))}
           />
         )}
+        {activeTab === 'manual' && (
+          <ManualTab currentUser={currentUser} />
+        )}
       </main>
 
       {/* Modal de Detalles de Habitación */}
@@ -1164,7 +1244,7 @@ export default function App() {
                       <div className="mt-4 pt-4 border-t border-blue-200">
                         <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta habitación</p>
                         <button onClick={() => {
-                          setSelectedRoom(null); // MEJORA: CIERRE INMEDIATO
+                          setSelectedRoom(null); // CIERRE INMEDIATO
                           setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
                         }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm">
                           Liberar Habitación
