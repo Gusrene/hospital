@@ -3,7 +3,7 @@ import {
   Activity, AlertTriangle, Bed, CheckCircle, Clock, 
   Droplets, LayoutDashboard, Settings, User, Wrench, X, 
   ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, 
-  FileText, Lock, Loader2, Key, Download, Calendar, BookOpen, Image, Stethoscope, Upload
+  FileText, Lock, Loader2, Key, Download, Calendar, BookOpen, Image, Stethoscope
 } from 'lucide-react';
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
