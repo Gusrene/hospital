@@ -3,13 +3,14 @@ import {
   Activity, AlertTriangle, Bed, CheckCircle, Clock, 
   Droplets, LayoutDashboard, Settings, User, Wrench, X, 
   ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, 
-  FileText, Lock, Loader2, Key, Download, Calendar, BookOpen, Image, Stethoscope
+  FileText, Lock, Loader2, Key, Download, Calendar, BookOpen, Image, Stethoscope, Upload
 } from 'lucide-react';
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage'; // <-- NUEVO STORAGE
 
 // --- 2. TU CONFIGURACIÓN REAL DE FIREBASE ---
 const firebaseConfig = {
@@ -25,6 +26,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app); // <-- INICIALIZAR STORAGE
 
 const safeAppId = 'mediroom_db';
 const getColRef = (colName: string) => collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
@@ -297,7 +299,7 @@ const TaskColumn = ({
                       className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white border-indigo-200 text-indigo-700 font-medium' : 'border-gray-300 bg-gray-50 text-gray-500'}`}
                     >
                       <option value="">Sin responsable asignado</option>
-                      {users.filter(u => u.dept === task.dept && u.role === 'staff').map(u => (
+                      {users.filter((u: any) => u.dept === task.dept && u.role === 'staff').map((u: any) => (
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
@@ -549,6 +551,7 @@ const ConfigTab = ({
   const [newRoomType, setNewRoomType] = useState<'Habitación' | 'Clínica'>('Habitación');
 
   const [localSettings, setLocalSettings] = useState(settings);
+  const [isUploading, setIsUploading] = useState(false); // <-- ESTADO PARA UPLOAD
 
   const handleAddUser = () => {
     if (!newUserName.trim() || !newUserEmail.trim() || !newUserPass.trim()) {
@@ -565,7 +568,26 @@ const ConfigTab = ({
 
   const handleSaveSettings = () => {
     onUpdateSettings(localSettings);
-    alert('Configuración guardada. Los cambios en el logo y nombre se reflejarán al recargar la página.');
+    alert('Configuración guardada. Los cambios se reflejarán en todo el sistema.');
+  };
+
+  // --- FUNCIÓN PARA SUBIR LOGO ---
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const storageRef = ref(storage, `logos/hospital_logo_${Date.now()}`);
+      await uploadBytes(storageRef, file);
+      const downloadUrl = await getDownloadURL(storageRef);
+      setLocalSettings({ ...localSettings, logoUrl: downloadUrl });
+      alert('Logo subido a la nube. Haz clic en "Guardar Diseño" para aplicar.');
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert('Error al subir la imagen. Verifica que Firebase Storage esté activo.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -577,17 +599,29 @@ const ConfigTab = ({
           <Image className="w-6 h-6 mr-2 text-gray-600"/> Branding y Apariencia
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
+          
+          {/* NUEVO CARGADOR DE LOGO */}
           <div className="md:col-span-2">
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">URL del Logo (Opcional - Enlace de internet)</label>
-            <input 
-              type="text" 
-              value={localSettings.logoUrl} 
-              onChange={(e) => setLocalSettings({...localSettings, logoUrl: e.target.value})} 
-              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" 
-              placeholder="https://ejemplo.com/milogo.png" 
-            />
-            <p className="text-xs text-gray-400 mt-1">Pega aquí el enlace de una imagen de internet para reemplazar el logo "HL" de arriba.</p>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Logo del Hospital (Subir Imagen)</label>
+            <div className="flex items-center gap-4 bg-white p-3 border rounded-lg">
+              {localSettings.logoUrl ? (
+                <img src={localSettings.logoUrl} alt="Preview" className="w-12 h-12 object-contain bg-gray-50 rounded" />
+              ) : (
+                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center text-gray-400 text-xs font-bold">HL</div>
+              )}
+              <div className="flex-1">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleLogoUpload} 
+                  disabled={isUploading}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer disabled:opacity-50"
+                />
+              </div>
+              {isUploading && <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />}
+            </div>
           </div>
+
           <div>
             <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre del Hospital / Empresa</label>
             <input 
@@ -607,7 +641,7 @@ const ConfigTab = ({
             />
           </div>
           <div className="md:col-span-2 flex justify-end mt-2">
-            <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+            <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors shadow-sm">
               Guardar Diseño
             </button>
           </div>
@@ -1028,7 +1062,7 @@ export default function App() {
       const room = rooms.find(r => r.id === task.roomId);
       
       // Notificar al supervisor de esa habitación si existe, si no al admin
-      const targetUserId = room?.supervisorId || users.find(u => u.role === 'admin')?.id;
+      const targetUserId = room?.supervisorId || users.find((u: any) => u.role === 'admin')?.id;
       if(targetUserId) {
         await setDoc(getDocRef('h_notifications', Date.now().toString()), {
           userId: targetUserId, message: `¡${room?.name || 'El área'} completamente lista y disponible!`, read: false, createdAt: Date.now()
