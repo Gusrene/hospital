@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Activity, AlertTriangle, Bed, CheckCircle, Clock, 
   Droplets, LayoutDashboard, Settings, User, Wrench, X, 
-  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2, Key, Download, Calendar, BookOpen
+  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, 
+  FileText, Lock, Loader2, Key, Download, Calendar, BookOpen, Image, Stethoscope
 } from 'lucide-react';
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -36,13 +37,15 @@ interface AppUser {
   email: string;
   password?: string;
   dept: string;
-  role: 'admin' | 'staff';
+  role: 'admin' | 'supervisor' | 'staff';
 }
 
 interface Room {
   id: string;
   name: string;
+  type: 'Habitación' | 'Clínica';
   status: string;
+  supervisorId: string | null;
 }
 
 interface Task {
@@ -74,6 +77,12 @@ interface Slas {
   [key: string]: number;
 }
 
+interface AppSettings {
+  logoUrl: string;
+  hospitalName: string;
+  hospitalUrl: string;
+}
+
 // --- 4. CONSTANTES Y MOCKS ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
@@ -84,34 +93,36 @@ const DEPARTMENTS = {
 
 const ROOM_STATUS = {
   DISPONIBLE: 'Disponible',
-  OCUPADA: 'Ocupada',
+  OCUPADA: 'Ocupada / En Uso',
   EVALUACION: 'Pendiente de Evaluación',
   MANTENIMIENTO: 'En Mantenimiento / Limpieza'
 };
 
 const INITIAL_CHECKLIST: ChecklistItem[] = [
   { id: '1', question: '¿Se retiró todo el material médico y punzocortante?', dept: DEPARTMENTS.ENFERMERIA },
-  { id: '2', question: '¿La cama está limpia y con sábanas nuevas?', dept: DEPARTMENTS.LIMPIEZA },
+  { id: '2', question: '¿La cama/camilla está limpia y con sábanas nuevas?', dept: DEPARTMENTS.LIMPIEZA },
   { id: '3', question: '¿El baño está desinfectado y abastecido?', dept: DEPARTMENTS.LIMPIEZA },
-  { id: '4', question: '¿Los equipos médicos (monitores, tomas de O2) funcionan correctamente?', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: '5', question: '¿La iluminación, TV y contactos eléctricos operan sin fallas?', dept: DEPARTMENTS.MANTENIMIENTO }
+  { id: '4', question: '¿Los equipos médicos operan correctamente?', dept: DEPARTMENTS.MANTENIMIENTO },
+  { id: '5', question: '¿La iluminación y contactos eléctricos operan sin fallas?', dept: DEPARTMENTS.MANTENIMIENTO }
 ];
 
 const INITIAL_ROOMS: Room[] = [
-  { id: '101', name: 'Habitación 101', status: ROOM_STATUS.OCUPADA },
-  { id: '102', name: 'Habitación 102', status: ROOM_STATUS.DISPONIBLE },
-  { id: '103', name: 'Habitación 103', status: ROOM_STATUS.EVALUACION },
-  { id: '201', name: 'Habitación 201', status: ROOM_STATUS.MANTENIMIENTO },
-  { id: '202', name: 'Habitación 202', status: ROOM_STATUS.DISPONIBLE },
-  { id: '203', name: 'Habitación 203', status: ROOM_STATUS.OCUPADA },
+  { id: '101', name: 'Habitación 101', type: 'Habitación', status: ROOM_STATUS.OCUPADA, supervisorId: null },
+  { id: '102', name: 'Habitación 102', type: 'Habitación', status: ROOM_STATUS.DISPONIBLE, supervisorId: null },
+  { id: 'C1', name: 'Clínica 1', type: 'Clínica', status: ROOM_STATUS.EVALUACION, supervisorId: 'sup1' },
 ];
 
 const INITIAL_USERS: AppUser[] = [
-  { id: 'admin1', name: 'Supervisor (Admin)', email: 'admin@hospital.com', password: 'password', dept: DEPARTMENTS.ADMIN, role: 'admin' },
+  { id: 'admin1', name: 'Director (Admin)', email: 'admin@hospital.com', password: 'password', dept: DEPARTMENTS.ADMIN, role: 'admin' },
+  { id: 'sup1', name: 'Dra. López (Supervisor Clínicas)', email: 'lopez@hospital.com', password: '123', dept: DEPARTMENTS.ADMIN, role: 'supervisor' },
   { id: 'u1', name: 'Carlos (Limpieza)', email: 'carlos@hospital.com', password: '123', dept: DEPARTMENTS.LIMPIEZA, role: 'staff' },
-  { id: 'u2', name: 'Ana (Enfermería)', email: 'ana@hospital.com', password: '123', dept: DEPARTMENTS.ENFERMERIA, role: 'staff' },
-  { id: 'u3', name: 'Luis (Mantenimiento)', email: 'luis@hospital.com', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff' },
 ];
+
+const INITIAL_SETTINGS: AppSettings = {
+  logoUrl: '',
+  hospitalName: 'Hospital Herrera Llerandi',
+  hospitalUrl: 'http://www.herrerallerandi.com'
+};
 
 // --- 5. COMPONENTES EXTRAÍDOS ---
 const getMinutesDifference = (start: number, end: number) => {
@@ -147,21 +158,25 @@ const DashboardTab = ({
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch(status) {
-      case ROOM_STATUS.DISPONIBLE: return <CheckCircle className="w-6 h-6 text-emerald-600" />;
-      case ROOM_STATUS.OCUPADA: return <User className="w-6 h-6 text-rose-600" />;
-      case ROOM_STATUS.EVALUACION: return <CheckSquare className="w-6 h-6 text-amber-600" />;
-      case ROOM_STATUS.MANTENIMIENTO: return <Wrench className="w-6 h-6 text-blue-600" />;
-      default: return <Bed className="w-6 h-6 text-gray-600" />;
-    }
+  const getStatusIcon = (status: string, type: string) => {
+    if (status === ROOM_STATUS.DISPONIBLE) return <CheckCircle className="w-6 h-6 text-emerald-600" />;
+    if (status === ROOM_STATUS.EVALUACION) return <CheckSquare className="w-6 h-6 text-amber-600" />;
+    if (status === ROOM_STATUS.MANTENIMIENTO) return <Wrench className="w-6 h-6 text-blue-600" />;
+    return type === 'Clínica' ? <Stethoscope className="w-6 h-6 text-rose-600" /> : <Bed className="w-6 h-6 text-rose-600" />;
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {currentUser.role === 'supervisor' && (
+        <div className="bg-indigo-50 border border-indigo-200 text-indigo-800 p-4 rounded-xl flex items-center shadow-sm">
+          <Activity className="w-5 h-5 mr-2 text-indigo-600"/>
+          <p className="font-medium text-sm">Vista de KPI: Mostrando solo las áreas asignadas a su supervisión.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500 font-medium">Total Habitaciones</p>
+          <p className="text-sm text-gray-500 font-medium">Total Áreas</p>
           <p className="text-3xl font-bold text-gray-800 mt-1">{stats.total}</p>
         </div>
         <div className="bg-emerald-50 p-4 rounded-xl shadow-sm border border-emerald-100">
@@ -169,7 +184,7 @@ const DashboardTab = ({
           <p className="text-3xl font-bold text-emerald-700 mt-1">{stats.disponibles}</p>
         </div>
         <div className="bg-rose-50 p-4 rounded-xl shadow-sm border border-rose-100">
-          <p className="text-sm text-rose-600 font-medium">Ocupadas</p>
+          <p className="text-sm text-rose-600 font-medium">En Uso</p>
           <p className="text-3xl font-bold text-rose-700 mt-1">{stats.ocupadas}</p>
         </div>
         <div className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100">
@@ -183,7 +198,7 @@ const DashboardTab = ({
       </div>
 
       <h2 className="text-xl font-bold text-gray-800 flex items-center justify-between">
-        <span>Mapa de Piso</span>
+        <span>Mapa de Piso Operativo</span>
         <span className="flex items-center text-xs font-normal text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
            <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div> En Vivo
         </span>
@@ -197,8 +212,11 @@ const DashboardTab = ({
             className={`p-5 rounded-xl border-l-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow bg-white ${getStatusColor(room.status).replace('bg-', 'border-').split(' ')[1]}`}
           >
             <div className="flex justify-between items-start mb-3">
-              <h3 className="font-bold text-lg text-gray-800">{room.name}</h3>
-              {getStatusIcon(room.status)}
+              <div>
+                <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider block mb-0.5">{room.type}</span>
+                <h3 className="font-bold text-lg text-gray-800 leading-tight">{room.name}</h3>
+              </div>
+              {getStatusIcon(room.status, room.type)}
             </div>
             
             <div className="space-y-2">
@@ -212,7 +230,7 @@ const DashboardTab = ({
                 </p>
               )}
 
-              {room.status === ROOM_STATUS.EVALUACION && currentUser?.role === 'admin' && (
+              {room.status === ROOM_STATUS.EVALUACION && (currentUser?.role === 'admin' || currentUser?.role === 'supervisor') && (
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -259,11 +277,12 @@ const TaskColumn = ({
           deptTasks.map(task => {
             const slaMinutes = slas[task.dept] || 0;
             const isMine = task.assignedTo === currentUser?.id;
+            const canAssign = currentUser?.role === 'admin' || currentUser?.role === 'supervisor';
 
             return (
               <div key={task.id} className={`p-4 rounded-lg shadow-sm border ${isMine ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-100'}`}>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-bold text-blue-600 text-sm">Hab. {task.roomId}</span>
+                  <span className="font-bold text-blue-600 text-sm">Área: {task.roomId}</span>
                   <span className="flex items-center text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
                     <Clock className="w-3 h-3 mr-1" /> SLA: {slaMinutes}m
                   </span>
@@ -271,14 +290,14 @@ const TaskColumn = ({
                 <p className="text-sm text-gray-700 mb-4">{task.description}</p>
                 
                 <div className="mb-4">
-                  {currentUser?.role === 'admin' ? (
+                  {canAssign ? (
                     <select 
                       value={task.assignedTo || ''}
                       onChange={(e) => onAssign(task.id, e.target.value)}
                       className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white border-indigo-200 text-indigo-700 font-medium' : 'border-gray-300 bg-gray-50 text-gray-500'}`}
                     >
                       <option value="">Sin responsable asignado</option>
-                      {users.filter(u => u.dept === task.dept).map(u => (
+                      {users.filter(u => u.dept === task.dept && u.role === 'staff').map(u => (
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
@@ -289,7 +308,7 @@ const TaskColumn = ({
                   )}
                 </div>
 
-                {(isMine || currentUser?.role === 'admin') && (
+                {(isMine || canAssign) && (
                   <button 
                     onClick={() => onComplete(task.id)}
                     className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center"
@@ -362,7 +381,7 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
   const slaPercent = totalFinalizadas > 0 ? Math.round((totalSlaCumplido / totalFinalizadas) * 100) : 0;
 
   const handleExportCSV = () => {
-    const headers = ["Habitacion", "Area", "Descripcion", "Responsable", "Fecha Creacion", "Fecha Cierre", "Minutos Tomados", "SLA (min)", "Cumplio SLA", "Estatus"];
+    const headers = ["Area/Habitacion", "Departamento", "Descripcion", "Responsable", "Fecha Creacion", "Fecha Cierre", "Minutos Tomados", "SLA (min)", "Cumplio SLA", "Estatus"];
     
     const rows = reportData.sort((a, b) => b.createdAt - a.createdAt).map(row => {
       const responsable = users.find(u => u.id === row.assignedTo)?.name || 'Sin Asignar';
@@ -460,7 +479,7 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
           <table className="w-full text-left text-sm min-w-[800px]">
             <thead className="bg-white border-b">
               <tr>
-                <th className="p-4 font-semibold text-gray-600">Hab.</th>
+                <th className="p-4 font-semibold text-gray-600">Área/Hab.</th>
                 <th className="p-4 font-semibold text-gray-600">Área</th>
                 <th className="p-4 font-semibold text-gray-600">Descripción</th>
                 <th className="p-4 font-semibold text-gray-600">Responsable</th>
@@ -512,18 +531,24 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
 };
 
 const ConfigTab = ({ 
-  slas, rooms, users, checklistItems, currentUser,
-  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist
+  slas, rooms, users, checklistItems, currentUser, settings,
+  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist,
+  onUpdateRoomSupervisor, onUpdateSettings
 }: any) => {
   const [newQuestion, setNewQuestion] = useState('');
   const [newDept, setNewDept] = useState(DEPARTMENTS.LIMPIEZA);
+  
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserDept, setNewUserDept] = useState(DEPARTMENTS.LIMPIEZA);
-  const [newUserRole, setNewUserRole] = useState<'staff' | 'admin'>('staff');
+  const [newUserRole, setNewUserRole] = useState<'staff' | 'supervisor' | 'admin'>('staff');
   const [userFormError, setUserFormError] = useState('');
+  
   const [newRoomId, setNewRoomId] = useState('');
+  const [newRoomType, setNewRoomType] = useState<'Habitación' | 'Clínica'>('Habitación');
+
+  const [localSettings, setLocalSettings] = useState(settings);
 
   const handleAddUser = () => {
     if (!newUserName.trim() || !newUserEmail.trim() || !newUserPass.trim()) {
@@ -538,12 +563,61 @@ const ConfigTab = ({
     setNewUserName(''); setNewUserEmail(''); setNewUserPass(''); setUserFormError('');
   };
 
+  const handleSaveSettings = () => {
+    onUpdateSettings(localSettings);
+    alert('Configuración guardada. Los cambios en el logo y nombre se reflejarán al recargar la página.');
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl animate-in fade-in duration-500">
+    <div className="space-y-6 max-w-4xl animate-in fade-in duration-500 pb-12">
+      
+      {/* BRANDING Y AJUSTES GLOBALES */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+          <Image className="w-6 h-6 mr-2 text-gray-600"/> Branding y Apariencia
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
+          <div className="md:col-span-2">
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">URL del Logo (Opcional - Enlace de internet)</label>
+            <input 
+              type="text" 
+              value={localSettings.logoUrl} 
+              onChange={(e) => setLocalSettings({...localSettings, logoUrl: e.target.value})} 
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" 
+              placeholder="https://ejemplo.com/milogo.png" 
+            />
+            <p className="text-xs text-gray-400 mt-1">Pega aquí el enlace de una imagen de internet para reemplazar el logo "HL" de arriba.</p>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre del Hospital / Empresa</label>
+            <input 
+              type="text" 
+              value={localSettings.hospitalName} 
+              onChange={(e) => setLocalSettings({...localSettings, hospitalName: e.target.value})} 
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" 
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Sitio Web Oficial</label>
+            <input 
+              type="text" 
+              value={localSettings.hospitalUrl} 
+              onChange={(e) => setLocalSettings({...localSettings, hospitalUrl: e.target.value})} 
+              className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" 
+            />
+          </div>
+          <div className="md:col-span-2 flex justify-end mt-2">
+            <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+              Guardar Diseño
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* SLAs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Configuración de SLAs (Minutos)
+          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Tiempos SLA por Área (Minutos)
         </h2>
         <div className="space-y-4">
           {Object.entries(slas).map(([dept, time]: any) => (
@@ -568,29 +642,52 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* Habitaciones */}
+      {/* ÁREAS Y CLÍNICAS */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
+          <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones y Clínicas
         </h2>
-        <div className="flex flex-col md:flex-row gap-3 mb-6">
+        <div className="flex flex-col md:flex-row gap-3 mb-6 bg-gray-50 p-4 rounded-xl border">
           <input 
-            type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}
+            type="text" placeholder="Identificador (ej. 301, C2)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}
             className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500"
           />
-          <button onClick={() => { onAddRoom(newRoomId); setNewRoomId(''); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
-            Agregar
+          <select value={newRoomType} onChange={(e) => setNewRoomType(e.target.value as any)} className="border border-gray-300 rounded-lg p-2 bg-white">
+            <option value="Habitación">Habitación</option>
+            <option value="Clínica">Clínica</option>
+          </select>
+          <button onClick={() => { onAddRoom(newRoomId, newRoomType); setNewRoomId(''); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+            Crear Área
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+
+        <div className="space-y-3">
           {rooms.map((room: Room) => (
-            <div key={room.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center space-x-2">
-                <Bed className="w-4 h-4 text-gray-400" />
-                <p className="font-medium text-sm text-gray-800">{room.name}</p>
+            <div key={room.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white rounded-lg border border-gray-200 shadow-sm gap-4">
+              <div className="flex items-center space-x-3 w-1/3">
+                {room.type === 'Clínica' ? <Stethoscope className="w-5 h-5 text-indigo-400" /> : <Bed className="w-5 h-5 text-indigo-400" />}
+                <div>
+                  <p className="font-bold text-gray-800">{room.name}</p>
+                  <span className="text-[10px] uppercase font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">{room.type}</span>
+                </div>
               </div>
-              <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg transition-colors">
-                <X className="w-4 h-4"/>
+              
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 block mb-1">Supervisor a cargo:</label>
+                <select 
+                  value={room.supervisorId || ''} 
+                  onChange={(e) => onUpdateRoomSupervisor(room.id, e.target.value)}
+                  className={`w-full border text-sm rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none ${room.supervisorId ? 'bg-indigo-50 border-indigo-200 text-indigo-800 font-medium' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                >
+                  <option value="">Sin supervisor asigando (Solo visible para Admin)</option>
+                  {users.filter((u: any) => u.role === 'supervisor' || u.role === 'admin').map((sup: any) => (
+                    <option key={sup.id} value={sup.id}>{sup.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 rounded-lg transition-colors h-fit self-end sm:self-center">
+                <X className="w-5 h-5"/>
               </button>
             </div>
           ))}
@@ -600,16 +697,16 @@ const ConfigTab = ({
       {/* Usuarios */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Users className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Personal
+          <Users className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Personal y Roles
         </h2>
         {userFormError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm font-medium mb-4">{userFormError}</div>}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 p-5 rounded-xl border">
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre</label>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre Completo</label>
             <input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Correo Electrónico</label>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Correo Electrónico (Login)</label>
             <input type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" placeholder="ejemplo@hospital.com" />
           </div>
           <div>
@@ -617,35 +714,41 @@ const ConfigTab = ({
             <input type="password" value={newUserPass} onChange={(e) => setNewUserPass(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Departamento</label>
-            <select value={newUserDept} onChange={(e) => setNewUserDept(e.target.value)} className="w-full border rounded-lg p-2 bg-white">
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Departamento Operativo</label>
+            <select value={newUserDept} onChange={(e) => setNewUserDept(e.target.value)} className="w-full border rounded-lg p-2 bg-white" disabled={newUserRole !== 'staff'}>
               {Object.values(DEPARTMENTS).map(dept => <option key={dept} value={dept}>{dept}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Rol</label>
-            <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)} className="w-full border rounded-lg p-2 bg-white">
-              <option value="staff">Operativo</option>
-              <option value="admin">Supervisor</option>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nivel de Acceso (Rol)</label>
+            <select value={newUserRole} onChange={(e) => {
+              setNewUserRole(e.target.value as any);
+              if (e.target.value === 'admin' || e.target.value === 'supervisor') setNewUserDept(DEPARTMENTS.ADMIN);
+            }} className="w-full border rounded-lg p-2 bg-white">
+              <option value="staff">Operador (Solo hace tareas)</option>
+              <option value="supervisor">Supervisor (Ve KPIs asignados)</option>
+              <option value="admin">Administrador Maestro (Acceso Total)</option>
             </select>
           </div>
           <div className="flex items-end">
-            <button onClick={handleAddUser} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg">
-              Añadir
+            <button onClick={handleAddUser} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg shadow-sm">
+              Crear Usuario
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {users.map((user: AppUser) => (
             <div key={user.id} className="flex items-center justify-between p-4 bg-white rounded-lg border shadow-sm">
               <div className="flex items-center space-x-3">
-                <div className="bg-indigo-50 p-2.5 rounded-full"><User className="w-5 h-5 text-indigo-600" /></div>
+                <div className={`p-2.5 rounded-full ${user.role === 'admin' ? 'bg-rose-50 text-rose-600' : user.role === 'supervisor' ? 'bg-amber-50 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <User className="w-5 h-5" />
+                </div>
                 <div>
                   <p className="font-bold text-sm text-gray-800">{user.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Correo: <span className="text-gray-700 font-medium">{user.email}</span></p>
-                  <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded">
-                    {user.dept} ({user.role})
+                  <p className="text-xs text-gray-500 mt-0.5"><span className="text-gray-700 font-medium">{user.email}</span></p>
+                  <span className={`text-[10px] font-bold uppercase mt-1 inline-block px-2 py-0.5 rounded ${user.role === 'admin' ? 'bg-rose-100 text-rose-700' : user.role === 'supervisor' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                    {user.role === 'staff' ? user.dept : user.role}
                   </span>
                 </div>
               </div>
@@ -662,10 +765,10 @@ const ConfigTab = ({
       {/* Checklist */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <CheckSquare className="w-6 h-6 mr-2 text-gray-600"/> Gestión del Checklist
+          <CheckSquare className="w-6 h-6 mr-2 text-gray-600"/> Preguntas de Evaluación
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Nueva pregunta..." value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Nueva pregunta para el checklist..." value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
           <select value={newDept} onChange={(e) => setNewDept(e.target.value)} className="border rounded-lg p-2 bg-white">
             {Object.values(DEPARTMENTS).filter(d => d !== DEPARTMENTS.ADMIN).map(dept => <option key={dept} value={dept}>{dept}</option>)}
           </select>
@@ -701,70 +804,51 @@ const ManualTab = ({ currentUser }: { currentUser: AppUser }) => {
           Manual de Usuario - MediRoom
         </h2>
 
-        {/* SECCIÓN OPERATIVA (Visible para todos) */}
+        {/* SECCIÓN OPERATIVA */}
         <div className="space-y-6">
           <h3 className="text-lg font-bold text-indigo-900 bg-indigo-50 p-3 rounded-lg flex items-center">
-            <User className="w-5 h-5 mr-2" /> Módulo Operativo (Ejecución de Tareas)
+            <User className="w-5 h-5 mr-2" /> Módulo Operador (Staff)
           </h3>
-          <div className="space-y-5 px-2">
-            <p className="text-sm text-gray-600">Este módulo está diseñado para que el personal de Limpieza, Enfermería y Mantenimiento reciba y complete las tareas generadas al desocupar una habitación.</p>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><ListTodo className="w-5 h-5 text-indigo-500 mr-2"/> 1. Visualizar sus Tareas</h4>
-              <p className="text-sm text-gray-600">En la pestaña <strong>"Tareas"</strong>, usted verá automáticamente las actividades correspondientes a su departamento. Cada tarjeta indica el número de la habitación y la descripción exacta del trabajo a realizar.</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><Clock className="w-5 h-5 text-amber-500 mr-2"/> 2. Tiempos de Respuesta (SLA)</h4>
-              <p className="text-sm text-gray-600">En la esquina superior derecha de cada tarea, verá un indicador con el ícono de un reloj. Ese es el <strong>SLA (Service Level Agreement)</strong>, que indica los minutos esperados para terminar la tarea. Trate de completar el trabajo antes de que ese tiempo expire para mantener un buen rendimiento en el sistema.</p>
-            </div>
-            
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 flex items-center mb-2"><CheckCircle className="w-5 h-5 text-emerald-500 mr-2"/> 3. Completar una Tarea</h4>
-              <p className="text-sm text-gray-600">Una vez que termine su trabajo físico en la habitación, haga clic en el botón verde <strong>"Marcar Completada"</strong> en su dispositivo móvil. El sistema registrará la hora exacta y, si es la última tarea pendiente, liberará la habitación automáticamente y se lo notificará al administrador.</p>
-            </div>
+          <div className="space-y-4 px-2">
+            <p className="text-sm text-gray-600">Este módulo está diseñado para que el personal reciba y complete las tareas generadas al desocupar una habitación o clínica.</p>
+            <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
+              <li><strong>1. Ver Tareas:</strong> En la pestaña "Tareas", verá el número del área y la descripción del trabajo a realizar según su departamento.</li>
+              <li><strong>2. Tiempos (SLA):</strong> Cada tarea tiene un reloj con los minutos esperados para terminarla. Cumplir este tiempo sube la estadística de su equipo.</li>
+              <li><strong>3. Finalizar:</strong> Al terminar el trabajo, presione "Marcar Completada". Si era la última tarea, el área quedará Disponible automáticamente.</li>
+            </ul>
           </div>
         </div>
 
-        {/* SECCIÓN ADMINISTRATIVA (Solo visible para admins) */}
+        {/* SECCIÓN SUPERVISOR */}
+        {(currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
+          <div className="space-y-6 mt-10">
+            <h3 className="text-lg font-bold text-amber-900 bg-amber-50 p-3 rounded-lg flex items-center">
+              <Activity className="w-5 h-5 mr-2" /> Módulo de Supervisor de Área
+            </h3>
+            <div className="space-y-4 px-2">
+              <p className="text-sm text-gray-600">Los supervisores tienen acceso al Tablero y a las Bitácoras, pero <strong>solo ven la información de las habitaciones y clínicas que les han sido asignadas</strong> por la administración.</p>
+              <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
+                <li><strong>Tablero KPI:</strong> El resumen superior solo cuenta las habitaciones a su cargo. Puede marcar áreas como Ocupadas o en Evaluación.</li>
+                <li><strong>Asignación Manual:</strong> En la pestaña Tareas, si un operador no ha tomado una tarea, el supervisor puede forzar la asignación desde el menú desplegable.</li>
+                <li><strong>Descarga de Reportes:</strong> Su botón de Exportar Excel solo descargará el historial correspondiente a su zona para sus reportes semanales.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* SECCIÓN ADMINISTRADOR MAESTRO */}
         {currentUser.role === 'admin' && (
           <div className="space-y-6 mt-10">
             <h3 className="text-lg font-bold text-rose-900 bg-rose-50 p-3 rounded-lg flex items-center">
-              <Settings className="w-5 h-5 mr-2" /> Módulo de Supervisión y Administración
+              <Settings className="w-5 h-5 mr-2" /> Módulo de Administrador Maestro
             </h3>
-            
-            <div className="space-y-5 px-2">
-              <p className="text-sm text-gray-600">Como supervisor, usted tiene control total sobre el flujo del hospital, las asignaciones, reportes y configuraciones maestras.</p>
-              
-              <div className="border-l-4 border-indigo-500 pl-4 py-1">
-                <h4 className="font-semibold text-gray-800 flex items-center"><LayoutDashboard className="w-4 h-4 mr-2"/> Tablero Central</h4>
-                <p className="text-sm text-gray-600 mt-1 mb-2">Es el mapa en vivo del hospital. Muestra el estatus de cada habitación.</p>
-                <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1">
-                  <li><strong>Liberar habitación:</strong> Seleccione una habitación ocupada y haga clic en "Desocupar Habitación". Esto la pasará a estado "Pendiente de Evaluación".</li>
-                  <li><strong>Ocupar habitación:</strong> Si está en verde (Disponible), haga clic para registrar un nuevo ingreso.</li>
-                  <li><strong>Cierre de emergencia:</strong> Si una habitación se queda en azul (Mantenimiento) pero ya no tiene tareas reales pendientes, el sistema le habilitará un botón para forzar su liberación a Disponible.</li>
-                </ul>
-              </div>
-
-              <div className="border-l-4 border-amber-500 pl-4 py-1">
-                <h4 className="font-semibold text-gray-800 flex items-center"><CheckSquare className="w-4 h-4 mr-2"/> Evaluaciones (Checklist)</h4>
-                <p className="text-sm text-gray-600 mt-1">Al hacer clic en una habitación "Pendiente de Evaluación", se abrirá un formulario. Al marcar un punto como "Falla", el sistema genera automáticamente una tarea asignada al departamento responsable (ej. si la TV falla, genera una tarea para mantenimiento). Al guardar, la habitación se bloquea en Mantenimiento hasta que el personal termine.</p>
-              </div>
-
-              <div className="border-l-4 border-emerald-500 pl-4 py-1">
-                <h4 className="font-semibold text-gray-800 flex items-center"><BarChart className="w-4 h-4 mr-2"/> Bitácora y Reportes</h4>
-                <p className="text-sm text-gray-600 mt-1">Aquí se registra cada movimiento del personal. Puede utilizar los calendarios en la parte superior para filtrar las tareas por rango de fechas. Si necesita procesar estos datos, haga clic en "Exportar Excel" para descargar un archivo CSV que puede abrir en Excel y realizar gráficas de cumplimiento.</p>
-              </div>
-
-              <div className="border-l-4 border-gray-500 pl-4 py-1">
-                <h4 className="font-semibold text-gray-800 flex items-center"><Settings className="w-4 h-4 mr-2"/> Menú de Configuración</h4>
-                <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1 mt-1">
-                  <li><strong>SLAs:</strong> Modifique los minutos máximos que tiene cada departamento para resolver problemas antes de ser penalizados en el reporte.</li>
-                  <li><strong>Habitaciones:</strong> Añada nuevas habitaciones (ej. 301) o elimine las que estén fuera de servicio.</li>
-                  <li><strong>Usuarios:</strong> Cree las cuentas (correos y contraseñas) para todo su personal. Elija correctamente su departamento para que las tareas se les asignen de forma inteligente.</li>
-                  <li><strong>Checklist:</strong> Puede agregar nuevas preguntas dinámicas al formulario de evaluación y asignarlas al área correspondiente.</li>
-                </ul>
-              </div>
+            <div className="space-y-4 px-2">
+              <p className="text-sm text-gray-600">El Administrador Maestro tiene acceso universal, viendo el 100% del hospital y teniendo acceso a la pestaña exclusiva de <strong>Configuración</strong>.</p>
+              <ul className="list-disc pl-5 text-sm text-gray-600 space-y-2">
+                <li><strong>Branding:</strong> Puede cambiar el Logo y Nombre del sistema pegando la URL de una imagen en la Configuración.</li>
+                <li><strong>Gestión de Áreas:</strong> Puede crear "Habitaciones" o "Clínicas" y, muy importante, desplegar el menú para <strong>asignar qué Supervisor vigilará esa área</strong>.</li>
+                <li><strong>Control de Roles:</strong> Al crear usuarios, debe decidir su nivel de acceso (Admin, Supervisor, Staff) para proteger la información.</li>
+              </ul>
             </div>
           </div>
         )}
@@ -794,7 +878,7 @@ const ChecklistModal = ({
       <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl my-8">
         <div className="bg-amber-500 p-4 rounded-t-2xl flex justify-between items-center text-white">
           <h3 className="font-bold text-lg flex items-center">
-            <CheckSquare className="w-5 h-5 mr-2"/> Checklist Evaluación - Hab. {selectedRoom.name}
+            <CheckSquare className="w-5 h-5 mr-2"/> Evaluación - {selectedRoom.name}
           </h3>
           <button onClick={onClose} className="hover:bg-amber-600 p-1 rounded-full"><X className="w-5 h-5"/></button>
         </div>
@@ -847,7 +931,8 @@ export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [slas, setSlas] = useState<Slas>({ [DEPARTMENTS.LIMPIEZA]: 30, [DEPARTMENTS.MANTENIMIENTO]: 120, [DEPARTMENTS.ENFERMERIA]: 15 });
-  
+  const [settings, setSettings] = useState<AppSettings>(INITIAL_SETTINGS);
+
   // UI Modal State
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
@@ -866,15 +951,7 @@ export default function App() {
   // Inicializar Firebase Auth
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.error("Auth Error:", err);
-        setDbReady(true);
-        setUsers(INITIAL_USERS);
-        setRooms(INITIAL_ROOMS);
-        setChecklistItems(INITIAL_CHECKLIST);
-      }
+      try { await signInAnonymously(auth); } catch (err) { console.error("Auth Error", err); setDbReady(true); }
     };
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, setAuthUser);
@@ -888,22 +965,14 @@ export default function App() {
       INITIAL_ROOMS.forEach(r => promises.push(setDoc(getDocRef('h_rooms', r.id), r)));
       INITIAL_CHECKLIST.forEach(c => promises.push(setDoc(getDocRef('h_checklistItems', c.id), c)));
       promises.push(setDoc(getDocRef('h_slas', 'main'), slas));
-      
-      const initialTasks: Task[] = [
-        { id: 't0', roomId: '102', dept: DEPARTMENTS.LIMPIEZA, description: 'Limpieza profunda', status: 'Completada', createdAt: Date.now() - 3600000, completedAt: Date.now() - 1800000, assignedTo: 'u1' }
-      ];
-      initialTasks.forEach(t => promises.push(setDoc(getDocRef('h_tasks', t.id), t)));
-      
+      promises.push(setDoc(getDocRef('h_settings', 'main'), INITIAL_SETTINGS));
       await Promise.all(promises);
-    } catch (err) {
-      console.error("Seed Error:", err);
-    }
+    } catch (err) { console.error("Seed Error", err); }
   };
 
   // Suscripciones Real-time a Firestore
   useEffect(() => {
     if (!authUser) return;
-
     const unsubs: (() => void)[] = [];
     const errHandler = (err: any) => console.error("Firebase Sync Error", err);
 
@@ -916,15 +985,28 @@ export default function App() {
     unsubs.push(onSnapshot(getColRef('h_tasks'), (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_checklistItems'), (s) => setChecklistItems(s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => {
-      if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas);
-    }, errHandler));
+    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas); }, errHandler));
+    unsubs.push(onSnapshot(getColRef('h_settings'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSettings(s.docs[0].data() as AppSettings); }, errHandler));
 
     return () => unsubs.forEach(u => u());
   }, [authUser]);
 
 
-  // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
+  // --- FILTROS DE VISIBILIDAD (EL CORAZÓN DE LOS KPIs POR ROL) ---
+  const isSupervisor = currentUser?.role === 'supervisor';
+  
+  const visibleRooms = useMemo(() => {
+    if (isSupervisor) return rooms.filter(r => r.supervisorId === currentUser.id);
+    return rooms; // Admin ve todo, Staff ve todo en tareas
+  }, [rooms, currentUser, isSupervisor]);
+
+  const visibleTasks = useMemo(() => {
+    if (isSupervisor) return tasks.filter(t => visibleRooms.some(r => r.id === t.roomId));
+    return tasks; // Admin y Staff ven sus propias lógicas dentro de las vistas
+  }, [tasks, visibleRooms, isSupervisor]);
+
+
+  // --- MANEJADORES ---
   const handleVacateRoom = (roomId: string) => {
     setSelectedRoom(null);
     setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
@@ -940,17 +1022,16 @@ export default function App() {
     if(!task) return;
     await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
-    // Liberación automática cuando no quedan tareas pendientes en la habitación
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
     if (pendingRoomTasks.length === 0) {
       await setDoc(getDocRef('h_rooms', task.roomId), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+      const room = rooms.find(r => r.id === task.roomId);
       
-      if(currentUser) {
+      // Notificar al supervisor de esa habitación si existe, si no al admin
+      const targetUserId = room?.supervisorId || users.find(u => u.role === 'admin')?.id;
+      if(targetUserId) {
         await setDoc(getDocRef('h_notifications', Date.now().toString()), {
-          userId: currentUser.id, 
-          message: `¡Habitación ${task.roomId} completamente lista y disponible!`, 
-          read: false, 
-          createdAt: Date.now()
+          userId: targetUserId, message: `¡${room?.name || 'El área'} completamente lista y disponible!`, read: false, createdAt: Date.now()
         });
       }
     }
@@ -960,11 +1041,20 @@ export default function App() {
     await setDoc(getDocRef('h_tasks', taskId), { assignedTo: userId }, { merge: true });
     if (userId) {
       const taskObj = tasks.find(t => t.id === taskId);
-      const notifId = Date.now().toString();
-      await setDoc(getDocRef('h_notifications', notifId), {
-        userId: userId, message: `Nueva tarea asignada en Hab. ${taskObj?.roomId}`, read: false, createdAt: Date.now()
+      await setDoc(getDocRef('h_notifications', Date.now().toString()), {
+        userId: userId, message: `Nueva tarea asignada en ${taskObj?.roomId}`, read: false, createdAt: Date.now()
       });
     }
+  };
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = users.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.password === loginPassword.trim());
+    if (user) {
+      setCurrentUser(user);
+      setActiveTab(user.role === 'staff' ? 'tasks' : 'dashboard');
+      setLoginError(''); setLoginEmail(''); setLoginPassword(''); setResetSuccess('');
+    } else { setLoginError('Correo o contraseña incorrectos'); }
   };
 
   const markNotificationsAsRead = async () => {
@@ -992,7 +1082,6 @@ export default function App() {
     await Promise.all(promises);
   };
 
-  // --- CAMBIO DE CONTRASEÑA INTERNO ---
   const handleInnerPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser) return;
@@ -1000,17 +1089,6 @@ export default function App() {
     setIsChangingPassword(false);
     setInnerNewPassword('');
     alert('¡Tu contraseña ha sido actualizada con éxito!');
-  };
-
-  // --- LOGIN ---
-  const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const user = users.find(u => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.password === loginPassword.trim());
-    if (user) {
-      setCurrentUser(user);
-      setActiveTab(user.role === 'admin' ? 'dashboard' : 'tasks');
-      setLoginError(''); setLoginEmail(''); setLoginPassword(''); setResetSuccess('');
-    } else { setLoginError('Correo o contraseña incorrectos'); }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -1025,7 +1103,6 @@ export default function App() {
     }
   };
 
-  // --- CARGA Y LOGIN UI ---
   if (!authUser || !dbReady) {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
@@ -1040,8 +1117,10 @@ export default function App() {
       <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="bg-indigo-100 p-4 rounded-full mb-4"><Lock className="w-10 h-10 text-indigo-600" /></div>
-            <h1 className="text-2xl font-bold text-gray-800">MediRoom Control</h1>
+            <div className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center p-1 text-indigo-600 border-2 border-indigo-100 overflow-hidden mb-4">
+              {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : <Lock className="w-10 h-10" />}
+            </div>
+            <h1 className="text-2xl font-bold text-gray-800 text-center">{settings.hospitalName}</h1>
             <p className="text-sm text-gray-500 mt-1 flex items-center"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema En Línea</p>
           </div>
           
@@ -1093,28 +1172,26 @@ export default function App() {
       <header className="bg-indigo-900 text-white shadow-md relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
+            {/* BRANDING DINÁMICO */}
             <div className="flex items-center gap-4 mb-3 md:mb-0">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 text-indigo-900 font-bold border-2 border-white">
-                  HL
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center p-1 text-indigo-900 font-bold border-2 border-white overflow-hidden">
+                  {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" /> : 'HL'}
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg leading-tight text-white">Hospital Herrera Llerandi</span>
-                  <a 
-                    href="http://www.herrerallerandi.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-xs text-indigo-300 hover:text-white transition-colors"
-                  >
-                    www.herrerallerandi.com
-                  </a>
+                  <span className="font-bold text-lg leading-tight text-white max-w-[200px] truncate" title={settings.hospitalName}>{settings.hospitalName}</span>
+                  {settings.hospitalUrl && (
+                    <a href={settings.hospitalUrl.startsWith('http') ? settings.hospitalUrl : `https://${settings.hospitalUrl}`} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-300 hover:text-white transition-colors truncate max-w-[200px]">
+                      {settings.hospitalUrl.replace(/^https?:\/\//, '')}
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
             
             <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
               <nav className="flex flex-wrap justify-center space-x-1">
-                {currentUser.role === 'admin' && (
+                {(currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
                   <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'dashboard' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
                     <LayoutDashboard className="w-4 h-4 mr-1.5" /> Tablero
                   </button>
@@ -1122,17 +1199,16 @@ export default function App() {
                 <button onClick={() => setActiveTab('tasks')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'tasks' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
                   <ListTodo className="w-4 h-4 mr-1.5" /> Tareas
                 </button>
-                {currentUser.role === 'admin' && (
-                  <>
-                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
-                      <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
-                    </button>
-                    <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
-                      <Settings className="w-4 h-4 mr-1.5" /> Config
-                    </button>
-                  </>
+                {(currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
+                  <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                    <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
+                  </button>
                 )}
-                {/* BOTÓN MANUAL DE USUARIO */}
+                {currentUser.role === 'admin' && (
+                  <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                    <Settings className="w-4 h-4 mr-1.5" /> Config
+                  </button>
+                )}
                 <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
                   <BookOpen className="w-4 h-4 mr-1.5" /> Manual
                 </button>
@@ -1166,14 +1242,11 @@ export default function App() {
                 <div className="flex items-center space-x-3 text-sm">
                   <div className="text-right hidden sm:block">
                     <p className="font-bold text-white leading-tight">{currentUser.name}</p>
-                    <p className="text-indigo-300 text-xs">{currentUser.role === 'admin' ? 'Supervisor' : currentUser.dept}</p>
+                    <p className="text-indigo-300 text-xs">{currentUser.role === 'admin' ? 'Maestro' : currentUser.role === 'supervisor' ? 'Supervisor' : currentUser.dept}</p>
                   </div>
-                  
-                  {/* Botón de Cambiar Contraseña Interno */}
                   <button onClick={() => setIsChangingPassword(true)} className="p-1.5 bg-indigo-800 hover:bg-amber-500 rounded-lg text-indigo-200 hover:text-white transition-colors" title="Cambiar mi contraseña">
                     <Key className="w-5 h-5" />
                   </button>
-                  
                   <button onClick={() => setCurrentUser(null)} className="p-1.5 bg-indigo-800 hover:bg-rose-600 rounded-lg text-indigo-200 hover:text-white transition-colors" title="Cerrar Sesión">
                     <LogOut className="w-5 h-5" />
                   </button>
@@ -1185,24 +1258,27 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && currentUser.role === 'admin' && (
-          <DashboardTab rooms={rooms} tasks={tasks} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
+        {activeTab === 'dashboard' && (currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
+          <DashboardTab rooms={visibleRooms} tasks={visibleTasks} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
         )}
         {activeTab === 'tasks' && (
-          <TasksTab tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
+          <TasksTab tasks={visibleTasks} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
         )}
-        {activeTab === 'reports' && currentUser.role === 'admin' && (
-          <ReportsTab tasks={tasks} users={users} slas={slas} />
+        {activeTab === 'reports' && (currentUser.role === 'admin' || currentUser.role === 'supervisor') && (
+          <ReportsTab tasks={visibleTasks} users={users} slas={slas} />
         )}
         {activeTab === 'config' && currentUser.role === 'admin' && (
-          <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} currentUser={currentUser}
+          <ConfigTab 
+            slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} currentUser={currentUser} settings={settings}
             onUpdateSla={async (dept: string, val: string) => setDoc(getDocRef('h_slas', 'main'), { [dept]: parseInt(val) || 0 }, { merge: true })}
-            onAddRoom={async (id: string) => { if(id && !rooms.some(r=>r.id===id)) setDoc(getDocRef('h_rooms', id), { id, name: `Habitación ${id}`, status: ROOM_STATUS.DISPONIBLE }) }}
+            onAddRoom={async (id: string, type: string) => { if(id && !rooms.some(r=>r.id===id)) setDoc(getDocRef('h_rooms', id), { id, name: `${type === 'Clínica' ? 'Clínica' : 'Hab.'} ${id}`, type, status: ROOM_STATUS.DISPONIBLE, supervisorId: null }) }}
             onRemoveRoom={(id: string) => deleteDoc(getDocRef('h_rooms', id))}
+            onUpdateRoomSupervisor={(id: string, supId: string) => setDoc(getDocRef('h_rooms', id), { supervisorId: supId || null }, { merge: true })}
             onAddUser={async (userData: any) => setDoc(getDocRef('h_users_v2', `u_${Date.now()}`), { id: `u_${Date.now()}`, ...userData })}
             onRemoveUser={async (id: string) => { await deleteDoc(getDocRef('h_users_v2', id)); await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>setDoc(getDocRef('h_tasks', t.id), {assignedTo: null}, {merge:true}))) }}
             onAddChecklist={async (q: string, d: string) => { if(q) { const id=Date.now().toString(); setDoc(getDocRef('h_checklistItems', id), {id, question: q, dept: d}) } }}
             onRemoveChecklist={(id: string) => deleteDoc(getDocRef('h_checklistItems', id))}
+            onUpdateSettings={async (newSettings: AppSettings) => setDoc(getDocRef('h_settings', 'main'), newSettings, { merge: true })}
           />
         )}
         {activeTab === 'manual' && (
@@ -1225,29 +1301,28 @@ export default function App() {
               </div>
               <div className="flex flex-col gap-3">
                 {selectedRoom.status === ROOM_STATUS.OCUPADA && (
-                  <button onClick={() => handleVacateRoom(selectedRoom.id)} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-sm">Desocupar Habitación</button>
+                  <button onClick={() => handleVacateRoom(selectedRoom.id)} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-sm">Liberar / Desocupar Área</button>
                 )}
                 {selectedRoom.status === ROOM_STATUS.EVALUACION && (
                   <button onClick={() => setIsChecklistModalOpen(true)} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl flex justify-center items-center"><CheckSquare className="w-5 h-5 mr-2"/> Iniciar Evaluación</button>
                 )}
                 {selectedRoom.status === ROOM_STATUS.DISPONIBLE && (
-                  <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Marcar como Ocupada</button>
+                  <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Marcar como En Uso</button>
                 )}
                 
-                {/* Botón manual de liberación */}
                 {selectedRoom.status === ROOM_STATUS.MANTENIMIENTO && (
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                     <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-blue-800 font-medium text-sm">Acondicionando habitación.</p>
+                    <p className="text-blue-800 font-medium text-sm">Acondicionando Área.</p>
                     
                     {tasks.filter(t => t.roomId === selectedRoom.id && t.status !== 'Completada').length === 0 ? (
                       <div className="mt-4 pt-4 border-t border-blue-200">
-                        <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta habitación</p>
+                        <p className="text-emerald-700 text-xs font-bold mb-2">✓ Ya no hay tareas pendientes en esta área</p>
                         <button onClick={() => {
-                          setSelectedRoom(null); // CIERRE INMEDIATO
+                          setSelectedRoom(null);
                           setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
                         }} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl transition-colors shadow-sm">
-                          Liberar Habitación
+                          Habilitar Área
                         </button>
                       </div>
                     ) : (
@@ -1263,10 +1338,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Checklist */}
       <ChecklistModal isOpen={isChecklistModalOpen} onClose={() => { setIsChecklistModalOpen(false); setSelectedRoom(null); }} selectedRoom={selectedRoom} checklistItems={checklistItems} onSubmit={handleChecklistSubmit} />
 
-      {/* Modal de Cambio de Contraseña Interno */}
       {isChangingPassword && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl w-full max-w-sm shadow-2xl p-6">
@@ -1277,19 +1350,9 @@ export default function App() {
             <form onSubmit={handleInnerPasswordSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Nueva Contraseña</label>
-                <input 
-                  type="password" 
-                  value={innerNewPassword} 
-                  onChange={(e) => setInnerNewPassword(e.target.value)} 
-                  className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50" 
-                  placeholder="Escribe tu nueva contraseña..." 
-                  required 
-                  minLength={4}
-                />
+                <input type="password" value={innerNewPassword} onChange={(e) => setInnerNewPassword(e.target.value)} className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50" required minLength={4} />
               </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors">
-                Guardar Cambios
-              </button>
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors">Guardar Cambios</button>
             </form>
           </div>
         </div>
