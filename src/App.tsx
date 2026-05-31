@@ -238,7 +238,7 @@ const INITIAL_SETTINGS: AppSettings = {
   ]
 };
 
-const INITIAL_SLAS: any = { [DEPARTMENTS.LIMPIEZA]: 30, [DEPARTMENTS.MANTENIMIENTO]: 120, [DEPARTMENTS.ENFERMERIA]: 15, [DEPARTMENTS.ADMIN]: 60 };
+const INITIAL_SLAS: Record<string, number> = { [DEPARTMENTS.LIMPIEZA]: 30, [DEPARTMENTS.MANTENIMIENTO]: 120, [DEPARTMENTS.ENFERMERIA]: 15, [DEPARTMENTS.ADMIN]: 60 };
 
 const INITIAL_CHECKLIST: ChecklistItem[] = [
   { id: 'p1', category: 'Paredes', question: 'Sin suciedad', dept: DEPARTMENTS.LIMPIEZA },
@@ -451,7 +451,7 @@ const DashboardTab = ({
 const TaskColumn = ({ 
   deptName, icon, colorClass, tasks, users, currentUser, slas, onAssign, onComplete 
 }: { 
-  deptName: string, icon: React.ReactNode, colorClass: string, tasks: Task[], users: AppUser[], currentUser: AppUser, slas: Slas, onAssign: (id: string, uid: string) => void, onComplete: (id: string) => void 
+  deptName: string, icon: React.ReactNode, colorClass: string, tasks: Task[], users: AppUser[], currentUser: AppUser, slas: Record<string, number>, onAssign: (id: string, uid: string) => void, onComplete: (id: string) => void 
 }) => {
   const pendingTasks = tasks.filter(t => t.status !== 'Completada');
   const deptTasks = pendingTasks.filter(t => t.dept === deptName);
@@ -541,7 +541,7 @@ const TasksTab = ({ tasks, users, currentUser, slas, onAssign, onComplete }: any
   );
 };
 
-const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: AppUser[], slas: Slas, userLogs: UserLog[] }) => {
+const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[] }) => {
   const [reportView, setReportView] = useState<'tareas' | 'asistencia'>('tareas');
   
   // TAREAS LOGIC
@@ -794,7 +794,9 @@ const ConfigTab = ({
   };
 
   const handleSavePassword = (userId: string) => {
-    onUpdateUserPassword(userId, editPasswordValue);
+    if (onUpdateUserPassword) {
+      onUpdateUserPassword(userId, editPasswordValue);
+    }
     setEditingUserId(null);
   };
 
@@ -1175,7 +1177,7 @@ export default function App() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [slas, setSlas] = useState<Slas>(INITIAL_SLAS);
+  const [slas, setSlas] = useState<Record<string, number>>(INITIAL_SLAS);
   const [appSettings, setAppSettings] = useState<AppSettings>(INITIAL_SETTINGS);
   const [userLogs, setUserLogs] = useState<UserLog[]>([]);
   
@@ -1249,7 +1251,7 @@ export default function App() {
     unsubs.push(onSnapshot(getColRef('h_rooms'), (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_tasks'), (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas); }, errHandler));
+    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Record<string, number>); }, errHandler));
 
     return () => unsubs.forEach(u => u());
   }, [authUser]);
