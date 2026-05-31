@@ -12,14 +12,37 @@ import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, 
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 // --- 2. CONFIGURACIÓN DE FIREBASE ---
+// ⚠️ ATENCIÓN: REEMPLAZA ESTO CON LOS DATOS DE TU PROYECTO DE FIREBASE
+const defaultFirebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_MESSAGING_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+
 const w = window as any;
-const firebaseConfig = w.__firebase_config ? JSON.parse(w.__firebase_config) : {};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const isLocalDev = !!w.__firebase_config;
+const firebaseConfig = isLocalDev ? JSON.parse(w.__firebase_config) : defaultFirebaseConfig;
 
 const rawAppId = w.__app_id || 'hospital-manager-app';
 const safeAppId = rawAppId.split('_src')[0].split('/')[0];
+
+let app: any, auth: any, db: any;
+let firebaseError = false;
+
+try {
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "TU_API_KEY") {
+    throw new Error("Por favor, configura Firebase para continuar.");
+  }
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+} catch (err) {
+  console.error("No se pudo iniciar Firebase:", err);
+  firebaseError = true;
+}
 
 const getColRef = (colName: string) => collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
 const getDocRef = (colName: string, docId: string) => doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
@@ -899,6 +922,11 @@ export default function App() {
 
   // Inicializar Firebase Auth
   useEffect(() => {
+    if (firebaseError) {
+      setDbReady(true);
+      return;
+    }
+
     const initAuth = async () => {
       try {
         if (w.__initial_auth_token) {
@@ -1069,6 +1097,19 @@ export default function App() {
   };
 
   // --- CARGA Y LOGIN UI ---
+  if (firebaseError) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
+        <AlertTriangle className="w-16 h-16 text-rose-500 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-800 text-center">Falta conectar la Base de Datos</h2>
+        <p className="text-gray-600 text-center max-w-md mt-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          Has publicado la aplicación con éxito en Vercel, pero necesita un proyecto de <strong>Firebase</strong> real para guardar la información y sincronizarse en tiempo real.<br/><br/>
+          Abre el archivo <code>App.tsx</code> y reemplaza los valores de <code>defaultFirebaseConfig</code> con las credenciales de tu propio proyecto.
+        </p>
+      </div>
+    );
+  }
+
   if (!authUser || !dbReady) {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
