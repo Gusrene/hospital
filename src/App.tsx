@@ -109,6 +109,16 @@ const Building = ({ className }: { className?: string }) => (
     <path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" />
   </svg>
 );
+const FilterIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+  </svg>
+);
+const CalendarIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+  </svg>
+);
 
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -127,18 +137,40 @@ const defaultFirebaseConfig = {
   appId: "1:313648219875:web:ad87f0fcc6c714844227d6"
 };
 
-const w = window as any;
-const isLocalDev = !!w.__firebase_config;
-const firebaseConfig = isLocalDev ? JSON.parse(w.__firebase_config) : defaultFirebaseConfig;
+// --- DECLARACIÓN GLOBAL DE 'w' (window) PARA EVITAR REFERENCE_ERROR ---
+const w = typeof window !== 'undefined' ? (window as any) : {} as any;
 
-const rawAppId = w.__app_id || 'hospital-manager-app';
-const safeAppId = rawAppId.split('_src')[0].split('/')[0];
+// --- INICIALIZACIÓN ULTRA SEGURA DE VARIABLES GLOBALES ---
+const getFirebaseConfig = () => {
+  if (w && w.__firebase_config) {
+    if (typeof w.__firebase_config === 'object') {
+      return w.__firebase_config;
+    }
+    try {
+      return JSON.parse(w.__firebase_config);
+    } catch (e) {
+      console.error("Error al procesar __firebase_config:", e);
+    }
+  }
+  return defaultFirebaseConfig;
+};
 
-let app: any, auth: any, db: any;
+const getSafeAppId = () => {
+  const rawAppId = (w && w.__app_id) || 'hospital-manager-app';
+  if (typeof rawAppId === 'string') {
+    return rawAppId.split('_src')[0].split('/')[0];
+  }
+  return 'hospital-manager-app';
+};
+
+const firebaseConfig = getFirebaseConfig();
+const safeAppId = getSafeAppId();
+
+let app: any = null, auth: any = null, db: any = null;
 let firebaseError = false;
 
 try {
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "TU_API_KEY") {
+  if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey === "TU_API_KEY") {
     throw new Error("Por favor, configura Firebase para continuar.");
   }
   app = initializeApp(firebaseConfig);
@@ -149,8 +181,16 @@ try {
   firebaseError = true;
 }
 
-const getColRef = (colName: string) => collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
-const getDocRef = (colName: string, docId: string) => doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
+// Envolturas de seguridad para las referencias de Firestore
+const getColRef = (colName: string) => {
+  if (!db) return null;
+  return collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
+};
+
+const getDocRef = (colName: string, docId: string) => {
+  if (!db) return null;
+  return doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
+};
 
 // --- 3. INTERFACES TYPESCRIPT ---
 interface AppUser {
@@ -211,7 +251,7 @@ interface UserLog {
   timestamp: number;
 }
 
-// --- 4. CONSTANTES Y MOCKS ---
+// --- 4. CONSTANTES Y CONFIGURACIONES (Reordenado para evitar Temporal Dead Zone) ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
   LIMPIEZA: 'Limpieza',
@@ -523,97 +563,318 @@ const TaskColumn = ({
   );
 };
 
-const TasksTab = ({ tasks, users, currentUser, slas, onAssign, onComplete }: any) => {
+const TasksTab = ({ tasks, rooms, users, currentUser, slas, onAssign, onComplete }: any) => {
+  const [filterClinic, setFilterClinic] = useState('Todas');
+  const [filterUser, setFilterUser] = useState('Todos');
+  const [searchRoom, setSearchRoom] = useState('');
+
+  // Clínicas únicas disponibles en las habitaciones
+  const clinicsList = useMemo(() => Array.from(new Set(rooms.map((r: any) => r.clinic || 'Sede Central'))), [rooms]);
+
+  // Filtrar tareas basándonos en la clínica de su habitación asignada, el usuario y la búsqueda
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task: Task) => {
+      const room = rooms.find((r: Room) => r.id === task.roomId);
+      
+      const matchesClinic = filterClinic === 'Todas' || (room && room.clinic === filterClinic);
+      const matchesUser = filterUser === 'Todos' || task.assignedTo === filterUser || (filterUser === 'unassigned' && !task.assignedTo);
+      const matchesRoom = !searchRoom.trim() || task.roomId.toLowerCase().includes(searchRoom.toLowerCase().trim());
+      
+      return matchesClinic && matchesUser && matchesRoom;
+    });
+  }, [tasks, rooms, filterClinic, filterUser, searchRoom]);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <h2 className="text-xl font-bold text-gray-800 flex items-center">
-        <ListTodo className="w-6 h-6 mr-2 text-indigo-600"/> Tareas Activas y SLAs
-      </h2>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center">
+          <ListTodo className="w-6 h-6 mr-2 text-indigo-600"/> Tareas Activas y SLAs
+        </h2>
+        
+        {/* Barra de Filtros */}
+        <div className="flex flex-wrap items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-sm">
+          <div className="flex items-center space-x-1">
+            <FilterIcon className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-bold text-gray-500 uppercase">Filtros:</span>
+          </div>
+          
+          <select 
+            value={filterClinic} 
+            onChange={e => setFilterClinic(e.target.value)} 
+            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="Todas">Todas las Clínicas</option>
+            {clinicsList.map((c: any) => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <select 
+            value={filterUser} 
+            onChange={e => setFilterUser(e.target.value)} 
+            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="Todos">Todos los Responsables</option>
+            <option value="unassigned">Sin Asignar</option>
+            {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
+          </select>
+
+          <input 
+            type="text" 
+            placeholder="Habitación (ej. 101)" 
+            value={searchRoom}
+            onChange={e => setSearchRoom(e.target.value)}
+            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 w-36"
+          />
+        </div>
+      </div>
+      
       <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
         {currentUser?.role === 'admin' && (
-          <TaskColumn deptName={DEPARTMENTS.ADMIN} icon={<AlertTriangle className="w-5 h-5"/>} colorClass="text-rose-500" tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+          <TaskColumn deptName={DEPARTMENTS.ADMIN} icon={<AlertTriangle className="w-5 h-5"/>} colorClass="text-rose-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
         )}
-        <TaskColumn deptName={DEPARTMENTS.LIMPIEZA} icon={<Droplets className="w-5 h-5"/>} colorClass="text-blue-500" tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
-        <TaskColumn deptName={DEPARTMENTS.MANTENIMIENTO} icon={<Wrench className="w-5 h-5"/>} colorClass="text-amber-500" tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
-        <TaskColumn deptName={DEPARTMENTS.ENFERMERIA} icon={<Activity className="w-5 h-5"/>} colorClass="text-indigo-500" tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+        <TaskColumn deptName={DEPARTMENTS.LIMPIEZA} icon={<Droplets className="w-5 h-5"/>} colorClass="text-blue-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+        <TaskColumn deptName={DEPARTMENTS.MANTENIMIENTO} icon={<Wrench className="w-5 h-5"/>} colorClass="text-amber-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+        <TaskColumn deptName={DEPARTMENTS.ENFERMERIA} icon={<Activity className="w-5 h-5"/>} colorClass="text-indigo-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
       </div>
     </div>
   );
 };
 
-const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[] }) => {
+const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], rooms: Room[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[] }) => {
   const [reportView, setReportView] = useState<'tareas' | 'asistencia'>('tareas');
   
-  // TAREAS LOGIC
+  // FILTROS DE TAREAS
+  const [taskClinic, setTaskClinic] = useState('Todas');
+  const [taskDept, setTaskDept] = useState('Todos');
+  const [taskUser, setTaskUser] = useState('Todos');
+  const [taskSlaFilter, setTaskSlaFilter] = useState('Todos'); 
+  const [taskMonth, setTaskMonth] = useState('Todos');
+  const [taskStartDate, setTaskStartDate] = useState('');
+  const [taskEndDate, setTaskEndDate] = useState('');
+
+  // FILTROS DE ASISTENCIA
+  const [asistenciaUser, setAsistenciaUser] = useState('Todos');
+  const [asistenciaAction, setAsistenciaAction] = useState('Todos');
+  const [asistenciaMonth, setAsistenciaMonth] = useState('Todos');
+  const [asistenciaStartDate, setAsistenciaStartDate] = useState('');
+  const [asistenciaEndDate, setAsistenciaEndDate] = useState('');
+
+  const monthsList = [
+    { val: '0', label: 'Enero' },
+    { val: '1', label: 'Febrero' },
+    { val: '2', label: 'Marzo' },
+    { val: '3', label: 'Abril' },
+    { val: '4', label: 'Mayo' },
+    { val: '5', label: 'Junio' },
+    { val: '6', label: 'Julio' },
+    { val: '7', label: 'Agosto' },
+    { val: '8', label: 'Septiembre' },
+    { val: '9', label: 'Octubre' },
+    { val: '10', label: 'Noviembre' },
+    { val: '11', label: 'Diciembre' },
+  ];
+
+  // Clínicas únicas
+  const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
+
+  // Cómputo del reporte de Tareas con los Filtros Aplicados
   const completedTasks = tasks.filter(t => t.status === 'Completada');
-  let totalSlaCumplido = 0;
-  let totalSlaIncumplido = 0;
 
-  const reportData = tasks.map(task => {
-    const isCompleted = task.status === 'Completada';
-    const timeTaken = isCompleted && task.completedAt ? getMinutesDifference(task.createdAt, task.completedAt) : null;
-    const sla = slas[task.dept] || 0;
-    const cumplioSla = isCompleted && timeTaken !== null && timeTaken <= sla;
-    if (isCompleted) {
-      if (cumplioSla) totalSlaCumplido++;
-      else totalSlaIncumplido++;
-    }
-    return { ...task, timeTaken, sla, cumplioSla };
-  });
+  const rawReportData = useMemo(() => {
+    return tasks.map(task => {
+      const isCompleted = task.status === 'Completada';
+      const timeTaken = isCompleted && task.completedAt ? getMinutesDifference(task.createdAt, task.completedAt) : null;
+      const sla = slas[task.dept] || 0;
+      const cumplioSla = isCompleted && timeTaken !== null && timeTaken <= sla;
+      return { ...task, timeTaken, sla, cumplioSla };
+    });
+  }, [tasks, slas]);
 
-  const totalFinalizadas = completedTasks.length;
-  const slaPercent = totalFinalizadas > 0 ? Math.round((totalSlaCumplido / totalFinalizadas) * 100) : 0;
+  // Filtrado final de los datos de tareas incluyendo MES y RANGO DE DÍAS
+  const filteredReportData = useMemo(() => {
+    return rawReportData.filter(row => {
+      const room = rooms.find(r => r.id === row.roomId);
+      const matchesClinic = taskClinic === 'Todas' || (room && room.clinic === taskClinic);
+      const matchesDept = taskDept === 'Todos' || row.dept === taskDept;
+      const matchesUser = taskUser === 'Todos' || row.assignedTo === taskUser;
+      
+      let matchesSla = true;
+      if (taskSlaFilter === 'Cumplio') matchesSla = row.status === 'Completada' && row.cumplioSla === true;
+      else if (taskSlaFilter === 'Fallo') matchesSla = row.status === 'Completada' && row.cumplioSla === false;
+      else if (taskSlaFilter === 'Pendiente') matchesSla = row.status === 'Pendiente';
+
+      // Filtro de Mes
+      const taskDate = new Date(row.createdAt);
+      const matchesMonth = taskMonth === 'Todos' || taskDate.getMonth().toString() === taskMonth;
+
+      // Filtro de Rango de Días
+      let matchesRange = true;
+      if (taskStartDate) {
+        const start = new Date(taskStartDate + 'T00:00:00').getTime();
+        if (row.createdAt < start) matchesRange = false;
+      }
+      if (taskEndDate) {
+        const end = new Date(taskEndDate + 'T23:59:59').getTime();
+        if (row.createdAt > end) matchesRange = false;
+      }
+
+      return matchesClinic && matchesDept && matchesUser && matchesSla && matchesMonth && matchesRange;
+    });
+  }, [rawReportData, rooms, taskClinic, taskDept, taskUser, taskSlaFilter, taskMonth, taskStartDate, taskEndDate]);
+
+  // KPIs dinámicos calculados basándose únicamente en los datos filtrados en tiempo real (para evitar side-effects)
+  const taskKPIs = useMemo(() => {
+    let creadas = filteredReportData.length;
+    let completadas = filteredReportData.filter(r => r.status === 'Completada').length;
+    let dentroSla = filteredReportData.filter(r => r.status === 'Completada' && r.cumplioSla === true).length;
+    let fueraSla = filteredReportData.filter(r => r.status === 'Completada' && r.cumplioSla === false).length;
+    const porcenSla = completadas > 0 ? Math.round((dentroSla / completadas) * 100) : 0;
+
+    return { creadas, completadas, porcenSla, fueraSla };
+  }, [filteredReportData]);
+
+  // Filtrado final de la bitácora de asistencia incluyendo MES y RANGO DE DÍAS
+  const filteredUserLogs = useMemo(() => {
+    return userLogs.filter(log => {
+      const matchesUser = asistenciaUser === 'Todos' || log.userId === asistenciaUser;
+      const matchesAction = asistenciaAction === 'Todos' || log.action === asistenciaAction;
+
+      const logDate = new Date(log.timestamp);
+      const matchesMonth = asistenciaMonth === 'Todos' || logDate.getMonth().toString() === asistenciaMonth;
+
+      let matchesRange = true;
+      if (asistenciaStartDate) {
+        const start = new Date(asistenciaStartDate + 'T00:00:00').getTime();
+        if (log.timestamp < start) matchesRange = false;
+      }
+      if (asistenciaEndDate) {
+        const end = new Date(asistenciaEndDate + 'T23:59:59').getTime();
+        if (log.timestamp > end) matchesRange = false;
+      }
+
+      return matchesUser && matchesAction && matchesMonth && matchesRange;
+    });
+  }, [userLogs, asistenciaUser, asistenciaAction, asistenciaMonth, asistenciaStartDate, asistenciaEndDate]);
+
+  // ESTADÍSTICAS DEL TABLERO DE ASISTENCIA EN TIEMPO REAL
+  const attendanceStats = useMemo(() => {
+    const totalRegistered = users.length;
+    const activos = users.filter(u => u.currentStatus && u.currentStatus !== 'Desconectado').length;
+    const disponibles = users.filter(u => u.currentStatus === 'Disponible').length;
+    const descansos = users.filter(u => u.currentStatus && u.currentStatus !== 'Disponible' && u.currentStatus !== 'Desconectado').length;
+    const offline = users.filter(u => !u.currentStatus || u.currentStatus === 'Desconectado').length;
+
+    return { totalRegistered, activos, disponibles, descansos, offline };
+  }, [users]);
+
+  const uniqueLogActions = useMemo(() => Array.from(new Set(userLogs.map(l => l.action))), [userLogs]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <h2 className="text-xl font-bold text-gray-800 flex items-center">
-          <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Módulo de Reportes
+          <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Módulo de Reportes y Bitácoras
         </h2>
-        <div className="flex bg-gray-200 p-1 rounded-lg">
-          <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad (Tareas)</button>
-          <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Control de Horas</button>
+        <div className="flex bg-gray-200 p-1 rounded-xl">
+          <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad (Tareas)</button>
+          <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Control de Horas & Asistencia</button>
         </div>
       </div>
 
       {reportView === 'tareas' ? (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {/* KPI Tareas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 font-medium">Total Creadas</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">{tasks.length}</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{taskKPIs.creadas}</p>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600"/></div>
             </div>
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 font-medium">Completadas</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-1">{totalFinalizadas}</p>
+                <p className="text-2xl font-bold text-emerald-600 mt-1">{taskKPIs.completadas}</p>
               </div>
               <div className="bg-emerald-50 p-3 rounded-lg"><CheckCircle className="w-6 h-6 text-emerald-600"/></div>
             </div>
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 font-medium">Cumplimiento SLA</p>
-                <p className={`text-2xl font-bold mt-1 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{slaPercent}%</p>
+                <p className={`text-2xl font-bold mt-1 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{taskKPIs.porcenSla}%</p>
               </div>
-              <div className={`${slaPercent >= 80 ? 'bg-emerald-50' : 'bg-amber-50'} p-3 rounded-lg`}>
-                <BarChart className={`w-6 h-6 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}/>
+              <div className={`${taskKPIs.porcenSla >= 80 ? 'bg-emerald-50' : 'bg-amber-50'} p-3 rounded-lg`}>
+                <BarChart className={`w-6 h-6 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}/>
               </div>
             </div>
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 font-medium">Fuera de SLA</p>
-                <p className="text-2xl font-bold text-rose-600 mt-1">{totalSlaIncumplido}</p>
+                <p className="text-2xl font-bold text-rose-600 mt-1">{taskKPIs.fueraSla}</p>
               </div>
               <div className="bg-rose-50 p-3 rounded-lg"><AlertTriangle className="w-6 h-6 text-rose-600"/></div>
             </div>
           </div>
 
+          {/* Filtros del reporte de Tareas con MES y RANGO DE FECHAS */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+              <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Historial de Tareas
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Clínica / Sede</label>
+                <select value={taskClinic} onChange={e => setTaskClinic(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todas">Todas las Clínicas</option>
+                  {clinicsList.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Departamento</label>
+                <select value={taskDept} onChange={e => setTaskDept(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos los Departamentos</option>
+                  {Object.values(DEPARTMENTS).map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Responsable</label>
+                <select value={taskUser} onChange={e => setTaskUser(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Estatus SLA / Proceso</label>
+                <select value={taskSlaFilter} onChange={e => setTaskSlaFilter(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Ver Todos</option>
+                  <option value="Cumplio">Cumplió SLA</option>
+                  <option value="Fallo">Fuera de SLA</option>
+                  <option value="Pendiente">Pendiente de Ejecución</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Filtrar por Mes</label>
+                <select value={taskMonth} onChange={e => setTaskMonth(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos los meses</option>
+                  {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Rango de Días (Desde / Hasta)</label>
+                <div className="flex items-center space-x-2">
+                  <input type="date" value={taskStartDate} onChange={e => setTaskStartDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <span className="text-gray-400 font-bold">-</span>
+                  <input type="date" value={taskEndDate} onChange={e => setTaskEndDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabla de reporte de Tareas */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
+              <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200">{filteredReportData.length} resultados</span>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[800px]">
@@ -629,7 +890,7 @@ const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: Ap
                   </tr>
                 </thead>
                 <tbody>
-                  {[...reportData].sort((a, b) => b.createdAt - a.createdAt).map(row => (
+                  {filteredReportData.sort((a, b) => b.createdAt - a.createdAt).map(row => (
                     <tr key={row.id} className="border-b hover:bg-gray-50">
                       <td className="p-4 font-bold text-gray-800">{row.roomId}</td>
                       <td className="p-4 text-gray-600">{row.dept}</td>
@@ -659,8 +920,8 @@ const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: Ap
                       </td>
                     </tr>
                   ))}
-                  {reportData.length === 0 && (
-                    <tr><td colSpan={7} className="p-6 text-center text-gray-500">No hay registros generados.</td></tr>
+                  {filteredReportData.length === 0 && (
+                    <tr><td colSpan={7} className="p-6 text-center text-gray-500">No se encontraron tareas con los filtros aplicados.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -668,48 +929,192 @@ const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: Ap
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-4 border-b border-gray-100 bg-gray-50">
-            <h3 className="font-bold text-gray-700">Bitácora de Eventos de Personal</h3>
-            <p className="text-xs text-gray-500 mt-1">Historial de conexiones y descansos del personal (Ordenado por más reciente)</p>
+        <>
+          {/* TABLERO DE CONTROL DE ASISTENCIA (KPIS Y TARJETAS EN TIEMPO REAL CON VIBRACIÓN DE COLOR) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-gray-400 uppercase">Activos Hoy</span>
+                <p className="text-3xl font-extrabold text-indigo-600 mt-1">{attendanceStats.activos}</p>
+                <p className="text-xs text-gray-400 mt-1">Registrados: {attendanceStats.totalRegistered}</p>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600"><Users className="w-6 h-6"/></div>
+            </div>
+            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-emerald-600 uppercase">Disponibles Ahora</span>
+                <p className="text-3xl font-extrabold text-emerald-700 mt-1">{attendanceStats.disponibles}</p>
+                <p className="text-xs text-emerald-600/80 mt-1">Listos para tareas</p>
+              </div>
+              <div className="bg-emerald-100 p-3 rounded-xl text-emerald-700"><CheckCircle className="w-6 h-6"/></div>
+            </div>
+            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
+              <div>
+                <span className="text-xs font-semibold text-amber-600 uppercase">En Descanso / Receso</span>
+                <p className="text-3xl font-extrabold text-amber-700 mt-1">{attendanceStats.descansos}</p>
+                <p className="text-xs text-amber-600/80 mt-1">En pausa temporal</p>
+              </div>
+              <div className="bg-amber-100 p-3 rounded-xl text-amber-700"><Clock className="w-6 h-6"/></div>
+            </div>
+            <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-slate-500 uppercase">Desconectados</span>
+                <p className="text-3xl font-extrabold text-slate-700 mt-1">{attendanceStats.offline}</p>
+                <p className="text-xs text-slate-500/80 mt-1">Fuera de turno</p>
+              </div>
+              <div className="bg-slate-200 p-3 rounded-xl text-slate-700"><LogOut className="w-6 h-6" /></div>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[600px]">
-              <thead className="bg-white border-b">
-                <tr>
-                  <th className="p-4 font-semibold text-gray-600">Fecha y Hora</th>
-                  <th className="p-4 font-semibold text-gray-600">Usuario</th>
-                  <th className="p-4 font-semibold text-gray-600">Rol</th>
-                  <th className="p-4 font-semibold text-gray-600">Evento Registrado (Estado)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...userLogs].sort((a,b) => b.timestamp - a.timestamp).map(log => {
-                  const u = users.find(x => x.id === log.userId);
-                  const isOnline = log.action === 'Disponible';
-                  const isOffline = log.action === 'Desconectado';
-                  return (
-                    <tr key={log.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 text-gray-600 font-medium">
-                        {new Date(log.timestamp).toLocaleDateString('es-ES')} - {formatTime(log.timestamp)}
-                      </td>
-                      <td className="p-4 font-bold text-gray-800">{u?.name || 'Usuario Desconocido'}</td>
-                      <td className="p-4 text-gray-600">{u?.role === 'admin' ? 'Admin' : u?.dept}</td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald-100 text-emerald-700' : isOffline ? 'bg-gray-200 text-gray-700' : 'bg-amber-100 text-amber-700'}`}>
-                          {log.action}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {userLogs.length === 0 && (
-                  <tr><td colSpan={4} className="p-6 text-center text-gray-500">No hay registros de asistencia aún.</td></tr>
-                )}
-              </tbody>
-            </table>
+
+          {/* ESTADO EN VIVO DEL PERSONAL - REDISEÑO DE TABLERO MODERNIZADO */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
+              <div>
+                <h3 className="font-bold text-gray-800 text-lg flex items-center">
+                  <Users className="w-6 h-6 text-indigo-600 mr-2" /> Monitor de Asistencia de Personal en Tiempo Real
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">Consulta los estados del turno del personal operativo en vivo</p>
+              </div>
+              <span className="inline-flex items-center text-xs font-normal text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-ping"></div> Actualizado en tiempo real
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {users.map(u => {
+                const isOnline = u.currentStatus && u.currentStatus !== 'Desconectado';
+                const isAvailable = u.currentStatus === 'Disponible';
+                const isBreak = isOnline && !isAvailable;
+
+                return (
+                  <div key={u.id} className={`p-4 rounded-2xl border transition-all duration-300 shadow-sm hover:-translate-y-0.5 bg-gradient-to-br ${
+                    isAvailable ? 'from-emerald-50/50 to-white border-emerald-200 hover:border-emerald-300' :
+                    isBreak ? 'from-amber-50/50 to-white border-amber-200 hover:border-amber-300' :
+                    'from-slate-50/50 to-white border-slate-200 hover:border-slate-300'
+                  }`}>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className={`relative p-2.5 rounded-full ${
+                          isAvailable ? 'bg-emerald-100 text-emerald-700' : 
+                          isBreak ? 'bg-amber-100 text-amber-700' : 
+                          'bg-slate-200 text-slate-700'
+                        }`}>
+                          <User className="w-5 h-5" />
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                            isAvailable ? 'bg-emerald-500 animate-pulse' : 
+                            isOnline ? 'bg-amber-500' : 
+                            'bg-gray-400'
+                          }`}></span>
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm leading-tight">{u.name}</p>
+                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-wider block mt-1 w-max">{u.dept}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Estado actual:</span>
+                      <span className={`font-bold uppercase tracking-wider px-2.5 py-1 rounded-md text-[10px] ${
+                        isAvailable ? 'bg-emerald-100 text-emerald-800' : 
+                        isOnline ? 'bg-amber-100 text-amber-800' : 
+                        'bg-slate-200 text-slate-700'
+                      }`}>
+                        {u.currentStatus || 'Desconectado'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+
+          {/* Filtros de la Bitácora de Asistencia con MES y RANGOS */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+              <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Bitácora de Asistencia
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Colaborador / Usuario</label>
+                <select value={asistenciaUser} onChange={e => setAsistenciaUser(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos los Usuarios</option>
+                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Tipo de Evento</label>
+                <select value={asistenciaAction} onChange={e => setAsistenciaAction(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos los Eventos</option>
+                  <option value="Disponible">Disponible (Inició Turno)</option>
+                  <option value="Desconectado">Desconectado (Terminó Turno)</option>
+                  {uniqueLogActions.filter(act => act !== 'Disponible' && act !== 'Desconectado').map(act => (
+                    <option key={act} value={act}>{act}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Filtrar por Mes</label>
+                <select value={asistenciaMonth} onChange={e => setAsistenciaMonth(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos los meses</option>
+                  {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Rango de Días (Desde / Hasta)</label>
+                <div className="flex items-center space-x-2">
+                  <input type="date" value={asistenciaStartDate} onChange={e => setAsistenciaStartDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <span className="text-gray-400 font-bold">-</span>
+                  <input type="date" value={asistenciaEndDate} onChange={e => setAsistenciaEndDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabla de Logs de Asistencia */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <h3 className="font-bold text-gray-700">Bitácora Histórica de Asistencia</h3>
+              <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200">{filteredUserLogs.length} eventos</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[600px]">
+                <thead className="bg-white border-b">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Fecha y Hora</th>
+                    <th className="p-4 font-semibold text-gray-600">Usuario</th>
+                    <th className="p-4 font-semibold text-gray-600">Rol / Depto</th>
+                    <th className="p-4 font-semibold text-gray-600">Acción Registrada</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUserLogs.sort((a,b) => b.timestamp - a.timestamp).map(log => {
+                    const u = users.find(x => x.id === log.userId);
+                    const isOnline = log.action === 'Disponible';
+                    const isOffline = log.action === 'Desconectado';
+                    return (
+                      <tr key={log.id} className="border-b hover:bg-gray-50">
+                        <td className="p-4 text-gray-600 font-medium">
+                          {new Date(log.timestamp).toLocaleDateString('es-ES')} - {formatTime(log.timestamp)}
+                        </td>
+                        <td className="p-4 font-bold text-gray-800">{u?.name || 'Usuario Desconocido'}</td>
+                        <td className="p-4 text-gray-600">{u?.role === 'admin' ? 'Supervisor' : u?.dept}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isOffline ? 'bg-gray-100 text-gray-700 border' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                            {log.action}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filteredUserLogs.length === 0 && (
+                    <tr><td colSpan={4} className="p-6 text-center text-gray-500">No se encontraron eventos de asistencia.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -896,7 +1301,7 @@ const ConfigTab = ({
           <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
           <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border rounded-lg p-2 bg-white">
             {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
           </select>
@@ -1212,127 +1617,206 @@ export default function App() {
   }, []);
 
   const seedDatabase = async () => {
+    if (!db) return;
     try {
       const promises: Promise<void>[] = [];
-      INITIAL_USERS.forEach(u => promises.push(setDoc(getDocRef('h_users', u.id), u)));
-      INITIAL_ROOMS.forEach(r => promises.push(setDoc(getDocRef('h_rooms', r.id), r)));
-      INITIAL_CHECKLIST.forEach(c => promises.push(setDoc(getDocRef('h_checklistItems', c.id), c)));
-      promises.push(setDoc(getDocRef('h_slas', 'main'), slas));
-      promises.push(setDoc(getDocRef('h_settings', 'main'), INITIAL_SETTINGS));
+      INITIAL_USERS.forEach(u => promises.push(setDoc(getDocRef('h_users', u.id)!, u)));
+      INITIAL_ROOMS.forEach(r => promises.push(setDoc(getDocRef('h_rooms', r.id)!, r)));
+      INITIAL_CHECKLIST.forEach(c => promises.push(setDoc(getDocRef('h_checklistItems', c.id)!, c)));
+      promises.push(setDoc(getDocRef('h_slas', 'main')!, slas));
+      promises.push(setDoc(getDocRef('h_settings', 'main')!, INITIAL_SETTINGS));
       await Promise.all(promises);
     } catch (err) { console.error("Seed Error:", err); }
   };
 
   // Suscripciones Real-time a Firestore
   useEffect(() => {
-    if (!authUser) return;
+    if (!authUser || !db) {
+      if (authUser && !db) {
+        setDbReady(true);
+        setUsers(INITIAL_USERS);
+        setRooms(INITIAL_ROOMS);
+        setChecklistItems(INITIAL_CHECKLIST);
+      }
+      return;
+    }
     const unsubs: (() => void)[] = [];
     const errHandler = (err: any) => console.error("Firebase Sync Error", err);
 
-    unsubs.push(onSnapshot(getColRef('h_users'), (snapshot) => {
-      if (snapshot.empty) { seedDatabase().then(() => setDbReady(true)); } 
-      else { setUsers(snapshot.docs.map(d => ({id: d.id, ...d.data()} as AppUser))); setDbReady(true); }
-    }, errHandler));
+    const usersRef = getColRef('h_users');
+    if (usersRef) {
+      unsubs.push(onSnapshot(usersRef, (snapshot) => {
+        if (snapshot.empty) { seedDatabase().then(() => setDbReady(true)); } 
+        else { setUsers(snapshot.docs.map(d => ({id: d.id, ...d.data()} as AppUser))); setDbReady(true); }
+      }, errHandler));
+    }
 
-    unsubs.push(onSnapshot(getColRef('h_settings'), (s) => {
-      if (!s.empty && s.docs[0].id === 'main') setAppSettings(s.docs[0].data() as AppSettings);
-    }, errHandler));
+    const settingsRef = getDocRef('h_settings', 'main');
+    if (settingsRef) {
+      unsubs.push(onSnapshot(settingsRef, (docSnap) => {
+        if (docSnap.exists()) setAppSettings(docSnap.data() as AppSettings);
+      }, errHandler));
+    }
 
-    unsubs.push(onSnapshot(getColRef('h_user_logs'), (s) => {
-      setUserLogs(s.docs.map(d => ({id: d.id, ...d.data()} as UserLog)));
-    }, errHandler));
+    const logsRef = getColRef('h_user_logs');
+    if (logsRef) {
+      unsubs.push(onSnapshot(logsRef, (s) => {
+        setUserLogs(s.docs.map(d => ({id: d.id, ...d.data()} as UserLog)));
+      }, errHandler));
+    }
 
-    unsubs.push(onSnapshot(getColRef('h_checklistItems'), (s) => {
-      const items = s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem));
-      if (items.length < 10) INITIAL_CHECKLIST.forEach(c => setDoc(getDocRef('h_checklistItems', c.id), c));
-      else setChecklistItems(items);
-    }, errHandler));
+    const checklistRef = getColRef('h_checklistItems');
+    if (checklistRef) {
+      unsubs.push(onSnapshot(checklistRef, (s) => {
+        const items = s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem));
+        if (items.length < 10) INITIAL_CHECKLIST.forEach(c => {
+          const docR = getDocRef('h_checklistItems', c.id);
+          if (docR) setDoc(docR, c);
+        });
+        else setChecklistItems(items);
+      }, errHandler));
+    }
 
-    unsubs.push(onSnapshot(getColRef('h_rooms'), (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_tasks'), (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Record<string, number>); }, errHandler));
+    const roomsRef = getColRef('h_rooms');
+    if (roomsRef) {
+      unsubs.push(onSnapshot(roomsRef, (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
+    }
+
+    const tasksRef = getColRef('h_tasks');
+    if (tasksRef) {
+      unsubs.push(onSnapshot(tasksRef, (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
+    }
+
+    const notifRef = getColRef('h_notifications');
+    if (notifRef) {
+      unsubs.push(onSnapshot(notifRef, (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
+    }
+
+    const slasRef = getDocRef('h_slas', 'main');
+    if (slasRef) {
+      unsubs.push(onSnapshot(slasRef, (docSnap) => { if (docSnap.exists()) setSlas(docSnap.data() as Record<string, number>); }, errHandler));
+    }
 
     return () => unsubs.forEach(u => u());
   }, [authUser]);
 
   // --- LOGICA DE CONTROL DE HORAS ---
   const handleUserStatusChange = async (userId: string, newStatus: string) => {
-    await setDoc(getDocRef('h_users', userId), { currentStatus: newStatus }, { merge: true });
+    if (!db) return;
+    const userRef = getDocRef('h_users', userId);
+    if (userRef) await setDoc(userRef, { currentStatus: newStatus }, { merge: true });
     
     const logId = `log_${Date.now()}_${userId}`;
-    await setDoc(getDocRef('h_user_logs', logId), {
-      id: logId,
-      userId: userId,
-      action: newStatus,
-      timestamp: Date.now()
-    });
+    const logRef = getDocRef('h_user_logs', logId);
+    if (logRef) {
+      await setDoc(logRef, {
+        id: logId,
+        userId: userId,
+        action: newStatus,
+        timestamp: Date.now()
+      });
+    }
   };
 
   const handleUpdateUserPassword = async (userId: string, newPass: string) => {
-    if (!newPass.trim()) return;
-    await setDoc(getDocRef('h_users', userId), { password: newPass.trim() }, { merge: true });
+    if (!newPass.trim() || !db) return;
+    const userRef = getDocRef('h_users', userId);
+    if (userRef) await setDoc(userRef, { password: newPass.trim() }, { merge: true });
   };
 
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
-  const handleVacateRoom = async (roomId: string) => { await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true }); setSelectedRoom(null); };
-  const handleOccupyRoom = async (roomId: string) => { await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true }); setSelectedRoom(null); };
+  const handleVacateRoom = async (roomId: string) => { 
+    if (!db) return;
+    const rRef = getDocRef('h_rooms', roomId);
+    if (rRef) await setDoc(rRef, { status: ROOM_STATUS.EVALUACION }, { merge: true }); 
+    setSelectedRoom(null); 
+  };
+
+  const handleOccupyRoom = async (roomId: string) => { 
+    if (!db) return;
+    const rRef = getDocRef('h_rooms', roomId);
+    if (rRef) await setDoc(rRef, { status: ROOM_STATUS.OCUPADA }, { merge: true }); 
+    setSelectedRoom(null); 
+  };
 
   const handleCompleteTask = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    if(!task) return;
-    await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
+    if(!task || !db) return;
+    const tRef = getDocRef('h_tasks', taskId);
+    if (tRef) await setDoc(tRef, { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
     
     if (pendingRoomTasks.length === 0) { 
       const targetRoom = rooms.find(r => r.id === task.roomId || r.name === task.roomId);
       if (targetRoom) {
-        await setDoc(getDocRef('h_rooms', targetRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true }); 
+        const rRef = getDocRef('h_rooms', targetRoom.id);
+        if (rRef) await setDoc(rRef, { status: ROOM_STATUS.DISPONIBLE }, { merge: true }); 
       }
     }
   };
 
   const handleAssignTask = async (taskId: string, userId: string) => {
-    await setDoc(getDocRef('h_tasks', taskId), { assignedTo: userId }, { merge: true });
+    if (!db) return;
+    const tRef = getDocRef('h_tasks', taskId);
+    if (tRef) await setDoc(tRef, { assignedTo: userId }, { merge: true });
     if (userId) {
       const taskObj = tasks.find(t => t.id === taskId);
-      await setDoc(getDocRef('h_notifications', Date.now().toString()), { userId: userId, message: `Nueva tarea asignada en Hab. ${taskObj?.roomId}`, read: false, createdAt: Date.now() });
+      const notRef = getDocRef('h_notifications', Date.now().toString());
+      if (notRef) await setDoc(notRef, { userId: userId, message: `Nueva tarea asignada en Hab. ${taskObj?.roomId}`, read: false, createdAt: Date.now() });
     }
   };
 
   const markNotificationsAsRead = async () => {
-    if(!currentUser) return;
-    const promises = notifications.filter(n => n.userId === currentUser.id && !n.read).map(n => setDoc(getDocRef('h_notifications', n.id), { read: true }, { merge: true }));
+    if(!currentUser || !db) return;
+    const promises = notifications
+      .filter(n => n.userId === currentUser.id && !n.read)
+      .map(n => {
+        const notRef = getDocRef('h_notifications', n.id);
+        return notRef ? setDoc(notRef, { read: true }, { merge: true }) : Promise.resolve();
+      });
     await Promise.all(promises);
   };
 
   const handleChecklistSubmit = async (answers: {[key: string]: boolean}, comentarios: string, urgente: string, room: Room) => {
+    if (!db) return;
     const promises: Promise<void>[] = [];
     let roomNeedsTasks = false;
 
     checklistItems.forEach(item => {
       if (answers[item.id] === false) { 
         const taskId = `t_${Date.now()}_${item.id}`;
-        promises.push(setDoc(getDocRef('h_tasks', taskId), {
-          id: taskId, roomId: room.id, dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
-        }));
+        const tRef = getDocRef('h_tasks', taskId);
+        if (tRef) {
+          promises.push(setDoc(tRef, {
+            id: taskId, roomId: room.id, dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
+          }));
+        }
         roomNeedsTasks = true;
       }
     });
 
     if (comentarios.trim()) {
       users.filter(u => u.role === 'admin').forEach((admin, i) => {
-        promises.push(setDoc(getDocRef('h_notifications', `n_${Date.now()}_${i}`), { id: `n_${Date.now()}_${i}`, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now() }));
+        const notRef = getDocRef('h_notifications', `n_${Date.now()}_${i}`);
+        if (notRef) {
+          promises.push(setDoc(notRef, { id: `n_${Date.now()}_${i}`, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now() }));
+        }
       });
     }
 
     if (urgente.trim()) {
-      promises.push(setDoc(getDocRef('h_tasks', `t_${Date.now()}_u`), { id: `t_${Date.now()}_u`, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null }));
+      const tRef = getDocRef('h_tasks', `t_${Date.now()}_u`);
+      if (tRef) {
+        promises.push(setDoc(tRef, { id: `t_${Date.now()}_u`, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null }));
+      }
       roomNeedsTasks = true;
     }
 
-    promises.push(setDoc(getDocRef('h_rooms', room.id), { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
+    const rRef = getDocRef('h_rooms', room.id);
+    if (rRef) {
+      promises.push(setDoc(rRef, { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
+    }
     await Promise.all(promises);
     setIsChecklistModalOpen(false);
     setSelectedRoom(null);
@@ -1441,7 +1925,7 @@ export default function App() {
                 </button>
                 {currentUser.role === 'admin' && (
                   <>
-                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <button onClick={() => { setReportView('tareas'); setActiveTab('reports'); }} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
                     </button>
                     <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
@@ -1512,22 +1996,22 @@ export default function App() {
           <DashboardTab rooms={rooms} tasks={tasks} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
         )}
         {activeTab === 'tasks' && (
-          <TasksTab tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
+          <TasksTab tasks={tasks} rooms={rooms} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
         )}
         {activeTab === 'reports' && currentUser.role === 'admin' && (
-          <ReportsTab tasks={tasks} users={users} slas={slas} userLogs={userLogs} />
+          <ReportsTab tasks={tasks} rooms={rooms} users={users} slas={slas} userLogs={userLogs} />
         )}
         {activeTab === 'config' && currentUser.role === 'admin' && (
           <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} appSettings={appSettings} currentUser={currentUser}
-            onUpdateSla={async (dept: string, val: string) => setDoc(getDocRef('h_slas', 'main'), { [dept]: parseInt(val) || 0 }, { merge: true })}
-            onAddRoom={async (id: string, area: string, clinic: string) => { if(id && !rooms.some(r=>r.id===id)) setDoc(getDocRef('h_rooms', id), { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE }) }}
-            onRemoveRoom={(id: string) => deleteDoc(getDocRef('h_rooms', id))}
-            onAddUser={async (userData: any) => setDoc(getDocRef('h_users', `u_${Date.now()}`), { id: `u_${Date.now()}`, ...userData })}
-            onRemoveUser={async (id: string) => { await deleteDoc(getDocRef('h_users', id)); await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>setDoc(getDocRef('h_tasks', t.id), {assignedTo: null}, {merge:true}))) }}
-            onAddChecklist={async (q: string, c: string, d: string) => { if(q) { const id=Date.now().toString(); setDoc(getDocRef('h_checklistItems', id), {id, category: c, question: q, dept: d}) } }}
-            onRemoveChecklist={(id: string) => deleteDoc(getDocRef('h_checklistItems', id))}
+            onUpdateSla={async (dept: string, val: string) => { if (db) await setDoc(getDocRef('h_slas', 'main')!, { [dept]: parseInt(val) || 0 }, { merge: true }); }}
+            onAddRoom={async (id: string, area: string, clinic: string) => { if(id && db && !rooms.some(r=>r.id===id)) await setDoc(getDocRef('h_rooms', id)!, { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE }) }}
+            onRemoveRoom={(id: string) => { if (db) deleteDoc(getDocRef('h_rooms', id)!); }}
+            onAddUser={async (userData: any) => { if (db) await setDoc(getDocRef('h_users', `u_${Date.now()}`)!, { id: `u_${Date.now()}`, ...userData }) }}
+            onRemoveUser={async (id: string) => { if (db) { await deleteDoc(getDocRef('h_users', id)!); await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>{ const tR = getDocRef('h_tasks', t.id); return tR ? setDoc(tR, {assignedTo: null}, {merge:true}) : Promise.resolve() })) } }}
+            onAddChecklist={async (q: string, c: string, d: string) => { if(q && db) { const id=Date.now().toString(); await setDoc(getDocRef('h_checklistItems', id)!, {id, category: c, question: q, dept: d}) } }}
+            onRemoveChecklist={(id: string) => { if (db) deleteDoc(getDocRef('h_checklistItems', id)!); }}
             onUpdateUserPassword={handleUpdateUserPassword}
-            onUpdateSettings={async (settings: any) => setDoc(getDocRef('h_settings', 'main'), settings, {merge:true})}
+            onUpdateSettings={async (settings: any) => { if (db) await setDoc(getDocRef('h_settings', 'main')!, settings, {merge:true}) }}
           />
         )}
         {activeTab === 'manual' && <ManualTab />}
@@ -1567,7 +2051,10 @@ export default function App() {
                     {currentUser?.role === 'admin' && (
                       <button 
                         onClick={async () => {
-                          await setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+                          const rRef = getDocRef('h_rooms', selectedRoom.id);
+                          if (rRef) {
+                            await setDoc(rRef, { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+                          }
                           setSelectedRoom(null);
                         }} 
                         className="mt-4 w-full bg-white border border-blue-300 hover:bg-blue-100 text-blue-700 text-sm font-bold py-2 rounded-lg transition-colors"
