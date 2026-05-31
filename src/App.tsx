@@ -1,10 +1,112 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Activity, AlertTriangle, Bed, CheckCircle, Clock, 
-  Droplets, LayoutDashboard, Settings, User, Wrench, X, 
-  ListTodo, CheckSquare, Users, BarChart, Bell, LogOut, FileText, Lock, Loader2,
-  ChevronDown, ChevronRight, ChevronLeft
-} from 'lucide-react';
+
+// --- ICONOS SVG INCLUIDOS (Reemplazo de lucide-react para evitar errores de entorno) ---
+const Icon = ({ path, className }: { path: string, className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d={path} />
+  </svg>
+);
+
+const Activity = ({ className }: { className?: string }) => <Icon path="M22 12h-4l-3 9L9 3l-3 9H2" className={className} />;
+const AlertTriangle = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+const Bed = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/>
+  </svg>
+);
+const CheckCircle = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+  </svg>
+);
+const Clock = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </svg>
+);
+const Droplets = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.99 7 2.99s-2.29 6.07-2.29 6.07A4.05 4.05 0 0 0 7 16.3z"/>
+    <path d="M14 19.3c1.65 0 3-1.37 3-3.04 0-.87-.43-1.69-1.28-2.39S14 9.3 14 9.3s-1.72 4.56-1.72 4.56c-.85.7-1.28 1.52-1.28 2.39 0 1.67 1.35 3.04 3 3.04z"/>
+  </svg>
+);
+const LayoutDashboard = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>
+  </svg>
+);
+const Settings = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+);
+const User = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </svg>
+);
+const Wrench = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+  </svg>
+);
+const X = ({ className }: { className?: string }) => <Icon path="M18 6L6 18M6 6l12 12" className={className} />;
+const ListTodo = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M9 6h11M9 12h11M9 18h11M5 6v.01M5 12v.01M5 18v.01"/>
+  </svg>
+);
+const CheckSquare = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+  </svg>
+);
+const Users = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  </svg>
+);
+const BarChart = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+  </svg>
+);
+const Bell = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+);
+const LogOut = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+  </svg>
+);
+const FileText = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+  </svg>
+);
+const Lock = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+  </svg>
+);
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`${className || ''} animate-spin`}>
+    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+  </svg>
+);
+const ChevronDown = ({ className }: { className?: string }) => <Icon path="M6 9l6 6 6-6" className={className} />;
+const ChevronRight = ({ className }: { className?: string }) => <Icon path="M9 18l6-6-6-6" className={className} />;
+const ChevronLeft = ({ className }: { className?: string }) => <Icon path="M15 18l-6-6 6-6" className={className} />;
+
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
@@ -114,76 +216,60 @@ const AREAS = ['Pediatría', 'Medicina', 'Cirugía', 'Intensivo', 'Maternidad', 
 
 // NUEVO CHECKLIST BASADO EN EL FORMULARIO DE GOOGLE
 const INITIAL_CHECKLIST: ChecklistItem[] = [
-  // PAREDES
   { id: 'p1', category: 'Paredes', question: 'Sin suciedad', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'p2', category: 'Paredes', question: 'Pintura en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'p3', category: 'Paredes', question: 'Sin grietas', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'p4', category: 'Paredes', question: 'Sin humedad', dept: DEPARTMENTS.MANTENIMIENTO },
-  // PUERTAS
   { id: 'pu1', category: 'Puertas', question: 'Sin daños', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'pu2', category: 'Puertas', question: 'Limpias', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'pu3', category: 'Puertas', question: 'Sin desgaste excesivo', dept: DEPARTMENTS.MANTENIMIENTO },
-  // ZÓCALOS
   { id: 'z1', category: 'Zócalos y Scrach', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'z2', category: 'Zócalos y Scrach', question: 'Sin rajaduras', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'z3', category: 'Zócalos y Scrach', question: 'Pintura en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  // SISTEMA ELÉCTRICO
   { id: 'e1', category: 'Sistema Eléctrico', question: 'Luces funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'e2', category: 'Sistema Eléctrico', question: 'Tomacorrientes funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'e3', category: 'Sistema Eléctrico', question: 'Switches funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'e4', category: 'Sistema Eléctrico', question: 'Pera de llamado funcionando', dept: DEPARTMENTS.ENFERMERIA },
-  // PISO
   { id: 'pi1', category: 'Piso Habitación y Baño', question: 'Sin manchas', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'pi2', category: 'Piso Habitación y Baño', question: 'Sin rayones', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'pi3', category: 'Piso Habitación y Baño', question: 'Limpio', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'pi4', category: 'Piso Habitación y Baño', question: 'Sin cerámicas quebradas', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'pi5', category: 'Piso Habitación y Baño', question: 'Sin humedad', dept: DEPARTMENTS.MANTENIMIENTO },
-  // VIDRIOS
   { id: 'v1', category: 'Vidrios / Cedazos', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'v2', category: 'Vidrios / Cedazos', question: 'Sin daños', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'v3', category: 'Vidrios / Cedazos', question: 'Sin rajaduras', dept: DEPARTMENTS.MANTENIMIENTO },
-  // SILLONES
   { id: 's1', category: 'Sillones y Sillas', question: 'Limpias', dept: DEPARTMENTS.LIMPIEZA },
   { id: 's2', category: 'Sillones y Sillas', question: 'Sin manchas', dept: DEPARTMENTS.LIMPIEZA },
   { id: 's3', category: 'Sillones y Sillas', question: 'Tapicería en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 's4', category: 'Sillones y Sillas', question: 'Madera en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  // CUADRO
   { id: 'c1', category: 'Cuadro', question: 'Está limpio', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'c2', category: 'Cuadro', question: 'Está alineado', dept: DEPARTMENTS.LIMPIEZA },
-  // TELÉFONO
   { id: 't1', category: 'Teléfono', question: 'Limpieza general', dept: DEPARTMENTS.LIMPIEZA },
   { id: 't2', category: 'Teléfono', question: 'Estructura limpia', dept: DEPARTMENTS.LIMPIEZA },
   { id: 't3', category: 'Teléfono', question: 'Base en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  // TV
   { id: 'tv1', category: 'Televisores y Controles', question: 'Funciona', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'tv2', category: 'Televisores y Controles', question: 'Tiene control remoto', dept: DEPARTMENTS.ENFERMERIA },
   { id: 'tv3', category: 'Televisores y Controles', question: 'Acceso a cable', dept: DEPARTMENTS.MANTENIMIENTO },
-  // LIMPIEZA BAÑO
   { id: 'b1', category: 'Limpieza de Baño', question: 'Grifería limpia y sin sarro', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'b2', category: 'Limpieza de Baño', question: 'Espejo limpio', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'b3', category: 'Limpieza de Baño', question: 'Cortina limpia', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'b4', category: 'Limpieza de Baño', question: 'Antiresbalante en buen estado', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'b5', category: 'Limpieza de Baño', question: 'Sin fugas de agua', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'b6', category: 'Limpieza de Baño', question: 'Limpieza general de blancos', dept: DEPARTMENTS.LIMPIEZA },
-  // INSUMOS
   { id: 'in1', category: 'Insumos de Baño', question: 'Hay Papel Higiénico', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'in2', category: 'Insumos de Baño', question: 'Hay Servilletas de mano', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'in3', category: 'Insumos de Baño', question: 'Hay Jabón', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'in4', category: 'Insumos de Baño', question: 'Hay Serchas', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'in5', category: 'Insumos de Baño', question: 'Hay Ambientador', dept: DEPARTMENTS.LIMPIEZA },
-  // BIOSEGURIDAD
   { id: 'bio1', category: 'Bolsa de Bioseguridad', question: 'Bolsa Roja colocada', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'bio2', category: 'Bolsa de Bioseguridad', question: 'Bolsa Negra colocada', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'bio3', category: 'Bolsa de Bioseguridad', question: 'Basureros en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  // AIRE
   { id: 'a1', category: 'Aire Acondicionado', question: 'Limpieza de rejillas/equipo', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'a2', category: 'Aire Acondicionado', question: 'Funciona', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'a3', category: 'Aire Acondicionado', question: 'Cuenta con control remoto', dept: DEPARTMENTS.ENFERMERIA },
-  // MUEBLES
   { id: 'm1', category: 'Muebles', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'm2', category: 'Muebles', question: 'Pintura/Barniz sin falta de retoque', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'm3', category: 'Muebles', question: 'Sin daños estructurales', dept: DEPARTMENTS.MANTENIMIENTO },
-  // CAJILLA
   { id: 'caj1', category: 'Cajilla de Seguridad', question: 'Funciona correctamente', dept: DEPARTMENTS.MANTENIMIENTO },
 ];
 
@@ -557,7 +643,6 @@ const ConfigTab = ({
   const [newRoomId, setNewRoomId] = useState('');
   const [newRoomArea, setNewRoomArea] = useState('General');
 
-  // Obtener categorías únicas del checklist
   const categories = Array.from(new Set(checklistItems.map((i: ChecklistItem) => i.category || 'General')));
 
   const handleAddUser = () => {
@@ -748,7 +833,7 @@ const ConfigTab = ({
   );
 };
 
-// === AQUÍ ESTÁ EL WIZARD CON OBLIGATORIEDAD ===
+// === WIZARD DEL FORMULARIO DE CHECKLIST ===
 const ChecklistModal = ({ 
   isOpen, onClose, selectedRoom, checklistItems, onSubmit 
 }: { 
@@ -759,16 +844,15 @@ const ChecklistModal = ({
   const [urgente, setUrgente] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Extraemos las categorías únicas y calculamos los pasos
   const categories = Array.from(new Set(checklistItems.map((i: ChecklistItem) => i.category || 'General')));
   const totalSteps = categories.length + 1; // +1 para la pestaña final de comentarios
 
   useEffect(() => {
     if (isOpen) {
-      setAnswers({}); // Se inicia vacío, obligando a responder
+      setAnswers({}); 
       setComentarios('');
       setUrgente('');
-      setCurrentStep(0); // Reiniciar al primer paso al abrir
+      setCurrentStep(0); 
     }
   }, [isOpen, checklistItems]);
 
@@ -778,7 +862,6 @@ const ChecklistModal = ({
   const currentCategory = isFinalStep ? 'Observaciones Finales' : categories[currentStep];
   const currentItems = isFinalStep ? [] : checklistItems.filter(item => (item.category || 'General') === currentCategory);
 
-  // Verificamos si todas las preguntas de la vista actual tienen una respuesta (true o false)
   const isCurrentStepComplete = isFinalStep || currentItems.every(item => answers[item.id] !== undefined);
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
@@ -808,7 +891,7 @@ const ChecklistModal = ({
           ></div>
         </div>
         
-        {/* Contenido Dinámico (Scrollable) */}
+        {/* Contenido Dinámico */}
         <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
           <div className="flex justify-between items-end mb-6 border-b border-gray-200 pb-4">
             <h4 className="text-2xl font-bold text-gray-800">{currentCategory as string}</h4>
@@ -891,6 +974,42 @@ const ChecklistModal = ({
   );
 };
 
+// === NUEVA PESTAÑA DE MANUAL DE USUARIO ===
+const ManualTab = () => (
+  <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <FileText className="w-7 h-7 mr-3 text-indigo-600" /> Manual de Usuario y Operación
+      </h2>
+      <div className="space-y-6 text-gray-700">
+        <section>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">1. Roles del Sistema</h3>
+          <ul className="list-disc pl-5 space-y-2 mt-3">
+            <li><strong>Supervisor (Admin):</strong> Tiene acceso total. Puede ver el tablero general, configurar los tiempos límite (SLAs), registrar habitaciones, crear nuevos usuarios y administrar las preguntas del checklist. Es el único que puede hacer las evaluaciones iniciales.</li>
+            <li><strong>Personal Operativo (Limpieza, Mantenimiento, Enfermería):</strong> Poseen una vista simplificada. Solo ven las tareas que han sido asignadas a su departamento y pueden marcarlas como completadas una vez finalizadas.</li>
+          </ul>
+        </section>
+        <section>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">2. Flujo de las Habitaciones</h3>
+          <ul className="list-decimal pl-5 space-y-2 mt-3">
+            <li>Una habitación comienza su ciclo en color verde como <strong>Disponible</strong>.</li>
+            <li>Al ingresar un paciente, el supervisor la marca como <strong>Ocupada</strong> (color rojo).</li>
+            <li>Cuando el paciente es dado de alta, el sistema la pasa a <strong>Pendiente de Evaluación</strong> (color amarillo).</li>
+            <li>El supervisor entra a la habitación y realiza el <strong>Control de Limpieza</strong>. Por cada elemento que marque con "✗ No Cumple", se genera una tarea automática dirigida al departamento responsable.</li>
+            <li>La habitación cambia a <strong>En Mantenimiento</strong> (color azul) mientras haya al menos una tarea pendiente de resolver.</li>
+            <li>Una vez que el personal completa <strong>TODAS</strong> las tareas, la habitación regresa automáticamente a <strong>Disponible</strong>.</li>
+          </ul>
+        </section>
+        <section>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Notificaciones y Tiempos de Respuesta (SLAs)</h3>
+          <p className="mt-3">Cada tarea generada tiene un tiempo límite estipulado (SLA). Si una tarea toma más del tiempo acordado, se reflejará en color rojo (Fuera de SLA) en la pestaña de <strong>Bitácora</strong>.</p>
+          <p className="mt-2">El icono de la campana (🔔) en la barra superior avisará en tiempo real al personal cuando se le asigne una nueva tarea de manera directa o cuando haya observaciones urgentes.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+);
+
 // --- 6. COMPONENTE PRINCIPAL (APP) ---
 export default function App() {
   const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
@@ -955,12 +1074,6 @@ export default function App() {
       INITIAL_ROOMS.forEach(r => promises.push(setDoc(getDocRef('h_rooms', r.id), r)));
       INITIAL_CHECKLIST.forEach(c => promises.push(setDoc(getDocRef('h_checklistItems', c.id), c)));
       promises.push(setDoc(getDocRef('h_slas', 'main'), slas));
-      
-      const initialTasks: Task[] = [
-        { id: 't0', roomId: '102', dept: DEPARTMENTS.LIMPIEZA, description: 'Limpieza general de blancos', status: 'Completada', createdAt: Date.now() - 3600000, completedAt: Date.now() - 1800000, assignedTo: 'u1' }
-      ];
-      initialTasks.forEach(t => promises.push(setDoc(getDocRef('h_tasks', t.id), t)));
-      
       await Promise.all(promises);
     } catch (err) {
       console.error("Seed Error:", err);
@@ -979,9 +1092,19 @@ export default function App() {
       else { setUsers(snapshot.docs.map(d => ({id: d.id, ...d.data()} as AppUser))); setDbReady(true); }
     }, errHandler));
 
+    // IMPORTANTE: Este bloque arregla el problema del "Formulario Incompleto" inyectando el PDF completo si tu base de datos estaba vacía o desactualizada
+    unsubs.push(onSnapshot(getColRef('h_checklistItems'), (s) => {
+      const items = s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem));
+      const needsUpdate = items.length < 10 || (items.length > 0 && !items[0].category);
+      if (needsUpdate) {
+        INITIAL_CHECKLIST.forEach(c => setDoc(getDocRef('h_checklistItems', c.id), c));
+      } else {
+        setChecklistItems(items);
+      }
+    }, errHandler));
+
     unsubs.push(onSnapshot(getColRef('h_rooms'), (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_tasks'), (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_checklistItems'), (s) => setChecklistItems(s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_slas'), (s) => {
       if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas);
@@ -1007,6 +1130,7 @@ export default function App() {
     if(!task) return;
     await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
+    // IMPORTANTE: Esto arregla el problema de "la habitación no regresa a la lista" verificando mediante room.id correctamente
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
     if (pendingRoomTasks.length === 0) {
       await setDoc(getDocRef('h_rooms', task.roomId), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
@@ -1035,18 +1159,17 @@ export default function App() {
     const promises: Promise<void>[] = [];
     let roomNeedsTasks = false;
 
-    // Generar tareas por checklist fallido
     checklistItems.forEach(item => {
       if (answers[item.id] === false) { 
         const taskId = `t_${Date.now()}_${item.id}`;
         promises.push(setDoc(getDocRef('h_tasks', taskId), {
-          id: taskId, roomId: room.name, dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
+          id: taskId, roomId: room.id, // <-- CORRECCIÓN: Guardando room.id en lugar del nombre
+          dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
         }));
         roomNeedsTasks = true;
       }
     });
 
-    // Guardar comentarios como notificación general para todos los admins
     if (comentarios.trim()) {
       const admins = users.filter(u => u.role === 'admin');
       admins.forEach((admin, index) => {
@@ -1057,16 +1180,14 @@ export default function App() {
       });
     }
 
-    // Guardar evento urgente como Tarea para Admin
     if (urgente.trim()) {
       const taskId = `t_${Date.now()}_urgente`;
       promises.push(setDoc(getDocRef('h_tasks', taskId), {
-        id: taskId, roomId: room.name, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
+        id: taskId, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
       }));
       roomNeedsTasks = true;
     }
 
-    // Actualizar estado de habitación
     promises.push(setDoc(getDocRef('h_rooms', room.id), { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
     
     await Promise.all(promises);
@@ -1165,6 +1286,21 @@ export default function App() {
               </div>
             </form>
           )}
+
+          {/* RESTAURACIÓN DEL MANUAL DE CUENTAS DE PRUEBA EN LOGIN */}
+          <div className="mt-8 border-t border-gray-100 pt-5">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <h4 className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide flex items-center">
+                <Users className="w-4 h-4 mr-1.5 text-gray-500"/> Usuarios Registrados
+              </h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Supervisión (Admin): <strong className="text-indigo-600">admin</strong> / 123 <br/>
+                Operativo Limpieza: <strong className="text-indigo-600">carlos</strong> / 123 <br/>
+                Operativo Enfermería: <strong className="text-indigo-600">ana</strong> / 123 <br/>
+                Operativo Mantenimiento: <strong className="text-indigo-600">luis</strong> / 123
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1203,6 +1339,10 @@ export default function App() {
                     </button>
                   </>
                 )}
+                {/* NUEVA PESTAÑA DE MANUAL */}
+                <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                  <FileText className="w-4 h-4 mr-1.5" /> Manual
+                </button>
               </nav>
 
               <div className="flex items-center space-x-4 border-l border-indigo-700 pl-4">
@@ -1263,6 +1403,7 @@ export default function App() {
             onRemoveChecklist={(id: string) => deleteDoc(getDocRef('h_checklistItems', id))}
           />
         )}
+        {activeTab === 'manual' && <ManualTab />}
       </main>
 
       {/* Modal de Detalles de Habitación */}
@@ -1302,7 +1443,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Modal Checklist Completado */}
+      {/* Modal Checklist Completado (WIZARD) */}
       <ChecklistModal isOpen={isChecklistModalOpen} onClose={() => { setIsChecklistModalOpen(false); setSelectedRoom(null); }} selectedRoom={selectedRoom} checklistItems={checklistItems} onSubmit={handleChecklistSubmit} />
     </div>
   );
