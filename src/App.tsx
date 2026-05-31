@@ -14,12 +14,13 @@ import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'fi
 // --- 2. CONFIGURACIÓN DE FIREBASE ---
 // ⚠️ ATENCIÓN: REEMPLAZA ESTO CON LOS DATOS DE TU PROYECTO DE FIREBASE
 const defaultFirebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
+  authDomain: "mediroom-eb9ef.firebaseapp.com",
+  databaseURL: "https://mediroom-eb9ef-default-rtdb.firebaseio.com",
+  projectId: "mediroom-eb9ef",
+  storageBucket: "mediroom-eb9ef.firebasestorage.app",
+  messagingSenderId: "313648219875",
+  appId: "1:313648219875:web:ad87f0fcc6c714844227d6"
 };
 
 const w = window as any;
