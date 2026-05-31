@@ -558,6 +558,29 @@ const ConfigTab = ({
 
   return (
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-500">
+      {/* SLAs */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Configuración de SLAs (Tiempos máximos)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Object.entries(slas).map(([dept, time]: any) => (
+            <div key={dept} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <span className="font-semibold text-gray-700 text-sm block mb-2">{dept}</span>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="number" 
+                  value={time}
+                  onChange={(e) => onUpdateSla(dept, e.target.value)}
+                  className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+                <span className="text-gray-500 text-sm font-medium">min</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Habitaciones */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
