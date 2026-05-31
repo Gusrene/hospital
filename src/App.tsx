@@ -114,11 +114,6 @@ const FilterIcon = ({ className }: { className?: string }) => (
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
-const CalendarIcon = ({ className }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
-  </svg>
-);
 
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -251,7 +246,7 @@ interface UserLog {
   timestamp: number;
 }
 
-// --- 4. CONSTANTES Y CONFIGURACIONES (Reordenado para evitar Temporal Dead Zone) ---
+// --- 4. CONSTANTES Y CONFIGURACIONES ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
   LIMPIEZA: 'Limpieza',
@@ -676,9 +671,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
   // Clínicas únicas
   const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
 
-  // Cómputo del reporte de Tareas con los Filtros Aplicados
-  const completedTasks = tasks.filter(t => t.status === 'Completada');
-
   const rawReportData = useMemo(() => {
     return tasks.map(task => {
       const isCompleted = task.status === 'Completada';
@@ -755,7 +747,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
     });
   }, [userLogs, asistenciaUser, asistenciaAction, asistenciaMonth, asistenciaStartDate, asistenciaEndDate]);
 
-  // ESTADÍSTICAS DEL TABLERO DE ASISTENCIA EN TIEMPO REAL
+  // ESTADÍSTICAS DEL TABLERO DE ASISTENCIA EN TIEMEMPO REAL
   const attendanceStats = useMemo(() => {
     const totalRegistered = users.length;
     const activos = users.filter(u => u.currentStatus && u.currentStatus !== 'Desconectado').length;
@@ -940,7 +932,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
               </div>
               <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600"><Users className="w-6 h-6"/></div>
             </div>
-            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
+            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
               <div>
                 <span className="text-xs font-semibold text-emerald-600 uppercase">Disponibles Ahora</span>
                 <p className="text-3xl font-extrabold text-emerald-700 mt-1">{attendanceStats.disponibles}</p>
@@ -948,7 +940,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
               </div>
               <div className="bg-emerald-100 p-3 rounded-xl text-emerald-700"><CheckCircle className="w-6 h-6"/></div>
             </div>
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
+            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-amber-600 uppercase">En Descanso / Receso</span>
                 <p className="text-3xl font-extrabold text-amber-700 mt-1">{attendanceStats.descansos}</p>
@@ -1301,7 +1293,7 @@ const ConfigTab = ({
           <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
           <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border rounded-lg p-2 bg-white">
             {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
           </select>
@@ -1925,7 +1917,7 @@ export default function App() {
                 </button>
                 {currentUser.role === 'admin' && (
                   <>
-                    <button onClick={() => { setReportView('tareas'); setActiveTab('reports'); }} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
                     </button>
                     <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
