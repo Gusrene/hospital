@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-// --- ICONOS SVG INCLUIDOS (Reemplazo de lucide-react para evitar errores de entorno) ---
+// --- ICONOS SVG INCLUIDOS ---
 const Icon = ({ path, className }: { path: string, className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d={path} />
@@ -10,9 +10,7 @@ const Icon = ({ path, className }: { path: string, className?: string }) => (
 const Activity = ({ className }: { className?: string }) => <Icon path="M22 12h-4l-3 9L9 3l-3 9H2" className={className} />;
 const AlertTriangle = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-    <line x1="12" y1="9" x2="12" y2="13"/>
-    <line x1="12" y1="17" x2="12.01" y2="17"/>
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
   </svg>
 );
 const Bed = ({ className }: { className?: string }) => (
@@ -32,8 +30,7 @@ const Clock = ({ className }: { className?: string }) => (
 );
 const Droplets = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.99 7 2.99s-2.29 6.07-2.29 6.07A4.05 4.05 0 0 0 7 16.3z"/>
-    <path d="M14 19.3c1.65 0 3-1.37 3-3.04 0-.87-.43-1.69-1.28-2.39S14 9.3 14 9.3s-1.72 4.56-1.72 4.56c-.85.7-1.28 1.52-1.28 2.39 0 1.67 1.35 3.04 3 3.04z"/>
+    <path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7 2.99 7 2.99s-2.29 6.07-2.29 6.07A4.05 4.05 0 0 0 7 16.3z"/><path d="M14 19.3c1.65 0 3-1.37 3-3.04 0-.87-.43-1.69-1.28-2.39S14 9.3 14 9.3s-1.72 4.56-1.72 4.56c-.85.7-1.28 1.52-1.28 2.39 0 1.67 1.35 3.04 3 3.04z"/>
   </svg>
 );
 const LayoutDashboard = ({ className }: { className?: string }) => (
@@ -43,8 +40,7 @@ const LayoutDashboard = ({ className }: { className?: string }) => (
 );
 const Settings = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <circle cx="12" cy="12" r="3"/>
-    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
   </svg>
 );
 const User = ({ className }: { className?: string }) => (
@@ -106,6 +102,13 @@ const Loader2 = ({ className }: { className?: string }) => (
 const ChevronDown = ({ className }: { className?: string }) => <Icon path="M6 9l6 6 6-6" className={className} />;
 const ChevronRight = ({ className }: { className?: string }) => <Icon path="M9 18l6-6-6-6" className={className} />;
 const ChevronLeft = ({ className }: { className?: string }) => <Icon path="M15 18l-6-6 6-6" className={className} />;
+const Building = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 22V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v18" /><path d="M4 22h16" /><path d="M10 22v-4a2 2 0 0 1 4 0v4" />
+    <path d="M8 6h.01" /><path d="M16 6h.01" /><path d="M12 6h.01" /><path d="M12 10h.01" /><path d="M16 10h.01" /><path d="M8 10h.01" />
+    <path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" />
+  </svg>
+);
 
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
@@ -114,7 +117,6 @@ import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, 
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 // --- 2. CONFIGURACIÓN DE FIREBASE ---
-// ⚠️ TUS CREDENCIALES REALES YA ESTÁN AQUÍ
 const defaultFirebaseConfig = {
   apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
   authDomain: "mediroom-eb9ef.firebaseapp.com",
@@ -158,12 +160,14 @@ interface AppUser {
   password?: string;
   dept: string;
   role: 'admin' | 'staff';
+  currentStatus?: string;
 }
 
 interface Room {
   id: string;
   name: string;
   area: string;
+  clinic: string;
   status: string;
 }
 
@@ -193,8 +197,18 @@ interface Notification {
   createdAt: number;
 }
 
-interface Slas {
-  [key: string]: number;
+interface AppSettings {
+  appName: string;
+  logoUrl: string;
+  clinics: string[];
+  breakTypes: { id: string, name: string, duration: number }[];
+}
+
+interface UserLog {
+  id: string;
+  userId: string;
+  action: string; 
+  timestamp: number;
 }
 
 // --- 4. CONSTANTES Y MOCKS ---
@@ -214,7 +228,18 @@ const ROOM_STATUS = {
 
 const AREAS = ['Pediatría', 'Medicina', 'Cirugía', 'Intensivo', 'Maternidad', 'General'];
 
-// NUEVO CHECKLIST BASADO EN EL FORMULARIO DE GOOGLE
+const INITIAL_SETTINGS: AppSettings = {
+  appName: 'MediRoom Control',
+  logoUrl: '',
+  clinics: ['Sede Central', 'Clínica Norte'],
+  breakTypes: [
+    { id: 'b1', name: 'Almuerzo', duration: 60 },
+    { id: 'b2', name: 'Descanso / Pausa', duration: 15 }
+  ]
+};
+
+const INITIAL_SLAS: any = { [DEPARTMENTS.LIMPIEZA]: 30, [DEPARTMENTS.MANTENIMIENTO]: 120, [DEPARTMENTS.ENFERMERIA]: 15, [DEPARTMENTS.ADMIN]: 60 };
+
 const INITIAL_CHECKLIST: ChecklistItem[] = [
   { id: 'p1', category: 'Paredes', question: 'Sin suciedad', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'p2', category: 'Paredes', question: 'Pintura en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
@@ -274,19 +299,17 @@ const INITIAL_CHECKLIST: ChecklistItem[] = [
 ];
 
 const INITIAL_ROOMS: Room[] = [
-  { id: '101', name: 'Habitación 101', area: 'Pediatría', status: ROOM_STATUS.OCUPADA },
-  { id: '102', name: 'Habitación 102', area: 'Medicina', status: ROOM_STATUS.DISPONIBLE },
-  { id: '103', name: 'Habitación 103', area: 'Cirugía', status: ROOM_STATUS.EVALUACION },
-  { id: '201', name: 'Habitación 201', area: 'Intensivo', status: ROOM_STATUS.MANTENIMIENTO },
-  { id: '202', name: 'Habitación 202', area: 'Maternidad', status: ROOM_STATUS.DISPONIBLE },
-  { id: '203', name: 'Habitación 203', area: 'Pediatría', status: ROOM_STATUS.OCUPADA },
+  { id: '101', name: 'Habitación 101', area: 'Pediatría', clinic: 'Sede Central', status: ROOM_STATUS.OCUPADA },
+  { id: '102', name: 'Habitación 102', area: 'Medicina', clinic: 'Sede Central', status: ROOM_STATUS.DISPONIBLE },
+  { id: '103', name: 'Habitación 103', area: 'Cirugía', clinic: 'Sede Central', status: ROOM_STATUS.EVALUACION },
+  { id: '201', name: 'Habitación 201', area: 'Intensivo', clinic: 'Clínica Norte', status: ROOM_STATUS.MANTENIMIENTO },
 ];
 
 const INITIAL_USERS: AppUser[] = [
-  { id: 'admin1', name: 'Supervisor (Admin)', username: 'admin', password: '123', dept: DEPARTMENTS.ADMIN, role: 'admin' },
-  { id: 'u1', name: 'Carlos (Limpieza)', username: 'carlos', password: '123', dept: DEPARTMENTS.LIMPIEZA, role: 'staff' },
-  { id: 'u2', name: 'Ana (Enfermería)', username: 'ana', password: '123', dept: DEPARTMENTS.ENFERMERIA, role: 'staff' },
-  { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff' },
+  { id: 'admin1', name: 'Supervisor (Admin)', username: 'admin', password: '123', dept: DEPARTMENTS.ADMIN, role: 'admin', currentStatus: 'Desconectado' },
+  { id: 'u1', name: 'Carlos (Limpieza)', username: 'carlos', password: '123', dept: DEPARTMENTS.LIMPIEZA, role: 'staff', currentStatus: 'Desconectado' },
+  { id: 'u2', name: 'Ana (Enfermería)', username: 'ana', password: '123', dept: DEPARTMENTS.ENFERMERIA, role: 'staff', currentStatus: 'Desconectado' },
+  { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff', currentStatus: 'Desconectado' },
 ];
 
 // --- 5. COMPONENTES EXTRAÍDOS ---
@@ -306,13 +329,18 @@ const DashboardTab = ({
 }: { 
   rooms: Room[], tasks: Task[], currentUser: AppUser, onSelectRoom: (r: Room) => void, onOpenChecklist: () => void 
 }) => {
+  const [filterClinic, setFilterClinic] = useState('Todas');
+  
+  const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
+  const filteredRooms = useMemo(() => filterClinic === 'Todas' ? rooms : rooms.filter(r => r.clinic === filterClinic), [rooms, filterClinic]);
+
   const stats = useMemo(() => ({
-    total: rooms.length,
-    ocupadas: rooms.filter(r => r.status === ROOM_STATUS.OCUPADA).length,
-    disponibles: rooms.filter(r => r.status === ROOM_STATUS.DISPONIBLE).length,
-    evaluacion: rooms.filter(r => r.status === ROOM_STATUS.EVALUACION).length,
-    mantenimiento: rooms.filter(r => r.status === ROOM_STATUS.MANTENIMIENTO).length,
-  }), [rooms]);
+    total: filteredRooms.length,
+    ocupadas: filteredRooms.filter(r => r.status === ROOM_STATUS.OCUPADA).length,
+    disponibles: filteredRooms.filter(r => r.status === ROOM_STATUS.DISPONIBLE).length,
+    evaluacion: filteredRooms.filter(r => r.status === ROOM_STATUS.EVALUACION).length,
+    mantenimiento: filteredRooms.filter(r => r.status === ROOM_STATUS.MANTENIMIENTO).length,
+  }), [filteredRooms]);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -336,6 +364,19 @@ const DashboardTab = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center">
+          <LayoutDashboard className="w-6 h-6 mr-2 text-indigo-600"/> Tablero General
+        </h2>
+        <div className="flex items-center space-x-2">
+          <Building className="w-5 h-5 text-gray-500" />
+          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border border-gray-300 rounded-lg p-2 text-sm bg-white font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="Todas">Todas las Clínicas</option>
+            {clinicsList.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500 font-medium">Total Habitaciones</p>
@@ -358,16 +399,9 @@ const DashboardTab = ({
           <p className="text-3xl font-bold text-blue-700 mt-1">{stats.mantenimiento}</p>
         </div>
       </div>
-
-      <h2 className="text-xl font-bold text-gray-800 flex items-center justify-between">
-        <span>Mapa de Piso</span>
-        <span className="flex items-center text-xs font-normal text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-           <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div> En Vivo
-        </span>
-      </h2>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {rooms.map(room => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+        {filteredRooms.map(room => (
           <div 
             key={room.id} 
             onClick={() => onSelectRoom(room)}
@@ -376,7 +410,8 @@ const DashboardTab = ({
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-bold text-lg text-gray-800">{room.name}</h3>
-                <span className="text-xs text-gray-500 font-medium uppercase">{room.area}</span>
+                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">{room.clinic}</span>
+                <span className="text-xs text-indigo-500 font-medium">{room.area}</span>
               </div>
               {getStatusIcon(room.status)}
             </div>
@@ -407,6 +442,7 @@ const DashboardTab = ({
             </div>
           </div>
         ))}
+        {filteredRooms.length === 0 && <p className="text-gray-500 col-span-full">No hay habitaciones registradas en esta clínica.</p>}
       </div>
     </div>
   );
@@ -505,9 +541,11 @@ const TasksTab = ({ tasks, users, currentUser, slas, onAssign, onComplete }: any
   );
 };
 
-const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], slas: Slas }) => {
-  const completedTasks = tasks.filter(t => t.status === 'Completada');
+const ReportsTab = ({ tasks, users, slas, userLogs }: { tasks: Task[], users: AppUser[], slas: Slas, userLogs: UserLog[] }) => {
+  const [reportView, setReportView] = useState<'tareas' | 'asistencia'>('tareas');
   
+  // TAREAS LOGIC
+  const completedTasks = tasks.filter(t => t.status === 'Completada');
   let totalSlaCumplido = 0;
   let totalSlaIncumplido = 0;
 
@@ -516,7 +554,6 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
     const timeTaken = isCompleted && task.completedAt ? getMinutesDifference(task.createdAt, task.completedAt) : null;
     const sla = slas[task.dept] || 0;
     const cumplioSla = isCompleted && timeTaken !== null && timeTaken <= sla;
-    
     if (isCompleted) {
       if (cumplioSla) totalSlaCumplido++;
       else totalSlaIncumplido++;
@@ -529,121 +566,219 @@ const ReportsTab = ({ tasks, users, slas }: { tasks: Task[], users: AppUser[], s
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <h2 className="text-xl font-bold text-gray-800 flex items-center">
-        <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Bitácora y Estadísticas
-      </h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Total Creadas</p>
-            <p className="text-2xl font-bold text-gray-800 mt-1">{tasks.length}</p>
-          </div>
-          <div className="bg-gray-100 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600"/></div>
-        </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Completadas</p>
-            <p className="text-2xl font-bold text-emerald-600 mt-1">{totalFinalizadas}</p>
-          </div>
-          <div className="bg-emerald-50 p-3 rounded-lg"><CheckCircle className="w-6 h-6 text-emerald-600"/></div>
-        </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Cumplimiento SLA</p>
-            <p className={`text-2xl font-bold mt-1 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{slaPercent}%</p>
-          </div>
-          <div className={`${slaPercent >= 80 ? 'bg-emerald-50' : 'bg-amber-50'} p-3 rounded-lg`}>
-            <BarChart className={`w-6 h-6 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}/>
-          </div>
-        </div>
-        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Fuera de SLA</p>
-            <p className="text-2xl font-bold text-rose-600 mt-1">{totalSlaIncumplido}</p>
-          </div>
-          <div className="bg-rose-50 p-3 rounded-lg"><AlertTriangle className="w-6 h-6 text-rose-600"/></div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h2 className="text-xl font-bold text-gray-800 flex items-center">
+          <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Módulo de Reportes
+        </h2>
+        <div className="flex bg-gray-200 p-1 rounded-lg">
+          <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad (Tareas)</button>
+          <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Control de Horas</button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
-          <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[800px]">
-            <thead className="bg-white border-b">
-              <tr>
-                <th className="p-4 font-semibold text-gray-600">Hab.</th>
-                <th className="p-4 font-semibold text-gray-600">Área</th>
-                <th className="p-4 font-semibold text-gray-600">Descripción</th>
-                <th className="p-4 font-semibold text-gray-600">Responsable</th>
-                <th className="p-4 font-semibold text-gray-600">Tiempos</th>
-                <th className="p-4 font-semibold text-gray-600">SLA</th>
-                <th className="p-4 font-semibold text-gray-600">Estatus</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reportData.sort((a, b) => b.createdAt - a.createdAt).map(row => (
-                <tr key={row.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-bold text-gray-800">{row.roomId}</td>
-                  <td className="p-4 text-gray-600">{row.dept}</td>
-                  <td className="p-4 text-gray-700 max-w-xs truncate" title={row.description}>{row.description}</td>
-                  <td className="p-4 text-gray-600">
-                    {users.find(u => u.id === row.assignedTo)?.name || '-'}
-                  </td>
-                  <td className="p-4">
-                    <div className="text-xs text-gray-500">
-                      Creada: {formatTime(row.createdAt)} <br/>
-                      {row.status === 'Completada' && row.completedAt && <>Cierre: {formatTime(row.completedAt)}</>}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    {row.status === 'Completada' ? (
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${row.cumplioSla ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                        {row.timeTaken} / {row.sla}m
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 text-xs">SLA: {row.sla}m</span>
-                    )}
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.status === 'Completada' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                      {row.status}
-                    </span>
-                  </td>
+      {reportView === 'tareas' ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Total Creadas</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{tasks.length}</p>
+              </div>
+              <div className="bg-gray-100 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600"/></div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Completadas</p>
+                <p className="text-2xl font-bold text-emerald-600 mt-1">{totalFinalizadas}</p>
+              </div>
+              <div className="bg-emerald-50 p-3 rounded-lg"><CheckCircle className="w-6 h-6 text-emerald-600"/></div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Cumplimiento SLA</p>
+                <p className={`text-2xl font-bold mt-1 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{slaPercent}%</p>
+              </div>
+              <div className={`${slaPercent >= 80 ? 'bg-emerald-50' : 'bg-amber-50'} p-3 rounded-lg`}>
+                <BarChart className={`w-6 h-6 ${slaPercent >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}/>
+              </div>
+            </div>
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500 font-medium">Fuera de SLA</p>
+                <p className="text-2xl font-bold text-rose-600 mt-1">{totalSlaIncumplido}</p>
+              </div>
+              <div className="bg-rose-50 p-3 rounded-lg"><AlertTriangle className="w-6 h-6 text-rose-600"/></div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm min-w-[800px]">
+                <thead className="bg-white border-b">
+                  <tr>
+                    <th className="p-4 font-semibold text-gray-600">Hab.</th>
+                    <th className="p-4 font-semibold text-gray-600">Área</th>
+                    <th className="p-4 font-semibold text-gray-600">Descripción</th>
+                    <th className="p-4 font-semibold text-gray-600">Responsable</th>
+                    <th className="p-4 font-semibold text-gray-600">Tiempos</th>
+                    <th className="p-4 font-semibold text-gray-600">SLA</th>
+                    <th className="p-4 font-semibold text-gray-600">Estatus</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...reportData].sort((a, b) => b.createdAt - a.createdAt).map(row => (
+                    <tr key={row.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4 font-bold text-gray-800">{row.roomId}</td>
+                      <td className="p-4 text-gray-600">{row.dept}</td>
+                      <td className="p-4 text-gray-700 max-w-xs truncate" title={row.description}>{row.description}</td>
+                      <td className="p-4 text-gray-600">
+                        {users.find(u => u.id === row.assignedTo)?.name || '-'}
+                      </td>
+                      <td className="p-4">
+                        <div className="text-xs text-gray-500">
+                          Creada: {formatTime(row.createdAt)} <br/>
+                          {row.status === 'Completada' && row.completedAt && <>Cierre: {formatTime(row.completedAt)}</>}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {row.status === 'Completada' ? (
+                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${row.cumplioSla ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                            {row.timeTaken} / {row.sla}m
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 text-xs">SLA: {row.sla}m</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.status === 'Completada' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {reportData.length === 0 && (
+                    <tr><td colSpan={7} className="p-6 text-center text-gray-500">No hay registros generados.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-4 border-b border-gray-100 bg-gray-50">
+            <h3 className="font-bold text-gray-700">Bitácora de Eventos de Personal</h3>
+            <p className="text-xs text-gray-500 mt-1">Historial de conexiones y descansos del personal (Ordenado por más reciente)</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm min-w-[600px]">
+              <thead className="bg-white border-b">
+                <tr>
+                  <th className="p-4 font-semibold text-gray-600">Fecha y Hora</th>
+                  <th className="p-4 font-semibold text-gray-600">Usuario</th>
+                  <th className="p-4 font-semibold text-gray-600">Rol</th>
+                  <th className="p-4 font-semibold text-gray-600">Evento Registrado (Estado)</th>
                 </tr>
-              ))}
-              {reportData.length === 0 && (
-                <tr><td colSpan={7} className="p-6 text-center text-gray-500">No hay registros generados.</td></tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {[...userLogs].sort((a,b) => b.timestamp - a.timestamp).map(log => {
+                  const u = users.find(x => x.id === log.userId);
+                  const isOnline = log.action === 'Disponible';
+                  const isOffline = log.action === 'Desconectado';
+                  return (
+                    <tr key={log.id} className="border-b hover:bg-gray-50">
+                      <td className="p-4 text-gray-600 font-medium">
+                        {new Date(log.timestamp).toLocaleDateString('es-ES')} - {formatTime(log.timestamp)}
+                      </td>
+                      <td className="p-4 font-bold text-gray-800">{u?.name || 'Usuario Desconocido'}</td>
+                      <td className="p-4 text-gray-600">{u?.role === 'admin' ? 'Admin' : u?.dept}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald-100 text-emerald-700' : isOffline ? 'bg-gray-200 text-gray-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {log.action}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {userLogs.length === 0 && (
+                  <tr><td colSpan={4} className="p-6 text-center text-gray-500">No hay registros de asistencia aún.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 const ConfigTab = ({ 
-  slas, rooms, users, checklistItems, currentUser,
-  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist
+  slas, rooms, users, checklistItems, appSettings, currentUser,
+  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings
 }: any) => {
-  const [newQuestion, setNewQuestion] = useState('');
-  const [newCategory, setNewCategory] = useState('Paredes');
-  const [newDept, setNewDept] = useState(DEPARTMENTS.LIMPIEZA);
+  // Estados para Habitaciones
+  const [newRoomId, setNewRoomId] = useState('');
+  const [newRoomArea, setNewRoomArea] = useState('General');
+  const [newRoomClinic, setNewRoomClinic] = useState(appSettings?.clinics?.[0] || 'Sede Central');
   
+  // Estados para Usuarios
   const [newUserName, setNewUserName] = useState('');
   const [newUserLogin, setNewUserLogin] = useState('');
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserDept, setNewUserDept] = useState(DEPARTMENTS.LIMPIEZA);
   const [newUserRole, setNewUserRole] = useState<'staff' | 'admin'>('staff');
   const [userFormError, setUserFormError] = useState('');
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editPasswordValue, setEditPasswordValue] = useState('');
+
+  // Estados para Checklist
+  const [newQuestion, setNewQuestion] = useState('');
+  const [newCategory, setNewCategory] = useState('Paredes');
+  const [newDept, setNewDept] = useState(DEPARTMENTS.LIMPIEZA);
   
-  const [newRoomId, setNewRoomId] = useState('');
-  const [newRoomArea, setNewRoomArea] = useState('General');
+  // Estados para App Settings
+  const [appName, setAppName] = useState(appSettings?.appName || 'MediRoom Control');
+  const [appLogo, setAppLogo] = useState(appSettings?.logoUrl || '');
+  const [newClinic, setNewClinic] = useState('');
+  
+  // Estados para Descansos
+  const [newBreakName, setNewBreakName] = useState('');
+  const [newBreakDuration, setNewBreakDuration] = useState('30');
 
   const categories = Array.from(new Set(checklistItems.map((i: ChecklistItem) => i.category || 'General')));
+  const clinics = appSettings?.clinics || ['Sede Central'];
+  const breakTypes = appSettings?.breakTypes || [];
+
+  const handleSaveSettings = () => {
+    onUpdateSettings({ ...appSettings, appName, logoUrl: appLogo });
+    alert('Configuración guardada correctamente.');
+  };
+
+  const handleAddClinic = () => {
+    if(newClinic.trim() && !clinics.includes(newClinic.trim())) {
+      onUpdateSettings({ ...appSettings, clinics: [...clinics, newClinic.trim()] });
+      setNewClinic('');
+    }
+  };
+
+  const handleRemoveClinic = (cToRemove: string) => {
+    onUpdateSettings({ ...appSettings, clinics: clinics.filter((c: string) => c !== cToRemove) });
+  };
+
+  const handleAddBreak = () => {
+    if(newBreakName.trim() && newBreakDuration) {
+      const newBreak = { id: `b_${Date.now()}`, name: newBreakName.trim(), duration: parseInt(newBreakDuration) };
+      onUpdateSettings({ ...appSettings, breakTypes: [...breakTypes, newBreak] });
+      setNewBreakName(''); setNewBreakDuration('30');
+    }
+  };
+
+  const handleRemoveBreak = (idToRemove: string) => {
+    onUpdateSettings({ ...appSettings, breakTypes: breakTypes.filter((b: any) => b.id !== idToRemove) });
+  };
 
   const handleAddUser = () => {
     if (!newUserName.trim() || !newUserLogin.trim() || !newUserPass.trim()) {
@@ -654,8 +789,13 @@ const ConfigTab = ({
       setUserFormError('El usuario ya existe.');
       return;
     }
-    onAddUser({ name: newUserName, username: newUserLogin, password: newUserPass, dept: newUserDept, role: newUserRole });
+    onAddUser({ name: newUserName, username: newUserLogin, password: newUserPass, dept: newUserDept, role: newUserRole, currentStatus: 'Desconectado' });
     setNewUserName(''); setNewUserLogin(''); setNewUserPass(''); setUserFormError('');
+  };
+
+  const handleSavePassword = (userId: string) => {
+    onUpdateUserPassword(userId, editPasswordValue);
+    setEditingUserId(null);
   };
 
   const groupedChecklist = checklistItems.reduce((acc: any, item: ChecklistItem) => {
@@ -667,22 +807,80 @@ const ConfigTab = ({
 
   return (
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-500">
+      
+      {/* PERSONALIZACIÓN Y CLÍNICAS */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
+          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Personalización del Sistema
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">Nombre de la Aplicación</label>
+            <input type="text" value={appName} onChange={(e) => setAppName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Ej. Hospital San José" />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-600 mb-1 block">URL del Logotipo (Opcional)</label>
+            <input type="text" value={appLogo} onChange={(e) => setAppLogo(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" placeholder="https://mi-web.com/logo.png" />
+          </div>
+        </div>
+        <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors mb-8">Guardar Personalización</button>
+
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Building className="w-5 h-5 mr-2 text-gray-500"/> Gestión de Clínicas / Sucursales</h3>
+          <div className="flex gap-3 mb-4">
+            <input type="text" placeholder="Nueva clínica..." value={newClinic} onChange={(e) => setNewClinic(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+            <button onClick={handleAddClinic} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {clinics.map((c: string) => (
+              <span key={c} className="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center border border-gray-200">
+                {c} 
+                {clinics.length > 1 && <button onClick={() => handleRemoveClinic(c)} className="ml-2 text-rose-500 hover:text-rose-700"><X className="w-3 h-3"/></button>}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CONFIGURACIÓN DE DESCANSOS */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+          <Clock className="w-6 h-6 mr-2 text-gray-600"/> Tipos de Descanso (Control de Asistencia)
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">Configura las pausas permitidas para el personal. Estas opciones aparecerán en su Status Bar.</p>
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
+          <input type="text" placeholder="Ej. Hora de Almuerzo" value={newBreakName} onChange={(e) => setNewBreakName(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <div className="flex items-center">
+            <input type="number" placeholder="Minutos" value={newBreakDuration} onChange={(e) => setNewBreakDuration(e.target.value)} className="w-24 border rounded-l-lg p-2 focus:ring-2 focus:ring-indigo-500 border-r-0" />
+            <span className="bg-gray-100 border border-gray-300 border-l-0 px-3 py-2 rounded-r-lg text-gray-500 text-sm font-medium">min</span>
+          </div>
+          <button onClick={handleAddBreak} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {breakTypes.map((b: any) => (
+            <div key={b.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-100">
+              <div>
+                <p className="font-bold text-sm text-amber-900">{b.name}</p>
+                <p className="text-xs text-amber-700">Duración: {b.duration} min</p>
+              </div>
+              <button onClick={() => handleRemoveBreak(b.id)} className="text-rose-500 hover:text-rose-700 p-1.5"><X className="w-4 h-4"/></button>
+            </div>
+          ))}
+          {breakTypes.length === 0 && <p className="text-gray-500 text-sm col-span-full">No hay descansos configurados.</p>}
+        </div>
+      </div>
+
       {/* SLAs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Configuración de SLAs (Tiempos máximos)
+          <AlertTriangle className="w-6 h-6 mr-2 text-gray-600"/> Tiempos Máximos de Tarea (SLAs)
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.entries(slas).map(([dept, time]: any) => (
             <div key={dept} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
               <span className="font-semibold text-gray-700 text-sm block mb-2">{dept}</span>
               <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  value={time}
-                  onChange={(e) => onUpdateSla(dept, e.target.value)}
-                  className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
+                <input type="number" value={time} onChange={(e) => onUpdateSla(dept, e.target.value)} className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
                 <span className="text-gray-500 text-sm font-medium">min</span>
               </div>
             </div>
@@ -696,14 +894,14 @@ const ConfigTab = ({
           <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input 
-            type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)}
-            className="flex-1 border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500"
-          />
-          <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border border-gray-300 rounded-lg p-2 bg-white">
+          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border rounded-lg p-2 bg-white">
             {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
           </select>
-          <button onClick={() => { onAddRoom(newRoomId, newRoomArea); setNewRoomId(''); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors">
+          <select value={newRoomClinic} onChange={(e) => setNewRoomClinic(e.target.value)} className="border rounded-lg p-2 bg-white text-indigo-700 font-semibold">
+            {clinics.map((c: string) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <button onClick={() => { onAddRoom(newRoomId, newRoomArea, newRoomClinic); setNewRoomId(''); }} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">
             Agregar
           </button>
         </div>
@@ -713,13 +911,11 @@ const ConfigTab = ({
               <div className="flex items-center space-x-3">
                 <Bed className="w-5 h-5 text-gray-400" />
                 <div>
-                  <p className="font-medium text-sm text-gray-800">{room.name}</p>
-                  <p className="text-xs text-gray-500">{room.area}</p>
+                  <p className="font-bold text-sm text-gray-800">{room.name}</p>
+                  <p className="text-[10px] text-gray-500 uppercase">{room.clinic} - {room.area}</p>
                 </div>
               </div>
-              <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg transition-colors">
-                <X className="w-4 h-4"/>
-              </button>
+              <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg transition-colors"><X className="w-4 h-4"/></button>
             </div>
           ))}
         </div>
@@ -732,55 +928,49 @@ const ConfigTab = ({
         </h2>
         {userFormError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm font-medium mb-4">{userFormError}</div>}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 p-5 rounded-xl border">
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre</label>
-            <input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Usuario</label>
-            <input type="text" value={newUserLogin} onChange={(e) => setNewUserLogin(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Contraseña</label>
-            <input type="password" value={newUserPass} onChange={(e) => setNewUserPass(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Departamento</label>
+          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre</label><input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Usuario</label><input type="text" value={newUserLogin} onChange={(e) => setNewUserLogin(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Contraseña</label><input type="password" value={newUserPass} onChange={(e) => setNewUserPass(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Departamento</label>
             <select value={newUserDept} onChange={(e) => setNewUserDept(e.target.value)} className="w-full border rounded-lg p-2 bg-white">
               {Object.values(DEPARTMENTS).map(dept => <option key={dept} value={dept}>{dept}</option>)}
             </select>
           </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">Rol</label>
+          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Rol</label>
             <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)} className="w-full border rounded-lg p-2 bg-white">
               <option value="staff">Operativo</option>
               <option value="admin">Supervisor</option>
             </select>
           </div>
-          <div className="flex items-end">
-            <button onClick={handleAddUser} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg">
-              Añadir
-            </button>
-          </div>
+          <div className="flex items-end"><button onClick={handleAddUser} className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg">Añadir</button></div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {users.map((user: AppUser) => (
-            <div key={user.id} className="flex items-center justify-between p-4 bg-white rounded-lg border shadow-sm">
-              <div className="flex items-center space-x-3">
-                <div className="bg-indigo-50 p-2.5 rounded-full"><User className="w-5 h-5 text-indigo-600" /></div>
-                <div>
-                  <p className="font-bold text-sm text-gray-800">{user.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">User: <span className="text-gray-700 font-medium">{user.username}</span></p>
-                  <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded">
-                    {user.dept} ({user.role})
-                  </span>
+            <div key={user.id} className="flex flex-col p-4 bg-white rounded-lg border shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-indigo-50 p-2.5 rounded-full"><User className="w-5 h-5 text-indigo-600" /></div>
+                  <div>
+                    <p className="font-bold text-sm text-gray-800">{user.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">User: <span className="text-gray-700 font-medium">{user.username}</span></p>
+                    <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded">{user.dept} ({user.role})</span>
+                  </div>
                 </div>
+                {user.id !== currentUser?.id && (
+                  <div className="flex space-x-2">
+                    <button onClick={() => { setEditingUserId(user.id); setEditPasswordValue(''); }} className="text-amber-500 hover:text-amber-700 p-2 bg-amber-50 rounded-lg transition-colors" title="Cambiar Contraseña"><Lock className="w-4 h-4"/></button>
+                    <button onClick={() => onRemoveUser(user.id)} className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 rounded-lg transition-colors" title="Eliminar Usuario"><X className="w-4 h-4"/></button>
+                  </div>
+                )}
               </div>
-              {user.id !== currentUser?.id && (
-                <button onClick={() => onRemoveUser(user.id)} className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 rounded-lg">
-                  <X className="w-4 h-4"/>
-                </button>
+              
+              {editingUserId === user.id && (
+                <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center space-x-2 animate-in fade-in duration-200">
+                  <input type="text" placeholder="Nueva clave..." value={editPasswordValue} onChange={(e) => setEditPasswordValue(e.target.value)} className="flex-1 border border-gray-300 rounded-md p-1.5 text-sm outline-none" />
+                  <button onClick={() => handleSavePassword(user.id)} className="bg-emerald-600 text-white px-3 py-1.5 rounded-md text-sm font-bold shadow-sm">Guardar</button>
+                  <button onClick={() => setEditingUserId(null)} className="bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-sm font-bold">Cancelar</button>
+                </div>
               )}
             </div>
           ))}
@@ -800,28 +990,20 @@ const ConfigTab = ({
           <select value={newDept} onChange={(e) => setNewDept(e.target.value)} className="border rounded-lg p-2 bg-white md:w-40">
             {Object.values(DEPARTMENTS).filter(d => d !== DEPARTMENTS.ADMIN).map(dept => <option key={dept} value={dept}>{dept}</option>)}
           </select>
-          <button onClick={() => { onAddChecklist(newQuestion, newCategory, newDept); setNewQuestion(''); }} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">
-            Añadir
-          </button>
+          <button onClick={() => { onAddChecklist(newQuestion, newCategory, newDept); setNewQuestion(''); }} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
         </div>
         
         <div className="space-y-4">
           {Object.entries(groupedChecklist).map(([cat, items]: [string, any]) => (
              <details key={cat} className="group border border-gray-200 rounded-lg bg-gray-50">
                <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-800 marker:content-none">
-                 {cat}
-                 <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
+                 {cat} <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
                </summary>
                <div className="p-4 pt-0 space-y-2 bg-white border-t border-gray-200">
                  {items.map((item: ChecklistItem) => (
                    <div key={item.id} className="flex items-center justify-between p-2 border-b last:border-0">
-                     <div>
-                       <p className="text-sm text-gray-800">{item.question}</p>
-                       <span className="text-[10px] font-bold text-indigo-600 uppercase">{item.dept}</span>
-                     </div>
-                     <button onClick={() => onRemoveChecklist(item.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg">
-                       <X className="w-4 h-4"/>
-                     </button>
+                     <div><p className="text-sm text-gray-800">{item.question}</p><span className="text-[10px] font-bold text-indigo-600 uppercase">{item.dept}</span></div>
+                     <button onClick={() => onRemoveChecklist(item.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg"><X className="w-4 h-4"/></button>
                    </div>
                  ))}
                </div>
@@ -870,28 +1052,18 @@ const ChecklistModal = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        {/* Encabezado Fijo */}
         <div className="bg-amber-500 p-5 text-white flex justify-between items-center shrink-0">
           <div>
-            <h3 className="font-bold text-xl flex items-center">
-              <CheckSquare className="w-6 h-6 mr-2"/> CONTROL DE LIMPIEZA
-            </h3>
+            <h3 className="font-bold text-xl flex items-center"><CheckSquare className="w-6 h-6 mr-2"/> CONTROL DE LIMPIEZA</h3>
             <p className="text-amber-100 text-sm font-medium mt-1">{selectedRoom.name} - {selectedRoom.area}</p>
           </div>
-          <button onClick={onClose} className="hover:bg-amber-600 p-2 rounded-full transition-colors bg-amber-500/50">
-            <X className="w-6 h-6"/>
-          </button>
+          <button onClick={onClose} className="hover:bg-amber-600 p-2 rounded-full transition-colors bg-amber-500/50"><X className="w-6 h-6"/></button>
         </div>
         
-        {/* Barra de Progreso */}
         <div className="bg-gray-100 h-2 w-full shrink-0">
-          <div 
-            className="bg-indigo-600 h-full transition-all duration-500 ease-out"
-            style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
-          ></div>
+          <div className="bg-indigo-600 h-full transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}></div>
         </div>
         
-        {/* Contenido Dinámico */}
         <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
           <div className="flex justify-between items-end mb-6 border-b border-gray-200 pb-4">
             <h4 className="text-2xl font-bold text-gray-800">{currentCategory as string}</h4>
@@ -923,44 +1095,23 @@ const ChecklistModal = ({
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
               <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
                 <label className="block text-sm font-bold text-gray-700 mb-2">19. Comentario Adicional</label>
-                <textarea 
-                  value={comentarios} 
-                  onChange={e => setComentarios(e.target.value)}
-                  className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 min-h-[100px] bg-gray-50"
-                  placeholder="Observaciones generales acerca de la habitación..."
-                ></textarea>
+                <textarea value={comentarios} onChange={e => setComentarios(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 min-h-[100px] bg-gray-50" placeholder="Observaciones generales acerca de la habitación..."></textarea>
               </div>
               <div className="bg-rose-50 p-5 rounded-2xl shadow-sm border border-rose-200">
-                <label className="block text-sm font-bold text-rose-700 mb-2 flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender
-                </label>
-                <textarea 
-                  value={urgente} 
-                  onChange={e => setUrgente(e.target.value)}
-                  className="w-full border border-rose-300 bg-white rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px]"
-                  placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."
-                ></textarea>
+                <label className="block text-sm font-bold text-rose-700 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
+                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 bg-white rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px]" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
               </div>
             </div>
           )}
         </div>
 
-        {/* Navegación Inferior Fija */}
         <div className="p-5 border-t border-gray-200 bg-white flex justify-between items-center shrink-0">
-          <button 
-            onClick={handlePrev} 
-            disabled={currentStep === 0}
-            className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 cursor-not-allowed opacity-50' : 'text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
-          >
+          <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 cursor-not-allowed opacity-50' : 'text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
             <ChevronLeft className="w-5 h-5 mr-1" /> Anterior
           </button>
           
           {!isFinalStep ? (
-            <button 
-              onClick={handleNext} 
-              disabled={!isCurrentStepComplete}
-              className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${!isCurrentStepComplete ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-            >
+            <button onClick={handleNext} disabled={!isCurrentStepComplete} className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${!isCurrentStepComplete ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
               Siguiente <ChevronRight className="w-5 h-5 ml-1" />
             </button>
           ) : (
@@ -985,8 +1136,8 @@ const ManualTab = () => (
         <section>
           <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">1. Roles del Sistema</h3>
           <ul className="list-disc pl-5 space-y-2 mt-3">
-            <li><strong>Supervisor (Admin):</strong> Tiene acceso total. Puede ver el tablero general, configurar los tiempos límite (SLAs), registrar habitaciones, crear nuevos usuarios y administrar las preguntas del checklist. Es el único que puede hacer las evaluaciones iniciales.</li>
-            <li><strong>Personal Operativo (Limpieza, Mantenimiento, Enfermería):</strong> Poseen una vista simplificada. Solo ven las tareas que han sido asignadas a su departamento y pueden marcarlas como completadas una vez finalizadas.</li>
+            <li><strong>Supervisor (Admin):</strong> Tiene acceso total. Puede ver el tablero general, configurar tiempos límite, registrar habitaciones, gestionar clínicas y administrar las preguntas del checklist. Es el único que puede hacer las evaluaciones de habitaciones.</li>
+            <li><strong>Personal Operativo (Limpieza, Mantenimiento, Enfermería):</strong> Poseen una vista simplificada. Solo ven las tareas que han sido asignadas a su departamento.</li>
           </ul>
         </section>
         <section>
@@ -995,15 +1146,14 @@ const ManualTab = () => (
             <li>Una habitación comienza su ciclo en color verde como <strong>Disponible</strong>.</li>
             <li>Al ingresar un paciente, el supervisor la marca como <strong>Ocupada</strong> (color rojo).</li>
             <li>Cuando el paciente es dado de alta, el sistema la pasa a <strong>Pendiente de Evaluación</strong> (color amarillo).</li>
-            <li>El supervisor entra a la habitación y realiza el <strong>Control de Limpieza</strong>. Por cada elemento que marque con "✗ No Cumple", se genera una tarea automática dirigida al departamento responsable.</li>
-            <li>La habitación cambia a <strong>En Mantenimiento</strong> (color azul) mientras haya al menos una tarea pendiente de resolver.</li>
-            <li>Una vez que el personal completa <strong>TODAS</strong> las tareas, la habitación regresa automáticamente a <strong>Disponible</strong>.</li>
+            <li>El supervisor entra a la habitación y realiza el <strong>Control de Limpieza</strong>.</li>
+            <li>La habitación cambia a <strong>En Tareas</strong> (color azul) mientras haya al menos una tarea pendiente de resolver.</li>
+            <li>Una vez completadas todas las tareas, la habitación regresa a <strong>Disponible</strong>.</li>
           </ul>
         </section>
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Notificaciones y Tiempos de Respuesta (SLAs)</h3>
-          <p className="mt-3">Cada tarea generada tiene un tiempo límite estipulado (SLA). Si una tarea toma más del tiempo acordado, se reflejará en color rojo (Fuera de SLA) en la pestaña de <strong>Bitácora</strong>.</p>
-          <p className="mt-2">El icono de la campana (🔔) en la barra superior avisará en tiempo real al personal cuando se le asigne una nueva tarea de manera directa o cuando haya observaciones urgentes.</p>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Control de Asistencia y Tiempos</h3>
+          <p className="mt-3">El personal debe utilizar la barra superior para indicar en qué momento inician un descanso autorizado (ej. Almuerzo). Esto se refleja en la bitácora de asistencia que el Administrador puede revisar.</p>
         </section>
       </div>
     </div>
@@ -1025,7 +1175,9 @@ export default function App() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [slas, setSlas] = useState<Slas>({ [DEPARTMENTS.LIMPIEZA]: 30, [DEPARTMENTS.MANTENIMIENTO]: 120, [DEPARTMENTS.ENFERMERIA]: 15, [DEPARTMENTS.ADMIN]: 60 });
+  const [slas, setSlas] = useState<Slas>(INITIAL_SLAS);
+  const [appSettings, setAppSettings] = useState<AppSettings>(INITIAL_SETTINGS);
+  const [userLogs, setUserLogs] = useState<UserLog[]>([]);
   
   // UI Modal State
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -1036,24 +1188,14 @@ export default function App() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [resetSuccess, setResetSuccess] = useState('');
 
   // Inicializar Firebase Auth
   useEffect(() => {
-    if (firebaseError) {
-      setDbReady(true);
-      return;
-    }
-
+    if (firebaseError) { setDbReady(true); return; }
     const initAuth = async () => {
       try {
-        if (w.__initial_auth_token) {
-          await signInWithCustomToken(auth, w.__initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
+        if (w.__initial_auth_token) await signInWithCustomToken(auth, w.__initial_auth_token);
+        else await signInAnonymously(auth);
       } catch (err) {
         console.error("Auth Error:", err);
         setDbReady(true);
@@ -1074,16 +1216,14 @@ export default function App() {
       INITIAL_ROOMS.forEach(r => promises.push(setDoc(getDocRef('h_rooms', r.id), r)));
       INITIAL_CHECKLIST.forEach(c => promises.push(setDoc(getDocRef('h_checklistItems', c.id), c)));
       promises.push(setDoc(getDocRef('h_slas', 'main'), slas));
+      promises.push(setDoc(getDocRef('h_settings', 'main'), INITIAL_SETTINGS));
       await Promise.all(promises);
-    } catch (err) {
-      console.error("Seed Error:", err);
-    }
+    } catch (err) { console.error("Seed Error:", err); }
   };
 
   // Suscripciones Real-time a Firestore
   useEffect(() => {
     if (!authUser) return;
-
     const unsubs: (() => void)[] = [];
     const errHandler = (err: any) => console.error("Firebase Sync Error", err);
 
@@ -1092,48 +1232,62 @@ export default function App() {
       else { setUsers(snapshot.docs.map(d => ({id: d.id, ...d.data()} as AppUser))); setDbReady(true); }
     }, errHandler));
 
-    // IMPORTANTE: Este bloque arregla el problema del "Formulario Incompleto" inyectando el PDF completo si tu base de datos estaba vacía o desactualizada
+    unsubs.push(onSnapshot(getColRef('h_settings'), (s) => {
+      if (!s.empty && s.docs[0].id === 'main') setAppSettings(s.docs[0].data() as AppSettings);
+    }, errHandler));
+
+    unsubs.push(onSnapshot(getColRef('h_user_logs'), (s) => {
+      setUserLogs(s.docs.map(d => ({id: d.id, ...d.data()} as UserLog)));
+    }, errHandler));
+
     unsubs.push(onSnapshot(getColRef('h_checklistItems'), (s) => {
       const items = s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem));
-      const needsUpdate = items.length < 10 || (items.length > 0 && !items[0].category);
-      if (needsUpdate) {
-        INITIAL_CHECKLIST.forEach(c => setDoc(getDocRef('h_checklistItems', c.id), c));
-      } else {
-        setChecklistItems(items);
-      }
+      if (items.length < 10) INITIAL_CHECKLIST.forEach(c => setDoc(getDocRef('h_checklistItems', c.id), c));
+      else setChecklistItems(items);
     }, errHandler));
 
     unsubs.push(onSnapshot(getColRef('h_rooms'), (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_tasks'), (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
     unsubs.push(onSnapshot(getColRef('h_notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
-    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => {
-      if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas);
-    }, errHandler));
+    unsubs.push(onSnapshot(getColRef('h_slas'), (s) => { if (!s.empty && s.docs[0].id === 'main') setSlas(s.docs[0].data() as Slas); }, errHandler));
 
     return () => unsubs.forEach(u => u());
   }, [authUser]);
 
+  // --- LOGICA DE CONTROL DE HORAS ---
+  const handleUserStatusChange = async (userId: string, newStatus: string) => {
+    await setDoc(getDocRef('h_users', userId), { currentStatus: newStatus }, { merge: true });
+    
+    const logId = `log_${Date.now()}_${userId}`;
+    await setDoc(getDocRef('h_user_logs', logId), {
+      id: logId,
+      userId: userId,
+      action: newStatus,
+      timestamp: Date.now()
+    });
+  };
+
+  const handleUpdateUserPassword = async (userId: string, newPass: string) => {
+    if (!newPass.trim()) return;
+    await setDoc(getDocRef('h_users', userId), { password: newPass.trim() }, { merge: true });
+  };
 
   // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
-  const handleVacateRoom = async (roomId: string) => {
-    await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true });
-    setSelectedRoom(null);
-  };
-
-  const handleOccupyRoom = async (roomId: string) => {
-    await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true });
-    setSelectedRoom(null);
-  };
+  const handleVacateRoom = async (roomId: string) => { await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.EVALUACION }, { merge: true }); setSelectedRoom(null); };
+  const handleOccupyRoom = async (roomId: string) => { await setDoc(getDocRef('h_rooms', roomId), { status: ROOM_STATUS.OCUPADA }, { merge: true }); setSelectedRoom(null); };
 
   const handleCompleteTask = async (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     if(!task) return;
     await setDoc(getDocRef('h_tasks', taskId), { status: 'Completada', completedAt: Date.now() }, { merge: true });
     
-    // IMPORTANTE: Esto arregla el problema de "la habitación no regresa a la lista" verificando mediante room.id correctamente
     const pendingRoomTasks = tasks.filter(t => t.roomId === task.roomId && t.id !== taskId && t.status !== 'Completada');
-    if (pendingRoomTasks.length === 0) {
-      await setDoc(getDocRef('h_rooms', task.roomId), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+    
+    if (pendingRoomTasks.length === 0) { 
+      const targetRoom = rooms.find(r => r.id === task.roomId || r.name === task.roomId);
+      if (targetRoom) {
+        await setDoc(getDocRef('h_rooms', targetRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true }); 
+      }
     }
   };
 
@@ -1141,17 +1295,13 @@ export default function App() {
     await setDoc(getDocRef('h_tasks', taskId), { assignedTo: userId }, { merge: true });
     if (userId) {
       const taskObj = tasks.find(t => t.id === taskId);
-      const notifId = Date.now().toString();
-      await setDoc(getDocRef('h_notifications', notifId), {
-        userId: userId, message: `Nueva tarea asignada en Hab. ${taskObj?.roomId}`, read: false, createdAt: Date.now()
-      });
+      await setDoc(getDocRef('h_notifications', Date.now().toString()), { userId: userId, message: `Nueva tarea asignada en Hab. ${taskObj?.roomId}`, read: false, createdAt: Date.now() });
     }
   };
 
   const markNotificationsAsRead = async () => {
     if(!currentUser) return;
-    const unread = notifications.filter(n => n.userId === currentUser.id && !n.read);
-    const promises = unread.map(n => setDoc(getDocRef('h_notifications', n.id), { read: true }, { merge: true }));
+    const promises = notifications.filter(n => n.userId === currentUser.id && !n.read).map(n => setDoc(getDocRef('h_notifications', n.id), { read: true }, { merge: true }));
     await Promise.all(promises);
   };
 
@@ -1163,59 +1313,46 @@ export default function App() {
       if (answers[item.id] === false) { 
         const taskId = `t_${Date.now()}_${item.id}`;
         promises.push(setDoc(getDocRef('h_tasks', taskId), {
-          id: taskId, roomId: room.id, // <-- CORRECCIÓN: Guardando room.id en lugar del nombre
-          dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
+          id: taskId, roomId: room.id, dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
         }));
         roomNeedsTasks = true;
       }
     });
 
     if (comentarios.trim()) {
-      const admins = users.filter(u => u.role === 'admin');
-      admins.forEach((admin, index) => {
-        const notifId = `n_${Date.now()}_${index}`;
-        promises.push(setDoc(getDocRef('h_notifications', notifId), {
-          id: notifId, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now()
-        }));
+      users.filter(u => u.role === 'admin').forEach((admin, i) => {
+        promises.push(setDoc(getDocRef('h_notifications', `n_${Date.now()}_${i}`), { id: `n_${Date.now()}_${i}`, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now() }));
       });
     }
 
     if (urgente.trim()) {
-      const taskId = `t_${Date.now()}_urgente`;
-      promises.push(setDoc(getDocRef('h_tasks', taskId), {
-        id: taskId, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
-      }));
+      promises.push(setDoc(getDocRef('h_tasks', `t_${Date.now()}_u`), { id: `t_${Date.now()}_u`, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null }));
       roomNeedsTasks = true;
     }
 
     promises.push(setDoc(getDocRef('h_rooms', room.id), { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
-    
     await Promise.all(promises);
     setIsChecklistModalOpen(false);
     setSelectedRoom(null);
   };
 
-  // --- LOGIN ---
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  // --- LOGIN Y LOGOUT ---
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = users.find(u => u.username.toLowerCase() === loginUsername.trim().toLowerCase() && u.password === loginPassword.trim());
     if (user) {
       setCurrentUser(user);
       setActiveTab(user.role === 'admin' ? 'dashboard' : 'tasks');
-      setLoginError(''); setLoginUsername(''); setLoginPassword(''); setResetSuccess('');
+      setLoginError(''); setLoginUsername(''); setLoginPassword('');
+      await handleUserStatusChange(user.id, 'Disponible');
     } else { setLoginError('Usuario o contraseña incorrectos'); }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const userToReset = users.find(u => u.username.toLowerCase() === loginUsername.trim().toLowerCase());
-    if (userToReset) {
-      await setDoc(getDocRef('h_users', userToReset.id), { password: newPassword.trim() }, { merge: true });
-      setLoginError(''); setResetSuccess('¡Contraseña actualizada! Ya puedes iniciar sesión.');
-      setIsResettingPassword(false); setLoginPassword(''); setNewPassword('');
-    } else {
-      setLoginError('No se encontró ningún usuario con ese nombre de usuario.');
+  const handleLogout = async () => {
+    if (currentUser) {
+      await handleUserStatusChange(currentUser.id, 'Desconectado');
     }
+    setCurrentUser(null);
   };
 
   // --- CARGA Y LOGIN UI ---
@@ -1225,8 +1362,7 @@ export default function App() {
         <AlertTriangle className="w-16 h-16 text-rose-500 mb-4" />
         <h2 className="text-2xl font-bold text-gray-800 text-center">Falta conectar la Base de Datos</h2>
         <p className="text-gray-600 text-center max-w-md mt-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          Has publicado la aplicación con éxito en Vercel, pero necesita un proyecto de <strong>Firebase</strong> real para guardar la información y sincronizarse en tiempo real.<br/><br/>
-          Abre el archivo <code>App.tsx</code> y reemplaza los valores de <code>defaultFirebaseConfig</code> con las credenciales de tu propio proyecto.
+          Has publicado la aplicación con éxito en Vercel, pero necesita un proyecto de <strong>Firebase</strong> real.
         </p>
       </div>
     );
@@ -1236,71 +1372,37 @@ export default function App() {
     return (
       <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
         <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700">Sincronizando Sistema MediRoom...</h2>
+        <h2 className="text-xl font-semibold text-gray-700">Iniciando sistema...</h2>
       </div>
     );
   }
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4" style={{ backgroundImage: 'linear-gradient(to bottom right, #f8fafc, #e2e8f0)' }}>
+        <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-10 border border-gray-100">
           <div className="flex flex-col items-center mb-8">
-            <div className="bg-indigo-100 p-4 rounded-full mb-4"><Lock className="w-10 h-10 text-indigo-600" /></div>
-            <h1 className="text-2xl font-bold text-gray-800">MediRoom Control</h1>
-            <p className="text-sm text-gray-500 mt-1 flex items-center"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema En Línea</p>
+            {appSettings.logoUrl ? (
+              <img src={appSettings.logoUrl} alt="Logo" className="h-20 object-contain mb-4" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            ) : (
+              <div className="bg-indigo-100 p-4 rounded-2xl mb-4"><Lock className="w-10 h-10 text-indigo-600" /></div>
+            )}
+            <h1 className="text-2xl font-bold text-gray-800 text-center">{appSettings.appName}</h1>
+            <p className="text-sm text-gray-500 mt-2 flex items-center bg-gray-50 px-3 py-1 rounded-full"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema En Línea</p>
           </div>
           
-          {!isResettingPassword ? (
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
-              {loginError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm text-center font-medium border">{loginError}</div>}
-              {resetSuccess && <div className="bg-emerald-50 text-emerald-600 p-3 rounded-lg text-sm text-center font-medium border">{resetSuccess}</div>}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Usuario</label>
-                <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50" placeholder="Ej. admin" required />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
-                <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full border rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50" placeholder="••••••••" required />
-              </div>
-              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors">Iniciar Sesión</button>
-              <div className="text-center mt-4">
-                <button type="button" onClick={() => { setIsResettingPassword(true); setLoginError(''); setResetSuccess(''); }} className="text-sm text-indigo-600 font-medium">¿Olvidaste tu contraseña?</button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleResetPassword} className="space-y-5">
-              <div className="text-center mb-4"><h3 className="text-lg font-bold">Restablecer Contraseña</h3></div>
-              {loginError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm text-center font-medium">{loginError}</div>}
-              <div>
-                <label className="block text-sm font-semibold mb-1">Usuario</label>
-                <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full border rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-indigo-500" required />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold mb-1">Nueva Contraseña</label>
-                <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full border rounded-xl p-3 bg-gray-50 focus:ring-2 focus:ring-indigo-500" required minLength={3} />
-              </div>
-              <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition-colors">Guardar</button>
-              <div className="text-center mt-4">
-                <button type="button" onClick={() => { setIsResettingPassword(false); setLoginError(''); }} className="text-sm text-gray-500 font-medium">Volver</button>
-              </div>
-            </form>
-          )}
-
-          {/* RESTAURACIÓN DEL MANUAL DE CUENTAS DE PRUEBA EN LOGIN */}
-          <div className="mt-8 border-t border-gray-100 pt-5">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h4 className="text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide flex items-center">
-                <Users className="w-4 h-4 mr-1.5 text-gray-500"/> Usuarios Registrados
-              </h4>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Supervisión (Admin): <strong className="text-indigo-600">admin</strong> / 123 <br/>
-                Operativo Limpieza: <strong className="text-indigo-600">carlos</strong> / 123 <br/>
-                Operativo Enfermería: <strong className="text-indigo-600">ana</strong> / 123 <br/>
-                Operativo Mantenimiento: <strong className="text-indigo-600">luis</strong> / 123
-              </p>
+          <form onSubmit={handleLoginSubmit} className="space-y-5">
+            {loginError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm text-center font-medium border border-rose-100">{loginError}</div>}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Usuario</label>
+              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 outline-none" placeholder="Tu nombre de usuario" required />
             </div>
-          </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
+              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 outline-none" placeholder="••••••••" required />
+            </div>
+            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors mt-2">Iniciar Sesión Segura</button>
+          </form>
         </div>
       </div>
     );
@@ -1308,46 +1410,67 @@ export default function App() {
 
   const userNotifs = notifications.filter(n => n.userId === currentUser.id);
   const unreadNotifs = userNotifs.filter(n => !n.read).length;
+  const realCurrentUser = users.find(u => u.id === currentUser.id) || currentUser;
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-10">
-      <header className="bg-indigo-900 text-white shadow-md relative z-30">
+      <header className="bg-white text-gray-800 shadow-sm border-b border-gray-200 relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
+            
             <div className="flex items-center space-x-3 mb-3 md:mb-0">
-              <Activity className="w-8 h-8 text-indigo-300" />
-              <span className="font-bold text-xl tracking-tight">MediRoom Control</span>
+              {appSettings.logoUrl ? (
+                <img src={appSettings.logoUrl} alt="Logo" className="h-8 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              ) : (
+                <Activity className="w-8 h-8 text-indigo-600" />
+              )}
+              <span className="font-bold text-xl tracking-tight text-indigo-900 hidden sm:block">{appSettings.appName}</span>
             </div>
             
             <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
               <nav className="flex flex-wrap justify-center space-x-1">
                 {currentUser.role === 'admin' && (
-                  <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'dashboard' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                  <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'dashboard' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                     <LayoutDashboard className="w-4 h-4 mr-1.5" /> Tablero
                   </button>
                 )}
-                <button onClick={() => setActiveTab('tasks')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'tasks' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                <button onClick={() => setActiveTab('tasks')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'tasks' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                   <ListTodo className="w-4 h-4 mr-1.5" /> Tareas
                 </button>
                 {currentUser.role === 'admin' && (
                   <>
-                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
                     </button>
-                    <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                    <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                       <Settings className="w-4 h-4 mr-1.5" /> Config
                     </button>
                   </>
                 )}
-                {/* NUEVA PESTAÑA DE MANUAL */}
-                <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-800' : 'text-indigo-200 hover:bg-indigo-800/50'}`}>
+                <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
                   <FileText className="w-4 h-4 mr-1.5" /> Manual
                 </button>
               </nav>
 
-              <div className="flex items-center space-x-4 border-l border-indigo-700 pl-4">
+              <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
+                
+                {/* STATUS BAR (Control de Horas) */}
+                <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
+                  <div className={`w-2 h-2 rounded-full ml-2 ${realCurrentUser.currentStatus === 'Disponible' ? 'bg-emerald-500' : realCurrentUser.currentStatus === 'Desconectado' ? 'bg-gray-400' : 'bg-amber-500'}`}></div>
+                  <select 
+                    value={realCurrentUser.currentStatus || 'Disponible'} 
+                    onChange={(e) => handleUserStatusChange(currentUser.id, e.target.value)}
+                    className="bg-transparent border-none text-xs font-bold text-gray-700 focus:ring-0 cursor-pointer outline-none pl-1 pr-2"
+                  >
+                    <option value="Disponible">Disponible</option>
+                    {appSettings.breakTypes?.map(b => (
+                      <option key={b.id} value={b.name}>{b.name}</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="relative">
-                  <button onClick={() => { setIsNotifOpen(!isNotifOpen); markNotificationsAsRead(); }} className="text-indigo-200 hover:text-white transition-colors relative">
+                  <button onClick={() => { setIsNotifOpen(!isNotifOpen); markNotificationsAsRead(); }} className="text-gray-500 hover:text-indigo-600 transition-colors relative">
                     <Bell className="w-6 h-6" />
                     {unreadNotifs > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadNotifs}</span>}
                   </button>
@@ -1369,10 +1492,10 @@ export default function App() {
 
                 <div className="flex items-center space-x-3 text-sm">
                   <div className="text-right hidden sm:block">
-                    <p className="font-bold text-white leading-tight">{currentUser.name}</p>
-                    <p className="text-indigo-300 text-xs">{currentUser.role === 'admin' ? 'Supervisor' : currentUser.dept}</p>
+                    <p className="font-bold text-gray-800 leading-tight">{currentUser.name}</p>
+                    <p className="text-gray-500 text-xs">{currentUser.role === 'admin' ? 'Supervisor' : currentUser.dept}</p>
                   </div>
-                  <button onClick={() => setCurrentUser(null)} className="p-1.5 bg-indigo-800 hover:bg-rose-600 rounded-lg text-indigo-200 hover:text-white" title="Cerrar Sesión">
+                  <button onClick={handleLogout} className="p-2 bg-gray-100 hover:bg-rose-100 text-gray-600 hover:text-rose-600 rounded-lg transition-colors" title="Cerrar Sesión">
                     <LogOut className="w-5 h-5" />
                   </button>
                 </div>
@@ -1390,17 +1513,19 @@ export default function App() {
           <TasksTab tasks={tasks} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
         )}
         {activeTab === 'reports' && currentUser.role === 'admin' && (
-          <ReportsTab tasks={tasks} users={users} slas={slas} />
+          <ReportsTab tasks={tasks} users={users} slas={slas} userLogs={userLogs} />
         )}
         {activeTab === 'config' && currentUser.role === 'admin' && (
-          <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} currentUser={currentUser}
+          <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} appSettings={appSettings} currentUser={currentUser}
             onUpdateSla={async (dept: string, val: string) => setDoc(getDocRef('h_slas', 'main'), { [dept]: parseInt(val) || 0 }, { merge: true })}
-            onAddRoom={async (id: string, area: string) => { if(id && !rooms.some(r=>r.id===id)) setDoc(getDocRef('h_rooms', id), { id, name: `Hab. ${id}`, area, status: ROOM_STATUS.DISPONIBLE }) }}
+            onAddRoom={async (id: string, area: string, clinic: string) => { if(id && !rooms.some(r=>r.id===id)) setDoc(getDocRef('h_rooms', id), { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE }) }}
             onRemoveRoom={(id: string) => deleteDoc(getDocRef('h_rooms', id))}
             onAddUser={async (userData: any) => setDoc(getDocRef('h_users', `u_${Date.now()}`), { id: `u_${Date.now()}`, ...userData })}
             onRemoveUser={async (id: string) => { await deleteDoc(getDocRef('h_users', id)); await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>setDoc(getDocRef('h_tasks', t.id), {assignedTo: null}, {merge:true}))) }}
             onAddChecklist={async (q: string, c: string, d: string) => { if(q) { const id=Date.now().toString(); setDoc(getDocRef('h_checklistItems', id), {id, category: c, question: q, dept: d}) } }}
             onRemoveChecklist={(id: string) => deleteDoc(getDocRef('h_checklistItems', id))}
+            onUpdateUserPassword={handleUpdateUserPassword}
+            onUpdateSettings={async (settings: any) => setDoc(getDocRef('h_settings', 'main'), settings, {merge:true})}
           />
         )}
         {activeTab === 'manual' && <ManualTab />}
@@ -1409,18 +1534,18 @@ export default function App() {
       {/* Modal de Detalles de Habitación */}
       {selectedRoom && !isChecklistModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="bg-indigo-600 p-4 flex justify-between items-center text-white rounded-t-2xl">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
               <h3 className="font-bold text-lg">{selectedRoom.name}</h3>
               <button onClick={() => setSelectedRoom(null)} className="hover:bg-indigo-700 p-1 rounded-full"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-6 space-y-6">
               <div className="text-center">
                 <span className="text-sm text-gray-500 uppercase tracking-wide font-bold">Estado Actual</span>
-                <p className="text-lg font-semibold text-indigo-900 mt-1">{selectedRoom.status}</p>
-                <p className="text-sm text-gray-600">{selectedRoom.area}</p>
+                <p className="text-xl font-bold text-indigo-900 mt-1">{selectedRoom.status}</p>
+                <p className="text-sm text-gray-600 mt-1">{selectedRoom.clinic} - {selectedRoom.area}</p>
               </div>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-3 pt-4 border-t">
                 {selectedRoom.status === ROOM_STATUS.OCUPADA && (
                   <button onClick={() => handleVacateRoom(selectedRoom.id)} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-sm">Desocupar Habitación</button>
                 )}
@@ -1434,7 +1559,20 @@ export default function App() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
                     <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                     <p className="text-blue-800 font-medium text-sm">Acondicionando habitación.</p>
-                    <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 text-sm font-bold underline hover:text-blue-900">Ver tareas</button>
+                    <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 text-sm font-bold underline hover:text-blue-900 block w-full">Ver tareas en curso</button>
+                    
+                    {/* BOTÓN DE RESPALDO PARA ADMIN */}
+                    {currentUser?.role === 'admin' && (
+                      <button 
+                        onClick={async () => {
+                          await setDoc(getDocRef('h_rooms', selectedRoom.id), { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+                          setSelectedRoom(null);
+                        }} 
+                        className="mt-4 w-full bg-white border border-blue-300 hover:bg-blue-100 text-blue-700 text-sm font-bold py-2 rounded-lg transition-colors"
+                      >
+                        Forzar Desbloqueo (Admin)
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
