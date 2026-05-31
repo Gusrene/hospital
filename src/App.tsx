@@ -12,7 +12,7 @@ import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, 
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 // --- 2. CONFIGURACIÓN DE FIREBASE ---
-// ⚠️ ATENCIÓN: REEMPLAZA ESTO CON LOS DATOS DE TU PROYECTO DE FIREBASE
+// ⚠️ TUS CREDENCIALES REALES YA ESTÁN AQUÍ
 const defaultFirebaseConfig = {
   apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
   authDomain: "mediroom-eb9ef.firebaseapp.com",
@@ -95,7 +95,7 @@ interface Slas {
   [key: string]: number;
 }
 
-// --- 4. CONSTANTES Y MOCKS BETY ---
+// --- 4. CONSTANTES Y MOCKS ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
   LIMPIEZA: 'Limpieza',
@@ -748,6 +748,7 @@ const ConfigTab = ({
   );
 };
 
+// === AQUÍ ESTÁ EL WIZARD CON OBLIGATORIEDAD ===
 const ChecklistModal = ({ 
   isOpen, onClose, selectedRoom, checklistItems, onSubmit 
 }: { 
@@ -764,8 +765,7 @@ const ChecklistModal = ({
 
   useEffect(() => {
     if (isOpen) {
-      // INICIO MODIFICADO: Ya no pre-llenamos las respuestas con 'true'
-      setAnswers({});
+      setAnswers({}); // Se inicia vacío, obligando a responder
       setComentarios('');
       setUrgente('');
       setCurrentStep(0); // Reiniciar al primer paso al abrir
@@ -778,7 +778,7 @@ const ChecklistModal = ({
   const currentCategory = isFinalStep ? 'Observaciones Finales' : categories[currentStep];
   const currentItems = isFinalStep ? [] : checklistItems.filter(item => (item.category || 'General') === currentCategory);
 
-  // NUEVO: Verificamos si todas las preguntas de la vista actual tienen una respuesta (true o false)
+  // Verificamos si todas las preguntas de la vista actual tienen una respuesta (true o false)
   const isCurrentStepComplete = isFinalStep || currentItems.every(item => answers[item.id] !== undefined);
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
