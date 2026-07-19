@@ -114,14 +114,25 @@ const FilterIcon = ({ className }: { className?: string }) => (
     <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
-
+const Camera = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" />
+  </svg>
+);
+const Edit2 = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </svg>
+);
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
-// --- 2. CONFIGURACIÓN DE FIREBASE ---
+// --- DECLARACIÓN GLOBAL DE 'w' (window) PARA EVITAR REFERENCE_ERROR ---
+const w = typeof window !== 'undefined' ? (window as any) : {} as any;
+
 const defaultFirebaseConfig = {
   apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
   authDomain: "mediroom-eb9ef.firebaseapp.com",
@@ -132,34 +143,11 @@ const defaultFirebaseConfig = {
   appId: "1:313648219875:web:ad87f0fcc6c714844227d6"
 };
 
-// --- DECLARACIÓN GLOBAL DE 'w' (window) PARA EVITAR REFERENCE_ERROR ---
-const w = typeof window !== 'undefined' ? (window as any) : {} as any;
+const isLocalDev = typeof window !== 'undefined' && !!(window as any).__firebase_config;
+const firebaseConfig = isLocalDev ? JSON.parse((window as any).__firebase_config) : defaultFirebaseConfig;
 
-// --- INICIALIZACIÓN ULTRA SEGURA DE VARIABLES GLOBALES ---
-const getFirebaseConfig = () => {
-  if (w && w.__firebase_config) {
-    if (typeof w.__firebase_config === 'object') {
-      return w.__firebase_config;
-    }
-    try {
-      return JSON.parse(w.__firebase_config);
-    } catch (e) {
-      console.error("Error al procesar __firebase_config:", e);
-    }
-  }
-  return defaultFirebaseConfig;
-};
-
-const getSafeAppId = () => {
-  const rawAppId = (w && w.__app_id) || 'hospital-manager-app';
-  if (typeof rawAppId === 'string') {
-    return rawAppId.split('_src')[0].split('/')[0];
-  }
-  return 'hospital-manager-app';
-};
-
-const firebaseConfig = getFirebaseConfig();
-const safeAppId = getSafeAppId();
+const rawAppId = (typeof window !== 'undefined' && (window as any).__app_id) || 'hospital-manager-app';
+const safeAppId = rawAppId.split('_src')[0].split('/')[0];
 
 let app: any = null, auth: any = null, db: any = null;
 let firebaseError = false;
@@ -176,7 +164,6 @@ try {
   firebaseError = true;
 }
 
-// Envolturas de seguridad para las referencias de Firestore
 const getColRef = (colName: string) => {
   if (!db) return null;
   return collection(db, 'artifacts', safeAppId, 'public', 'data', colName);
@@ -215,6 +202,7 @@ interface Task {
   createdAt: number;
   completedAt?: number;
   assignedTo: string | null;
+  evidenceImage?: string; 
 }
 
 interface ChecklistItem {
@@ -246,7 +234,20 @@ interface UserLog {
   timestamp: number;
 }
 
-// --- 4. CONSTANTES Y CONFIGURACIONES ---
+interface ChecklistEvaluation {
+  id: string;
+  roomId: string;
+  roomName: string;
+  createdAt: number;
+  createdBy: string;
+  answers: Record<string, boolean>;
+  evidenceImages: Record<string, string>; 
+  comentarios: string;
+  urgente: string;
+  urgenteImage?: string;
+}
+
+// --- 4. CONSTANTES Y MOCKS ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
   LIMPIEZA: 'Limpieza',
@@ -279,58 +280,19 @@ const INITIAL_CHECKLIST: ChecklistItem[] = [
   { id: 'p1', category: 'Paredes', question: 'Sin suciedad', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'p2', category: 'Paredes', question: 'Pintura en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'p3', category: 'Paredes', question: 'Sin grietas', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'p4', category: 'Paredes', question: 'Sin humedad', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'pu1', category: 'Puertas', question: 'Sin daños', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'pu2', category: 'Puertas', question: 'Limpias', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'pu3', category: 'Puertas', question: 'Sin desgaste excesivo', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'z1', category: 'Zócalos y Scrach', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'z2', category: 'Zócalos y Scrach', question: 'Sin rajaduras', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'z3', category: 'Zócalos y Scrach', question: 'Pintura en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'e1', category: 'Sistema Eléctrico', question: 'Luces funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'e2', category: 'Sistema Eléctrico', question: 'Tomacorrientes funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'e3', category: 'Sistema Eléctrico', question: 'Switches funcionando', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'e4', category: 'Sistema Eléctrico', question: 'Pera de llamado funcionando', dept: DEPARTMENTS.ENFERMERIA },
   { id: 'pi1', category: 'Piso Habitación y Baño', question: 'Sin manchas', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'pi2', category: 'Piso Habitación y Baño', question: 'Sin rayones', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'pi3', category: 'Piso Habitación y Baño', question: 'Limpio', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'pi4', category: 'Piso Habitación y Baño', question: 'Sin cerámicas quebradas', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'pi5', category: 'Piso Habitación y Baño', question: 'Sin humedad', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'v1', category: 'Vidrios / Cedazos', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'v2', category: 'Vidrios / Cedazos', question: 'Sin daños', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'v3', category: 'Vidrios / Cedazos', question: 'Sin rajaduras', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 's1', category: 'Sillones y Sillas', question: 'Limpias', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 's2', category: 'Sillones y Sillas', question: 'Sin manchas', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 's3', category: 'Sillones y Sillas', question: 'Tapicería en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 's4', category: 'Sillones y Sillas', question: 'Madera en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'c1', category: 'Cuadro', question: 'Está limpio', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'c2', category: 'Cuadro', question: 'Está alineado', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 't1', category: 'Teléfono', question: 'Limpieza general', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 't2', category: 'Teléfono', question: 'Estructura limpia', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 't3', category: 'Teléfono', question: 'Base en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'tv1', category: 'Televisores y Controles', question: 'Funciona', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'tv2', category: 'Televisores y Controles', question: 'Tiene control remoto', dept: DEPARTMENTS.ENFERMERIA },
-  { id: 'tv3', category: 'Televisores y Controles', question: 'Acceso a cable', dept: DEPARTMENTS.MANTENIMIENTO },
   { id: 'b1', category: 'Limpieza de Baño', question: 'Grifería limpia y sin sarro', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'b2', category: 'Limpieza de Baño', question: 'Espejo limpio', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'b3', category: 'Limpieza de Baño', question: 'Cortina limpia', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'b4', category: 'Limpieza de Baño', question: 'Antiresbalante en buen estado', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'b5', category: 'Limpieza de Baño', question: 'Sin fugas de agua', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'b6', category: 'Limpieza de Baño', question: 'Limpieza general de blancos', dept: DEPARTMENTS.LIMPIEZA },
   { id: 'in1', category: 'Insumos de Baño', question: 'Hay Papel Higiénico', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'in2', category: 'Insumos de Baño', question: 'Hay Servilletas de mano', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'in3', category: 'Insumos de Baño', question: 'Hay Jabón', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'in4', category: 'Insumos de Baño', question: 'Hay Serchas', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'in5', category: 'Insumos de Baño', question: 'Hay Ambientador', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'bio1', category: 'Bolsa de Bioseguridad', question: 'Bolsa Roja colocada', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'bio2', category: 'Bolsa de Bioseguridad', question: 'Bolsa Negra colocada', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'bio3', category: 'Bolsa de Bioseguridad', question: 'Basureros en buen estado', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'a1', category: 'Aire Acondicionado', question: 'Limpieza de rejillas/equipo', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'a2', category: 'Aire Acondicionado', question: 'Funciona', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'a3', category: 'Aire Acondicionado', question: 'Cuenta con control remoto', dept: DEPARTMENTS.ENFERMERIA },
-  { id: 'm1', category: 'Muebles', question: 'Limpios', dept: DEPARTMENTS.LIMPIEZA },
-  { id: 'm2', category: 'Muebles', question: 'Pintura/Barniz sin falta de retoque', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'm3', category: 'Muebles', question: 'Sin daños estructurales', dept: DEPARTMENTS.MANTENIMIENTO },
-  { id: 'caj1', category: 'Cajilla de Seguridad', question: 'Funciona correctamente', dept: DEPARTMENTS.MANTENIMIENTO },
+  { id: 'in2', category: 'Insumos de Baño', question: 'Hay Jabón', dept: DEPARTMENTS.LIMPIEZA },
 ];
 
 const INITIAL_ROOMS: Room[] = [
@@ -347,7 +309,33 @@ const INITIAL_USERS: AppUser[] = [
   { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff', currentStatus: 'Desconectado' },
 ];
 
-// --- 5. COMPONENTES EXTRAÍDOS ---
+const compressImageBase64 = (file: File, callback: (base64: string) => void) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = (event) => {
+    const img = new window.Image();
+    img.src = event.target?.result as string;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 450;
+      const MAX_HEIGHT = 450;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+      } else {
+        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+      callback(dataUrl);
+    };
+  };
+};
 
 const getMinutesDifference = (start: number, end: number) => {
   if (!start || !end) return 0;
@@ -359,14 +347,15 @@ const formatTime = (timestamp: number) => {
   return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(timestamp));
 };
 
+// --- COMPONENTES PRINCIPALES ---
 const DashboardTab = ({ 
-  rooms, tasks, currentUser, onSelectRoom, onOpenChecklist 
+  rooms, tasks, currentUser, onSelectRoom, onOpenChecklist, clinics 
 }: { 
-  rooms: Room[], tasks: Task[], currentUser: AppUser, onSelectRoom: (r: Room) => void, onOpenChecklist: () => void 
+  rooms: Room[], tasks: Task[], currentUser: AppUser, onSelectRoom: (r: Room) => void, onOpenChecklist: () => void, clinics: string[] 
 }) => {
   const [filterClinic, setFilterClinic] = useState('Todas');
   
-  const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
+  const clinicsList = clinics || ['Sede Central'];
   const filteredRooms = useMemo(() => filterClinic === 'Todas' ? rooms : rooms.filter(r => r.clinic === filterClinic), [rooms, filterClinic]);
 
   const stats = useMemo(() => ({
@@ -458,7 +447,7 @@ const DashboardTab = ({
               
               {room.status === ROOM_STATUS.MANTENIMIENTO && (
                 <p className="text-sm font-medium text-blue-600 mt-2">
-                  {tasks.filter(t => t.roomId === room.id && t.status !== 'Completada').length} tareas pendientes
+                  {tasks.filter(t => t.roomId === room.id && t.status !== 'Completada').length} Tareas Pendientes
                 </p>
               )}
 
@@ -483,11 +472,22 @@ const DashboardTab = ({
   );
 };
 
+interface TaskColumnProps {
+  deptName: string;
+  icon: React.ReactNode;
+  colorClass: string;
+  tasks: Task[];
+  users: AppUser[];
+  currentUser: AppUser;
+  slas: Record<string, number>;
+  onAssign: (id: string, uid: string) => void;
+  onComplete: (id: string) => void;
+  onViewImage: (src: string) => void;
+}
+
 const TaskColumn = ({ 
-  deptName, icon, colorClass, tasks, users, currentUser, slas, onAssign, onComplete 
-}: { 
-  deptName: string, icon: React.ReactNode, colorClass: string, tasks: Task[], users: AppUser[], currentUser: AppUser, slas: Record<string, number>, onAssign: (id: string, uid: string) => void, onComplete: (id: string) => void 
-}) => {
+  deptName, icon, colorClass, tasks, users, currentUser, slas, onAssign, onComplete, onViewImage 
+}: TaskColumnProps) => {
   const pendingTasks = tasks.filter(t => t.status !== 'Completada');
   const deptTasks = pendingTasks.filter(t => t.dept === deptName);
   
@@ -520,7 +520,19 @@ const TaskColumn = ({
                     <Clock className="w-3 h-3 mr-1" /> SLA: {slaMinutes}m
                   </span>
                 </div>
-                <p className={`text-sm mb-4 ${isUrgent ? 'font-bold text-rose-800' : 'text-gray-700'}`}>{task.description}</p>
+                <p className={`text-sm mb-2 ${isUrgent ? 'font-bold text-rose-800' : 'text-gray-700'}`}>{task.description}</p>
+                
+                {task.evidenceImage && (
+                  <div className="mb-3">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Evidencia:</p>
+                    <img 
+                      src={task.evidenceImage} 
+                      alt="Falla" 
+                      onClick={() => onViewImage(task.evidenceImage!)}
+                      className="h-20 w-24 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
+                    />
+                  </div>
+                )}
                 
                 <div className="mb-4">
                   {currentUser?.role === 'admin' ? (
@@ -558,23 +570,19 @@ const TaskColumn = ({
   );
 };
 
-const TasksTab = ({ tasks, rooms, users, currentUser, slas, onAssign, onComplete }: any) => {
+const TasksTab = ({ tasks, rooms, users, currentUser, slas, onAssign, onComplete, onViewImage, clinics }: any) => {
   const [filterClinic, setFilterClinic] = useState('Todas');
   const [filterUser, setFilterUser] = useState('Todos');
   const [searchRoom, setSearchRoom] = useState('');
 
-  // Clínicas únicas disponibles en las habitaciones
-  const clinicsList = useMemo(() => Array.from(new Set(rooms.map((r: any) => r.clinic || 'Sede Central'))), [rooms]);
+  const clinicsList = clinics || ['Sede Central'];
 
-  // Filtrar tareas basándonos en la clínica de su habitación asignada, el usuario y la búsqueda
   const filteredTasks = useMemo(() => {
     return tasks.filter((task: Task) => {
       const room = rooms.find((r: Room) => r.id === task.roomId);
-      
       const matchesClinic = filterClinic === 'Todas' || (room && room.clinic === filterClinic);
       const matchesUser = filterUser === 'Todos' || task.assignedTo === filterUser || (filterUser === 'unassigned' && !task.assignedTo);
       const matchesRoom = !searchRoom.trim() || task.roomId.toLowerCase().includes(searchRoom.toLowerCase().trim());
-      
       return matchesClinic && matchesUser && matchesRoom;
     });
   }, [tasks, rooms, filterClinic, filterUser, searchRoom]);
@@ -586,58 +594,46 @@ const TasksTab = ({ tasks, rooms, users, currentUser, slas, onAssign, onComplete
           <ListTodo className="w-6 h-6 mr-2 text-indigo-600"/> Tareas Activas y SLAs
         </h2>
         
-        {/* Barra de Filtros */}
         <div className="flex flex-wrap items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-sm">
           <div className="flex items-center space-x-1">
             <FilterIcon className="w-4 h-4 text-gray-400" />
             <span className="text-xs font-bold text-gray-500 uppercase">Filtros:</span>
           </div>
           
-          <select 
-            value={filterClinic} 
-            onChange={e => setFilterClinic(e.target.value)} 
-            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500"
-          >
+          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
             <option value="Todas">Todas las Clínicas</option>
             {clinicsList.map((c: any) => <option key={c} value={c}>{c}</option>)}
           </select>
 
-          <select 
-            value={filterUser} 
-            onChange={e => setFilterUser(e.target.value)} 
-            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500"
-          >
+          <select value={filterUser} onChange={e => setFilterUser(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
             <option value="Todos">Todos los Responsables</option>
             <option value="unassigned">Sin Asignar</option>
             {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
 
-          <input 
-            type="text" 
-            placeholder="Habitación (ej. 101)" 
-            value={searchRoom}
-            onChange={e => setSearchRoom(e.target.value)}
-            className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 w-36"
-          />
+          <input type="text" placeholder="Habitación (ej. 101)" value={searchRoom} onChange={e => setSearchRoom(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 w-36"/>
         </div>
       </div>
       
       <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
         {currentUser?.role === 'admin' && (
-          <TaskColumn deptName={DEPARTMENTS.ADMIN} icon={<AlertTriangle className="w-5 h-5"/>} colorClass="text-rose-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+          <TaskColumn deptName={DEPARTMENTS.ADMIN} icon={<AlertTriangle className="w-5 h-5"/>} colorClass="text-rose-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} onViewImage={onViewImage} />
         )}
-        <TaskColumn deptName={DEPARTMENTS.LIMPIEZA} icon={<Droplets className="w-5 h-5"/>} colorClass="text-blue-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
-        <TaskColumn deptName={DEPARTMENTS.MANTENIMIENTO} icon={<Wrench className="w-5 h-5"/>} colorClass="text-amber-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
-        <TaskColumn deptName={DEPARTMENTS.ENFERMERIA} icon={<Activity className="w-5 h-5"/>} colorClass="text-indigo-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} />
+        <TaskColumn deptName={DEPARTMENTS.LIMPIEZA} icon={<Droplets className="w-5 h-5"/>} colorClass="text-blue-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} onViewImage={onViewImage} />
+        <TaskColumn deptName={DEPARTMENTS.MANTENIMIENTO} icon={<Wrench className="w-5 h-5"/>} colorClass="text-amber-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} onViewImage={onViewImage} />
+        <TaskColumn deptName={DEPARTMENTS.ENFERMERIA} icon={<Activity className="w-5 h-5"/>} colorClass="text-indigo-500" tasks={filteredTasks} users={users} currentUser={currentUser} slas={slas} onAssign={onAssign} onComplete={onComplete} onViewImage={onViewImage} />
       </div>
     </div>
   );
 };
 
-const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], rooms: Room[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[] }) => {
-  const [reportView, setReportView] = useState<'tareas' | 'asistencia'>('tareas');
+const ReportsTab = ({ 
+  tasks, rooms, users, slas, userLogs, evaluations, checklistItems, onViewImage, clinics 
+}: { 
+  tasks: Task[], rooms: Room[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[], evaluations: ChecklistEvaluation[], checklistItems: ChecklistItem[], onViewImage: (src: string) => void, clinics: string[] 
+}) => {
+  const [reportView, setReportView] = useState<'tareas' | 'asistencia' | 'checklist'>('tareas');
   
-  // FILTROS DE TAREAS
   const [taskClinic, setTaskClinic] = useState('Todas');
   const [taskDept, setTaskDept] = useState('Todos');
   const [taskUser, setTaskUser] = useState('Todos');
@@ -646,30 +642,23 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
   const [taskStartDate, setTaskStartDate] = useState('');
   const [taskEndDate, setTaskEndDate] = useState('');
 
-  // FILTROS DE ASISTENCIA
   const [asistenciaUser, setAsistenciaUser] = useState('Todos');
   const [asistenciaAction, setAsistenciaAction] = useState('Todos');
   const [asistenciaMonth, setAsistenciaMonth] = useState('Todos');
   const [asistenciaStartDate, setAsistenciaStartDate] = useState('');
   const [asistenciaEndDate, setAsistenciaEndDate] = useState('');
 
+  const [evalRoomFilter, setEvalRoomFilter] = useState('Todos');
+  const [evalMonthFilter, setEvalMonthFilter] = useState('Todos');
+
   const monthsList = [
-    { val: '0', label: 'Enero' },
-    { val: '1', label: 'Febrero' },
-    { val: '2', label: 'Marzo' },
-    { val: '3', label: 'Abril' },
-    { val: '4', label: 'Mayo' },
-    { val: '5', label: 'Junio' },
-    { val: '6', label: 'Julio' },
-    { val: '7', label: 'Agosto' },
-    { val: '8', label: 'Septiembre' },
-    { val: '9', label: 'Octubre' },
-    { val: '10', label: 'Noviembre' },
-    { val: '11', label: 'Diciembre' },
+    { val: '0', label: 'Enero' }, { val: '1', label: 'Febrero' }, { val: '2', label: 'Marzo' },
+    { val: '3', label: 'Abril' }, { val: '4', label: 'Mayo' }, { val: '5', label: 'Junio' },
+    { val: '6', label: 'Julio' }, { val: '7', label: 'Agosto' }, { val: '8', label: 'Septiembre' },
+    { val: '9', label: 'Octubre' }, { val: '10', label: 'Noviembre' }, { val: '11', label: 'Diciembre' },
   ];
 
-  // Clínicas únicas
-  const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
+  const clinicsList = clinics || ['Sede Central'];
 
   const rawReportData = useMemo(() => {
     return tasks.map(task => {
@@ -681,7 +670,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
     });
   }, [tasks, slas]);
 
-  // Filtrado final de los datos de tareas incluyendo MES y RANGO DE DÍAS
   const filteredReportData = useMemo(() => {
     return rawReportData.filter(row => {
       const room = rooms.find(r => r.id === row.roomId);
@@ -694,11 +682,9 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
       else if (taskSlaFilter === 'Fallo') matchesSla = row.status === 'Completada' && row.cumplioSla === false;
       else if (taskSlaFilter === 'Pendiente') matchesSla = row.status === 'Pendiente';
 
-      // Filtro de Mes
       const taskDate = new Date(row.createdAt);
       const matchesMonth = taskMonth === 'Todos' || taskDate.getMonth().toString() === taskMonth;
 
-      // Filtro de Rango de Días
       let matchesRange = true;
       if (taskStartDate) {
         const start = new Date(taskStartDate + 'T00:00:00').getTime();
@@ -713,23 +699,19 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
     });
   }, [rawReportData, rooms, taskClinic, taskDept, taskUser, taskSlaFilter, taskMonth, taskStartDate, taskEndDate]);
 
-  // KPIs dinámicos calculados basándose únicamente en los datos filtrados en tiempo real (para evitar side-effects)
   const taskKPIs = useMemo(() => {
     let creadas = filteredReportData.length;
     let completadas = filteredReportData.filter(r => r.status === 'Completada').length;
     let dentroSla = filteredReportData.filter(r => r.status === 'Completada' && r.cumplioSla === true).length;
     let fueraSla = filteredReportData.filter(r => r.status === 'Completada' && r.cumplioSla === false).length;
     const porcenSla = completadas > 0 ? Math.round((dentroSla / completadas) * 100) : 0;
-
     return { creadas, completadas, porcenSla, fueraSla };
   }, [filteredReportData]);
 
-  // Filtrado final de la bitácora de asistencia incluyendo MES y RANGO DE DÍAS
   const filteredUserLogs = useMemo(() => {
     return userLogs.filter(log => {
       const matchesUser = asistenciaUser === 'Todos' || log.userId === asistenciaUser;
       const matchesAction = asistenciaAction === 'Todos' || log.action === asistenciaAction;
-
       const logDate = new Date(log.timestamp);
       const matchesMonth = asistenciaMonth === 'Todos' || logDate.getMonth().toString() === asistenciaMonth;
 
@@ -742,19 +724,25 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
         const end = new Date(asistenciaEndDate + 'T23:59:59').getTime();
         if (log.timestamp > end) matchesRange = false;
       }
-
       return matchesUser && matchesAction && matchesMonth && matchesRange;
     });
   }, [userLogs, asistenciaUser, asistenciaAction, asistenciaMonth, asistenciaStartDate, asistenciaEndDate]);
 
-  // ESTADÍSTICAS DEL TABLERO DE ASISTENCIA EN TIEMEMPO REAL
+  const filteredEvaluations = useMemo(() => {
+    return evaluations.filter(ev => {
+      const matchesRoom = evalRoomFilter === 'Todos' || ev.roomId === evalRoomFilter;
+      const date = new Date(ev.createdAt);
+      const matchesMonth = evalMonthFilter === 'Todos' || date.getMonth().toString() === evalMonthFilter;
+      return matchesRoom && matchesMonth;
+    });
+  }, [evaluations, evalRoomFilter, evalMonthFilter]);
+
   const attendanceStats = useMemo(() => {
     const totalRegistered = users.length;
     const activos = users.filter(u => u.currentStatus && u.currentStatus !== 'Desconectado').length;
     const disponibles = users.filter(u => u.currentStatus === 'Disponible').length;
     const descansos = users.filter(u => u.currentStatus && u.currentStatus !== 'Disponible' && u.currentStatus !== 'Desconectado').length;
     const offline = users.filter(u => !u.currentStatus || u.currentStatus === 'Desconectado').length;
-
     return { totalRegistered, activos, disponibles, descansos, offline };
   }, [users]);
 
@@ -766,15 +754,15 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
         <h2 className="text-xl font-bold text-gray-800 flex items-center">
           <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Módulo de Reportes y Bitácoras
         </h2>
-        <div className="flex bg-gray-200 p-1 rounded-xl">
+        <div className="flex flex-wrap bg-gray-200 p-1 rounded-xl gap-1">
           <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad (Tareas)</button>
           <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Control de Horas & Asistencia</button>
+          <button onClick={() => setReportView('checklist')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'checklist' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Auditoría de Checklists</button>
         </div>
       </div>
 
-      {reportView === 'tareas' ? (
+      {reportView === 'tareas' && (
         <>
-          {/* KPI Tareas */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
               <div>
@@ -808,7 +796,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
 
-          {/* Filtros del reporte de Tareas con MES y RANGO DE FECHAS */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
               <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Historial de Tareas
@@ -862,7 +849,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
 
-          {/* Tabla de reporte de Tareas */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
@@ -887,9 +873,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
                       <td className="p-4 font-bold text-gray-800">{row.roomId}</td>
                       <td className="p-4 text-gray-600">{row.dept}</td>
                       <td className="p-4 text-gray-700 max-w-xs truncate" title={row.description}>{row.description}</td>
-                      <td className="p-4 text-gray-600">
-                        {users.find(u => u.id === row.assignedTo)?.name || '-'}
-                      </td>
+                      <td className="p-4 text-gray-600">{users.find(u => u.id === row.assignedTo)?.name || '-'}</td>
                       <td className="p-4">
                         <div className="text-xs text-gray-500">
                           Creada: {formatTime(row.createdAt)} <br/>
@@ -920,9 +904,10 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
         </>
-      ) : (
+      )}
+
+      {reportView === 'asistencia' && (
         <>
-          {/* TABLERO DE CONTROL DE ASISTENCIA (KPIS Y TARJETAS EN TIEMPO REAL CON VIBRACIÓN DE COLOR) */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
               <div>
@@ -932,7 +917,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
               </div>
               <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600"><Users className="w-6 h-6"/></div>
             </div>
-            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
+            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between">
               <div>
                 <span className="text-xs font-semibold text-emerald-600 uppercase">Disponibles Ahora</span>
                 <p className="text-3xl font-extrabold text-emerald-700 mt-1">{attendanceStats.disponibles}</p>
@@ -940,7 +925,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
               </div>
               <div className="bg-emerald-100 p-3 rounded-xl text-emerald-700"><CheckCircle className="w-6 h-6"/></div>
             </div>
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between">
+            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
               <div>
                 <span className="text-xs font-semibold text-amber-600 uppercase">En Descanso / Receso</span>
                 <p className="text-3xl font-extrabold text-amber-700 mt-1">{attendanceStats.descansos}</p>
@@ -958,7 +943,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
 
-          {/* ESTADO EN VIVO DEL PERSONAL - REDISEÑO DE TABLERO MODERNIZADO */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
               <div>
@@ -1021,7 +1005,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
 
-          {/* Filtros de la Bitácora de Asistencia con MES y RANGOS */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
             <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
               <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Bitácora de Asistencia
@@ -1063,7 +1046,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
             </div>
           </div>
 
-          {/* Tabla de Logs de Asistencia */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <h3 className="font-bold text-gray-700">Bitácora Histórica de Asistencia</h3>
@@ -1108,40 +1090,135 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs }: { tasks: Task[], ro
           </div>
         </>
       )}
+
+      {reportView === 'checklist' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+              <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Auditoría de Evaluaciones
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Habitación</label>
+                <select value={evalRoomFilter} onChange={e => setEvalRoomFilter(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todas</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 mb-1">Filtrar por Mes</label>
+                <select value={evalMonthFilter} onChange={e => setEvalMonthFilter(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                  <option value="Todos">Todos</option>
+                  {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredEvaluations.sort((a,b) => b.createdAt - a.createdAt).map(ev => (
+              <div key={ev.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col space-y-4">
+                <div className="flex justify-between items-start border-b pb-3 border-gray-100">
+                  <div>
+                    <h3 className="font-bold text-gray-800 text-lg">{ev.roomName}</h3>
+                    <p className="text-xs text-gray-500">{new Date(ev.createdAt).toLocaleDateString('es-ES')} - {formatTime(ev.createdAt)}</p>
+                  </div>
+                  <span className="bg-indigo-50 text-indigo-700 text-xs font-bold px-3 py-1 rounded-md">Por: {ev.createdBy}</span>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Resultados de Evaluación / Evidencias:</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {Object.entries(ev.answers).map(([itemId, cumple]) => {
+                      const hasImage = ev.evidenceImages?.[itemId];
+                      if (cumple && !hasImage) return null; // Saltar elementos conformes que no tengan foto
+                      const qText = checklistItems.find(item => item.id === itemId)?.question || `Elemento ID: ${itemId}`;
+                      return (
+                        <div key={itemId} className={`p-3 border rounded-xl flex items-center justify-between gap-3 ${cumple ? 'bg-emerald-50/70 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                          <div className="flex-1">
+                            <p className={`text-xs font-bold ${cumple ? 'text-emerald-800' : 'text-rose-800'}`}>
+                              {cumple ? '✓ Cumple' : '✗ No Cumple'}
+                            </p>
+                            <p className="text-xs text-gray-700 font-medium">{qText}</p>
+                          </div>
+                          {hasImage && (
+                            <img 
+                              src={ev.evidenceImages[itemId]} 
+                              alt="Evidencia" 
+                              onClick={() => onViewImage(ev.evidenceImages[itemId])}
+                              className="w-12 h-12 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {ev.comentarios && (
+                  <div className="p-3 bg-gray-50 rounded-xl">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Comentario:</p>
+                    <p className="text-xs text-gray-700 italic">"{ev.comentarios}"</p>
+                  </div>
+                )}
+
+                {ev.urgente && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                    <p className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Urgente:</p>
+                    <p className="text-xs text-rose-800 font-bold mb-2">"{ev.urgente}"</p>
+                    {ev.urgenteImage && (
+                      <img 
+                        src={ev.urgenteImage} 
+                        alt="Urgente" 
+                        onClick={() => onViewImage(ev.urgenteImage!)}
+                        className="w-24 h-16 object-cover rounded-lg border border-rose-300 cursor-zoom-in"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+            {filteredEvaluations.length === 0 && (
+              <p className="text-center text-gray-500 py-10 col-span-full">No se encontraron evaluaciones registradas.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const ConfigTab = ({ 
   slas, rooms, users, checklistItems, appSettings, currentUser,
-  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings
+  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onAddChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings, onEditChecklist
 }: any) => {
-  // Estados para Habitaciones
   const [newRoomId, setNewRoomId] = useState('');
   const [newRoomArea, setNewRoomArea] = useState('General');
   const [newRoomClinic, setNewRoomClinic] = useState(appSettings?.clinics?.[0] || 'Sede Central');
   
-  // Estados para Usuarios
   const [newUserName, setNewUserName] = useState('');
   const [newUserLogin, setNewUserLogin] = useState('');
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserDept, setNewUserDept] = useState(DEPARTMENTS.LIMPIEZA);
   const [newUserRole, setNewUserRole] = useState<'staff' | 'admin'>('staff');
   const [userFormError, setUserFormError] = useState('');
+  
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [editPasswordValue, setEditPasswordValue] = useState('');
 
-  // Estados para Checklist
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editQuestionText, setEditQuestionText] = useState('');
+  const [editQuestionCategory, setEditQuestionCategory] = useState('');
+  const [editQuestionDept, setEditQuestionDept] = useState('');
+
   const [newQuestion, setNewQuestion] = useState('');
   const [newCategory, setNewCategory] = useState('Paredes');
   const [newDept, setNewDept] = useState(DEPARTMENTS.LIMPIEZA);
   
-  // Estados para App Settings
   const [appName, setAppName] = useState(appSettings?.appName || 'MediRoom Control');
   const [appLogo, setAppLogo] = useState(appSettings?.logoUrl || '');
   const [newClinic, setNewClinic] = useState('');
   
-  // Estados para Descansos
   const [newBreakName, setNewBreakName] = useState('');
   const [newBreakDuration, setNewBreakDuration] = useState('30');
 
@@ -1151,7 +1228,6 @@ const ConfigTab = ({
 
   const handleSaveSettings = () => {
     onUpdateSettings({ ...appSettings, appName, logoUrl: appLogo });
-    alert('Configuración guardada correctamente.');
   };
 
   const handleAddClinic = () => {
@@ -1197,6 +1273,20 @@ const ConfigTab = ({
     setEditingUserId(null);
   };
 
+  const handleStartEditChecklist = (item: ChecklistItem) => {
+    setEditingQuestionId(item.id);
+    setEditQuestionText(item.question);
+    setEditQuestionCategory(item.category);
+    setEditQuestionDept(item.dept);
+  };
+
+  const handleSaveEditChecklist = () => {
+    if (editingQuestionId && editQuestionText.trim()) {
+      onEditChecklist(editingQuestionId, editQuestionText, editQuestionCategory, editQuestionDept);
+      setEditingQuestionId(null);
+    }
+  };
+
   const groupedChecklist = checklistItems.reduce((acc: any, item: ChecklistItem) => {
     const cat = item.category || 'General';
     if (!acc[cat]) acc[cat] = [];
@@ -1206,8 +1296,6 @@ const ConfigTab = ({
 
   return (
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-500">
-      
-      {/* PERSONALIZACIÓN Y CLÍNICAS */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <Settings className="w-6 h-6 mr-2 text-gray-600"/> Personalización del Sistema
@@ -1241,7 +1329,6 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* CONFIGURACIÓN DE DESCANSOS */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
           <Clock className="w-6 h-6 mr-2 text-gray-600"/> Tipos de Descanso (Control de Asistencia)
@@ -1269,7 +1356,6 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* SLAs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <AlertTriangle className="w-6 h-6 mr-2 text-gray-600"/> Tiempos Máximos de Tarea (SLAs)
@@ -1287,7 +1373,6 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* Habitaciones */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
@@ -1320,7 +1405,6 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* Usuarios */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <Users className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Personal
@@ -1376,7 +1460,6 @@ const ConfigTab = ({
         </div>
       </div>
 
-      {/* Checklist */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
           <CheckSquare className="w-6 h-6 mr-2 text-gray-600"/> Gestión del Checklist (Formulario)
@@ -1394,15 +1477,61 @@ const ConfigTab = ({
         
         <div className="space-y-4">
           {Object.entries(groupedChecklist).map(([cat, items]: [string, any]) => (
-             <details key={cat} className="group border border-gray-200 rounded-lg bg-gray-50">
-               <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-800 marker:content-none">
+             <details key={cat} className="group border border-gray-200 rounded-lg bg-gray-50" open>
+               <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-800 marker:content-none hover:bg-gray-100/50">
                  {cat} <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
                </summary>
-               <div className="p-4 pt-0 space-y-2 bg-white border-t border-gray-200">
+               <div className="p-4 pt-2 space-y-3 bg-white border-t border-gray-200 rounded-b-xl">
                  {items.map((item: ChecklistItem) => (
-                   <div key={item.id} className="flex items-center justify-between p-2 border-b last:border-0">
-                     <div><p className="text-sm text-gray-800">{item.question}</p><span className="text-[10px] font-bold text-indigo-600 uppercase">{item.dept}</span></div>
-                     <button onClick={() => onRemoveChecklist(item.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg"><X className="w-4 h-4"/></button>
+                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg border gap-3">
+                     {editingQuestionId === item.id ? (
+                       <div className="flex-1 space-y-2">
+                         <input 
+                           type="text" 
+                           value={editQuestionText} 
+                           onChange={e => setEditQuestionText(e.target.value)} 
+                           className="w-full border rounded p-2 text-sm"
+                         />
+                         <div className="flex gap-2">
+                           <input 
+                             type="text" 
+                             value={editQuestionCategory} 
+                             onChange={e => setEditQuestionCategory(e.target.value)} 
+                             className="border rounded p-1 text-xs" 
+                             placeholder="Categoría"
+                           />
+                           <select 
+                             value={editQuestionDept} 
+                             onChange={e => setEditQuestionDept(e.target.value)} 
+                             className="border rounded p-1 text-xs bg-white"
+                           >
+                             {Object.values(DEPARTMENTS).filter(d => d !== DEPARTMENTS.ADMIN).map(dept => (
+                               <option key={dept} value={dept}>{dept}</option>
+                             ))}
+                           </select>
+                         </div>
+                       </div>
+                     ) : (
+                       <div>
+                         <p className="text-sm font-semibold text-gray-800">{item.question}</p>
+                         <span className="text-[10px] font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-0.5 rounded mr-2">{item.dept}</span>
+                         <span className="text-[10px] font-bold text-gray-500 uppercase bg-gray-100 px-2 py-0.5 rounded">{item.category}</span>
+                       </div>
+                     )}
+
+                     <div className="flex gap-2 justify-end">
+                       {editingQuestionId === item.id ? (
+                         <>
+                           <button onClick={handleSaveEditChecklist} className="bg-emerald-600 text-white font-bold text-xs py-1 px-3 rounded">Guardar</button>
+                           <button onClick={() => setEditingQuestionId(null)} className="bg-gray-200 text-gray-700 font-bold text-xs py-1 px-3 rounded">Cancelar</button>
+                         </>
+                       ) : (
+                         <>
+                           <button onClick={() => handleStartEditChecklist(item)} className="text-indigo-500 hover:text-indigo-700 p-1 bg-indigo-50 rounded-lg" title="Editar Pregunta"><Edit2 className="w-4 h-4"/></button>
+                           <button onClick={() => onRemoveChecklist(item.id)} className="text-rose-500 hover:text-rose-700 p-1 bg-rose-50 rounded-lg"><X className="w-4 h-4"/></button>
+                         </>
+                       )}
+                     </div>
                    </div>
                  ))}
                </div>
@@ -1414,25 +1543,28 @@ const ConfigTab = ({
   );
 };
 
-// === WIZARD DEL FORMULARIO DE CHECKLIST ===
 const ChecklistModal = ({ 
   isOpen, onClose, selectedRoom, checklistItems, onSubmit 
 }: { 
-  isOpen: boolean, onClose: () => void, selectedRoom: Room | null, checklistItems: ChecklistItem[], onSubmit: (answers: {[key: string]: boolean}, comentarios: string, urgente: string, room: Room) => void 
+  isOpen: boolean, onClose: () => void, selectedRoom: Room | null, checklistItems: ChecklistItem[], onSubmit: (answers: {[key: string]: boolean}, evidenceImages: {[key: string]: string}, comentarios: string, urgente: string, room: Room, urgenteImage?: string) => void 
 }) => {
   const [answers, setAnswers] = useState<{[key: string]: boolean}>({});
+  const [evidenceImages, setEvidenceImages] = useState<{[key: string]: string}>({});
   const [comentarios, setComentarios] = useState('');
   const [urgente, setUrgente] = useState('');
+  const [urgenteImage, setUrgenteImage] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
 
   const categories = Array.from(new Set(checklistItems.map((i: ChecklistItem) => i.category || 'General')));
-  const totalSteps = categories.length + 1; // +1 para la pestaña final de comentarios
+  const totalSteps = categories.length + 1; // +1 for comment tab
 
   useEffect(() => {
     if (isOpen) {
       setAnswers({}); 
+      setEvidenceImages({});
       setComentarios('');
       setUrgente('');
+      setUrgenteImage('');
       setCurrentStep(0); 
     }
   }, [isOpen, checklistItems]);
@@ -1447,6 +1579,24 @@ const ChecklistModal = ({
 
   const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
   const handlePrev = () => setCurrentStep(prev => Math.max(prev - 1, 0));
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, itemId: string) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      compressImageBase64(file, (base64) => {
+        setEvidenceImages(prev => ({ ...prev, [itemId]: base64 }));
+      });
+    }
+  };
+
+  const handleUrgenteFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      compressImageBase64(file, (base64) => {
+        setUrgenteImage(base64);
+      });
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -1474,19 +1624,56 @@ const ChecklistModal = ({
           {!isFinalStep ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
               <p className="text-sm text-blue-800 mb-4 bg-blue-50 p-4 rounded-xl border border-blue-200 font-medium shadow-sm">
-                Debe evaluar <strong>todos los elementos</strong> para continuar. Marque explícitamente "✓ Cumple" o "✗ No Cumple" según corresponda.
+                Debe evaluar <strong>todos los elementos</strong> para continuar. Marque "✓ Cumple" o "✗ No Cumple".
               </p>
               
               {currentItems.map((item: ChecklistItem) => (
-                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white rounded-xl border border-gray-200 gap-4 shadow-sm transition-all hover:border-indigo-300">
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-800 text-base">{item.question}</p>
-                    <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{item.dept}</span>
+                <div key={item.id} className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-indigo-300 transition-all flex flex-col space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-800 text-base">{item.question}</p>
+                      <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{item.dept}</span>
+                    </div>
+                    <div className="flex bg-gray-100 rounded-lg p-1 shrink-0 border border-gray-200 h-max self-end sm:self-center">
+                      <button onClick={() => setAnswers({...answers, [item.id]: true})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === true ? 'bg-white text-emerald-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✓ Cumple</button>
+                      <button onClick={() => setAnswers({...answers, [item.id]: false})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === false ? 'bg-white text-rose-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✗ No Cumple</button>
+                    </div>
                   </div>
-                  <div className="flex bg-gray-100 rounded-lg p-1 shrink-0 border border-gray-200">
-                    <button onClick={() => setAnswers({...answers, [item.id]: true})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === true ? 'bg-white text-emerald-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✓ Cumple</button>
-                    <button onClick={() => setAnswers({...answers, [item.id]: false})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === false ? 'bg-white text-rose-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✗ No Cumple</button>
-                  </div>
+                  
+                  {answers[item.id] !== undefined && (
+                    <div className="pt-2 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2.5 px-4 rounded-xl transition-colors w-max">
+                        <Camera className="w-4 h-4" />
+                        Tomar Foto / Subir Evidencia
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment" 
+                          className="hidden" 
+                          onChange={(e) => handleFileChange(e, item.id)} 
+                        />
+                      </label>
+                      {evidenceImages[item.id] && (
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={evidenceImages[item.id]} 
+                            alt="Evidencia" 
+                            className="w-12 h-12 object-cover rounded-lg border border-gray-300"
+                          />
+                          <button 
+                            onClick={() => {
+                              const newImages = { ...evidenceImages };
+                              delete newImages[item.id];
+                              setEvidenceImages(newImages);
+                            }}
+                            className="text-rose-600 hover:text-rose-800 text-xs font-bold"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1496,9 +1683,40 @@ const ChecklistModal = ({
                 <label className="block text-sm font-bold text-gray-700 mb-2">19. Comentario Adicional</label>
                 <textarea value={comentarios} onChange={e => setComentarios(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 min-h-[100px] bg-gray-50" placeholder="Observaciones generales acerca de la habitación..."></textarea>
               </div>
-              <div className="bg-rose-50 p-5 rounded-2xl shadow-sm border border-rose-200">
-                <label className="block text-sm font-bold text-rose-700 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
-                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 bg-white rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px]" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
+              <div className="bg-rose-50 p-5 rounded-2xl shadow-sm border border-rose-200 space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-rose-700 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
+                  <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 bg-white rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px]" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold py-2.5 px-4 rounded-xl transition-colors w-max">
+                    <Camera className="w-4 h-4" />
+                    Tomar Foto Evidencia Urgencia
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      className="hidden" 
+                      onChange={handleUrgenteFileChange} 
+                    />
+                  </label>
+                  {urgenteImage && (
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={urgenteImage} 
+                        alt="Urgente" 
+                        className="w-16 h-12 object-cover rounded-lg border border-rose-300"
+                      />
+                      <button 
+                        onClick={() => setUrgenteImage('')}
+                        className="text-rose-600 hover:text-rose-800 text-xs font-bold"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1514,7 +1732,7 @@ const ChecklistModal = ({
               Siguiente <ChevronRight className="w-5 h-5 ml-1" />
             </button>
           ) : (
-            <button onClick={() => onSubmit(answers, comentarios, urgente, selectedRoom)} className="px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-colors flex items-center">
+            <button onClick={() => onSubmit(answers, evidenceImages, comentarios, urgente, selectedRoom, urgenteImage)} className="px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-colors flex items-center">
               <CheckCircle className="w-5 h-5 mr-2"/> Finalizar
             </button>
           )}
@@ -1524,7 +1742,7 @@ const ChecklistModal = ({
   );
 };
 
-// === NUEVA PESTAÑA DE MANUAL DE USUARIO ===
+// === PESTAÑA DE MANUAL DE USUARIO ===
 const ManualTab = () => (
   <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
@@ -1577,16 +1795,30 @@ export default function App() {
   const [slas, setSlas] = useState<Record<string, number>>(INITIAL_SLAS);
   const [appSettings, setAppSettings] = useState<AppSettings>(INITIAL_SETTINGS);
   const [userLogs, setUserLogs] = useState<UserLog[]>([]);
+  const [evaluations, setEvaluations] = useState<ChecklistEvaluation[]>([]);
   
   // UI Modal State
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
+  // Visor de Imagen Pantalla Completa (Lightbox)
+  const [zoomImageSrc, setZoomImageSrc] = useState<string | null>(null);
+
+  // Notificación In-App Toast
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
   // Login State
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
 
   // Inicializar Firebase Auth
   useEffect(() => {
@@ -1666,6 +1898,13 @@ export default function App() {
           if (docR) setDoc(docR, c);
         });
         else setChecklistItems(items);
+      }, errHandler));
+    }
+
+    const evaluationsRef = getColRef('h_evaluations');
+    if (evaluationsRef) {
+      unsubs.push(onSnapshot(evaluationsRef, (s) => {
+        setEvaluations(s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistEvaluation)));
       }, errHandler));
     }
 
@@ -1770,24 +2009,33 @@ export default function App() {
     await Promise.all(promises);
   };
 
-  const handleChecklistSubmit = async (answers: {[key: string]: boolean}, comentarios: string, urgente: string, room: Room) => {
+  const handleChecklistSubmit = async (answers: {[key: string]: boolean}, evidenceImages: {[key: string]: string}, comentarios: string, urgente: string, room: Room, urgenteImage?: string) => {
     if (!db) return;
     const promises: Promise<void>[] = [];
     let roomNeedsTasks = false;
 
+    // 1. Guardar Tareas para fallas individuales
     checklistItems.forEach(item => {
       if (answers[item.id] === false) { 
         const taskId = `t_${Date.now()}_${item.id}`;
         const tRef = getDocRef('h_tasks', taskId);
         if (tRef) {
           promises.push(setDoc(tRef, {
-            id: taskId, roomId: room.id, dept: item.dept, description: `Fallo detectado: ${item.question} (${item.category})`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null
+            id: taskId, 
+            roomId: room.id, 
+            dept: item.dept, 
+            description: `Fallo detectado: ${item.question} (${item.category})`, 
+            status: 'Pendiente', 
+            createdAt: Date.now(), 
+            assignedTo: null,
+            evidenceImage: evidenceImages[item.id] || null // Guardar la imagen si existe
           }));
         }
         roomNeedsTasks = true;
       }
     });
 
+    // 2. Guardar comentarios/Notificaciones de Audit
     if (comentarios.trim()) {
       users.filter(u => u.role === 'admin').forEach((admin, i) => {
         const notRef = getDocRef('h_notifications', `n_${Date.now()}_${i}`);
@@ -1797,14 +2045,43 @@ export default function App() {
       });
     }
 
+    // 3. Registrar Tarea Urgente de Admin con su foto si aplica
     if (urgente.trim()) {
       const tRef = getDocRef('h_tasks', `t_${Date.now()}_u`);
       if (tRef) {
-        promises.push(setDoc(tRef, { id: `t_${Date.now()}_u`, roomId: room.id, dept: DEPARTMENTS.ADMIN, description: `🚨 URGENTE: ${urgente}`, status: 'Pendiente', createdAt: Date.now(), assignedTo: null }));
+        promises.push(setDoc(tRef, { 
+          id: `t_${Date.now()}_u`, 
+          roomId: room.id, 
+          dept: DEPARTMENTS.ADMIN, 
+          description: `🚨 URGENTE: ${urgente}`, 
+          status: 'Pendiente', 
+          createdAt: Date.now(), 
+          assignedTo: null,
+          evidenceImage: urgenteImage || null 
+        }));
       }
       roomNeedsTasks = true;
     }
 
+    // 4. Registrar Evaluación Histórica para Auditorías
+    const evalId = `ev_${Date.now()}`;
+    const evalRef = getDocRef('h_evaluations', evalId);
+    if (evalRef) {
+      promises.push(setDoc(evalRef, {
+        id: evalId,
+        roomId: room.id,
+        roomName: room.name,
+        createdAt: Date.now(),
+        createdBy: currentUser?.name || 'Supervisor',
+        answers,
+        evidenceImages,
+        comentarios,
+        urgente,
+        urgenteImage: urgenteImage || null
+      }));
+    }
+
+    // 5. Actualizar estado de habitación
     const rRef = getDocRef('h_rooms', room.id);
     if (rRef) {
       promises.push(setDoc(rRef, { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
@@ -1812,6 +2089,16 @@ export default function App() {
     await Promise.all(promises);
     setIsChecklistModalOpen(false);
     setSelectedRoom(null);
+    triggerToast("Evaluación del checklist guardada con éxito.");
+  };
+
+  const handleEditChecklistSubmit = async (id: string, text: string, category: string, dept: string) => {
+    if (!db) return;
+    const docR = getDocRef('h_checklistItems', id);
+    if (docR) {
+      await setDoc(docR, { question: text, category, dept }, { merge: true });
+      triggerToast("Pregunta del checklist actualizada correctamente.");
+    }
   };
 
   // --- LOGIN Y LOGOUT ---
@@ -1891,7 +2178,29 @@ export default function App() {
   const realCurrentUser = users.find(u => u.id === currentUser.id) || currentUser;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-10">
+    <div className="min-h-screen bg-slate-50 font-sans pb-10 relative">
+      
+      {/* Notificación Toast In-App */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 bg-indigo-900 text-white font-bold py-3.5 px-6 rounded-2xl shadow-2xl z-50 animate-bounce duration-500 border border-indigo-700 max-w-sm flex items-center space-x-2">
+          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Visor de Imagen / Lightbox */}
+      {zoomImageSrc && (
+        <div 
+          onClick={() => setZoomImageSrc(null)}
+          className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 cursor-zoom-out animate-in fade-in duration-300"
+        >
+          <img src={zoomImageSrc} alt="Zoom" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+          <button className="absolute top-5 right-5 text-white/70 hover:text-white p-3 bg-white/10 rounded-full">
+            <X className="w-8 h-8" />
+          </button>
+        </div>
+      )}
+
       <header className="bg-white text-gray-800 shadow-sm border-b border-gray-200 relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
@@ -1985,13 +2294,13 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'dashboard' && currentUser.role === 'admin' && (
-          <DashboardTab rooms={rooms} tasks={tasks} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
+          <DashboardTab rooms={rooms} tasks={tasks} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} clinics={appSettings.clinics} />
         )}
         {activeTab === 'tasks' && (
-          <TasksTab tasks={tasks} rooms={rooms} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} />
+          <TasksTab tasks={tasks} rooms={rooms} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} onViewImage={setZoomImageSrc} clinics={appSettings.clinics} />
         )}
         {activeTab === 'reports' && currentUser.role === 'admin' && (
-          <ReportsTab tasks={tasks} rooms={rooms} users={users} slas={slas} userLogs={userLogs} />
+          <ReportsTab tasks={tasks} rooms={rooms} users={users} slas={slas} userLogs={userLogs} evaluations={evaluations} checklistItems={checklistItems} onViewImage={setZoomImageSrc} clinics={appSettings.clinics} />
         )}
         {activeTab === 'config' && currentUser.role === 'admin' && (
           <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} appSettings={appSettings} currentUser={currentUser}
@@ -2003,7 +2312,8 @@ export default function App() {
             onAddChecklist={async (q: string, c: string, d: string) => { if(q && db) { const id=Date.now().toString(); await setDoc(getDocRef('h_checklistItems', id)!, {id, category: c, question: q, dept: d}) } }}
             onRemoveChecklist={(id: string) => { if (db) deleteDoc(getDocRef('h_checklistItems', id)!); }}
             onUpdateUserPassword={handleUpdateUserPassword}
-            onUpdateSettings={async (settings: any) => { if (db) await setDoc(getDocRef('h_settings', 'main')!, settings, {merge:true}) }}
+            onUpdateSettings={async (settings: any) => { if (db) { await setDoc(getDocRef('h_settings', 'main')!, settings, {merge:true}); triggerToast("Personalización guardada con éxito."); } }}
+            onEditChecklist={handleEditChecklistSubmit}
           />
         )}
         {activeTab === 'manual' && <ManualTab />}
