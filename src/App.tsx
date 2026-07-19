@@ -764,7 +764,9 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs }: { tasks
         <div className="flex bg-gray-200 p-1 rounded-xl">
           <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad</button>
           <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Asistencia</button>
-          <button onClick={() => setReportView('sistema')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'sistema' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Auditoría de Sistema</button>
+          <button onClick={() => setReportView('sistema')} className={`px-4 py-2 text-sm font-bold flex items-center rounded-lg transition-all ${reportView === 'sistema' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>
+            <ShieldCheck className="w-4 h-4 mr-1.5" /> Auditoría
+          </button>
         </div>
       </div>
 
