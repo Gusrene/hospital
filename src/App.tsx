@@ -739,8 +739,6 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, onViewImage }: { task
 
   const clinicsList = useMemo(() => Array.from(new Set(rooms.map(r => r.clinic || 'Sede Central'))), [rooms]);
 
-  const completedTasks = tasks.filter(t => t.status === 'Completada');
-
   const rawReportData = useMemo(() => {
     return tasks.map(task => {
       const isCompleted = task.status === 'Completada';
