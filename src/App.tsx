@@ -124,6 +124,11 @@ const CameraIcon = ({ className }: { className?: string }) => (
     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>
   </svg>
 );
+const DownloadIcon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
@@ -185,7 +190,7 @@ const getDocRef = (colName: string, docId: string) => {
   return doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
 };
 
-// --- 3. FUNCIONES DE IMÁGENES (COMPRESIÓN BASE64) ---
+// --- 3. COMPRESIÓN DE IMÁGENES ---
 const compressImage = (file: File, maxWidth: number = 800): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -403,8 +408,7 @@ const INITIAL_USERS: AppUser[] = [
   { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff', currentStatus: 'Desconectado' },
 ];
 
-// --- 6. COMPONENTES EXTRAÍDOS ---
-
+// --- 6. FUNCIONES DE AYUDA Y EXPORTACIÓN A EXCEL ---
 const getMinutesDifference = (start: number, end: number) => {
   if (!start || !end) return 0;
   return Math.round((end - start) / 60000);
@@ -415,6 +419,27 @@ const formatTime = (timestamp: number) => {
   return new Intl.DateTimeFormat('es-ES', { hour: '2-digit', minute: '2-digit' }).format(new Date(timestamp));
 };
 
+const exportToCSV = (data: any[], filename: string) => {
+  if (data.length === 0) return;
+  const header = Object.keys(data[0]);
+  const csv = [
+    header.join(','),
+    ...data.map(row => header.map(fieldName => `"${(row[fieldName] || '').toString().replace(/"/g, '""')}"`).join(','))
+  ].join('\r\n');
+
+  // El BOM '\uFEFF' fuerza a Excel a reconocer caracteres UTF-8 (Tildes, Ñ)
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+
+// --- 7. COMPONENTES EXTRAÍDOS ---
 const DashboardTab = ({ 
   rooms, tasks, currentUser, appSettings, onSelectRoom, onOpenChecklist 
 }: { 
@@ -663,6 +688,20 @@ const TasksTab = ({ tasks, appSettings, rooms, users, currentUser, slas, onAssig
     });
   }, [tasks, rooms, filterClinic, filterUser, searchRoom]);
 
+  const handleExportTasks = () => {
+    const exportData = filteredTasks.map((t: Task) => ({
+      'ID Tarea': t.id,
+      'Habitación': t.roomId,
+      'Sede/Clínica': rooms.find((r: Room) => r.id === t.roomId)?.clinic || '-',
+      'Departamento': t.dept,
+      'Descripción': t.description.replace(/(\r\n|\n|\r)/gm, " "), // Limpiar saltos de línea
+      'Estado': t.status,
+      'Fecha de Creación': new Date(t.createdAt).toLocaleString('es-ES'),
+      'Responsable Asignado': users.find((u: AppUser) => u.id === t.assignedTo)?.name || 'Sin Asignar'
+    }));
+    exportToCSV(exportData, `Tareas_Activas_${Date.now()}.csv`);
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -685,6 +724,10 @@ const TasksTab = ({ tasks, appSettings, rooms, users, currentUser, slas, onAssig
             {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
           <input type="text" placeholder="Habitación (ej. 101)" value={searchRoom} onChange={e => setSearchRoom(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 w-36" />
+          
+          <button onClick={handleExportTasks} className="ml-auto bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 font-bold flex items-center transition-colors">
+            <DownloadIcon className="w-4 h-4 mr-1.5" /> Exportar CSV
+          </button>
         </div>
       </div>
       
@@ -806,10 +849,51 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
   const uniqueLogActions = useMemo(() => Array.from(new Set(userLogs.map(l => l.action))), [userLogs]);
   const uniqueSystemCategories = useMemo(() => Array.from(new Set(systemLogs.map(l => l.actionCategory))), [systemLogs]);
 
-  // Filtro de auditoría de Checklist (basado en tareas generadas o en notificaciones si es necesario, aquí usaremos Tareas que contienen evidencias de evaluación)
+  // Filtro de auditoría de Checklist
   const checklistEvidenceTasks = useMemo(() => {
     return tasks.filter(t => t.evidenceImage || t.description.includes('Fallo detectado:'));
   }, [tasks]);
+
+  // EXPORTACIONES A EXCEL
+  const handleExportTaskReport = () => {
+    const exportData = filteredReportData.map(t => ({
+      'ID Tarea': t.id,
+      'Habitación': t.roomId,
+      'Sede': rooms.find(r => r.id === t.roomId)?.clinic || '-',
+      'Departamento': t.dept,
+      'Descripción': t.description.replace(/(\r\n|\n|\r)/gm, " "),
+      'Comentarios de Cierre': (t.closingComment || '').replace(/(\r\n|\n|\r)/gm, " "),
+      'Responsable': users.find(u => u.id === t.assignedTo)?.name || 'Sin asignar',
+      'Fecha Creación': new Date(t.createdAt).toLocaleString('es-ES'),
+      'Fecha Completada': t.completedAt ? new Date(t.completedAt).toLocaleString('es-ES') : '-',
+      'SLA Objetivo (min)': t.sla,
+      'Tiempo Real Tomado (min)': t.timeTaken || '-',
+      '¿Cumplió SLA?': t.status === 'Completada' ? (t.cumplioSla ? 'Sí' : 'No') : 'Pendiente',
+      'Estado Final': t.status
+    }));
+    exportToCSV(exportData, `Reporte_Tareas_${Date.now()}.csv`);
+  };
+
+  const handleExportAttendanceReport = () => {
+    const exportData = filteredUserLogs.map(log => ({
+      'Fecha y Hora': new Date(log.timestamp).toLocaleString('es-ES'),
+      'Colaborador': users.find(u => u.id === log.userId)?.name || 'Usuario Desconocido',
+      'Departamento': users.find(u => u.id === log.userId)?.dept || '-',
+      'Rol': users.find(u => u.id === log.userId)?.role || '-',
+      'Acción / Estado': log.action
+    }));
+    exportToCSV(exportData, `Bitacora_Asistencia_${Date.now()}.csv`);
+  };
+
+  const handleExportSystemAudit = () => {
+    const exportData = filteredSystemLogs.map(log => ({
+      'Fecha y Hora': new Date(log.timestamp).toLocaleString('es-ES'),
+      'Usuario / Admin': users.find(u => u.id === log.userId)?.name || 'Sistema',
+      'Categoría': log.actionCategory,
+      'Detalles de Acción': log.details.replace(/(\r\n|\n|\r)/gm, " ")
+    }));
+    exportToCSV(exportData, `Auditoria_Sistema_${Date.now()}.csv`);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -919,8 +1003,13 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
-              <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200">{filteredReportData.length} resultados</span>
+              <div>
+                <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
+                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 inline-block mt-1">{filteredReportData.length} resultados</span>
+              </div>
+              <button onClick={handleExportTaskReport} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
+                <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[900px]">
@@ -1125,8 +1214,13 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <h3 className="font-bold text-gray-700">Bitácora Histórica de Asistencia</h3>
-              <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200">{filteredUserLogs.length} events</span>
+              <div>
+                <h3 className="font-bold text-gray-700">Bitácora Histórica de Asistencia</h3>
+                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 mt-1 inline-block">{filteredUserLogs.length} eventos</span>
+              </div>
+              <button onClick={handleExportAttendanceReport} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
+                <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[600px]">
@@ -1265,8 +1359,13 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <h3 className="font-bold text-gray-700">Historial de Modificaciones Administrativas</h3>
-              <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200">{filteredSystemLogs.length} registros</span>
+              <div>
+                <h3 className="font-bold text-gray-700">Historial de Modificaciones Administrativas</h3>
+                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 mt-1 inline-block">{filteredSystemLogs.length} registros</span>
+              </div>
+              <button onClick={handleExportSystemAudit} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
+                <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[700px]">
@@ -1311,12 +1410,14 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
 const ConfigTab = ({ 
   slas, rooms, users, checklistItems, appSettings, currentUser,
-  onUpdateSla, onAddRoom, onRemoveRoom, onAddUser, onRemoveUser, onUpdateUser, onAddChecklist, onUpdateChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings
+  onUpdateSla, onAddRoom, onUpdateRoom, onRemoveRoom, onAddUser, onRemoveUser, onUpdateUser, onAddChecklist, onUpdateChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings
 }: any) => {
   // Habitaciones
   const [newRoomId, setNewRoomId] = useState('');
   const [newRoomArea, setNewRoomArea] = useState('General');
   const [newRoomClinic, setNewRoomClinic] = useState(appSettings?.clinics?.[0] || 'Sede Central');
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [editRoomData, setEditRoomData] = useState({ name: '', area: '', clinic: '' });
   
   // Usuarios
   const [newUserName, setNewUserName] = useState('');
@@ -1462,11 +1563,11 @@ const ConfigTab = ({
           <AlertTriangle className="w-6 h-6 mr-2 text-gray-600"/> Tiempos Máximos de Tarea (SLAs)
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {Object.entries(slas).map(([dept, time]: any) => (
+          {Object.values(DEPARTMENTS).map((dept: any) => (
             <div key={dept} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
               <span className="font-semibold text-gray-700 text-sm block mb-2">{dept}</span>
               <div className="flex items-center space-x-2">
-                <input type="number" value={time} onChange={(e) => onUpdateSla(dept, e.target.value)} className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                <input type="number" value={slas[dept] || 0} onChange={(e) => onUpdateSla(dept, e.target.value)} className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
                 <span className="text-gray-500 text-sm font-medium">min</span>
               </div>
             </div>
@@ -1493,16 +1594,37 @@ const ConfigTab = ({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {rooms.map((room: Room) => (
-            <div key={room.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="flex items-center space-x-3">
-                <Bed className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="font-bold text-sm text-gray-800">{room.name}</p>
-                  <p className="text-[10px] text-gray-500 uppercase">{room.clinic} - {room.area}</p>
+             editingRoomId === room.id ? (
+              <div key={room.id} className="flex flex-col gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-200 animate-in fade-in duration-200">
+                 <input type="text" value={editRoomData.name} onChange={e => setEditRoomData({...editRoomData, name: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm outline-none" placeholder="Nombre" />
+                 <select value={editRoomData.area} onChange={e => setEditRoomData({...editRoomData, area: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm bg-white outline-none">
+                    {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
+                 </select>
+                 <select value={editRoomData.clinic} onChange={e => setEditRoomData({...editRoomData, clinic: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm bg-white outline-none">
+                    {clinics.map((c: string) => <option key={c} value={c}>{c}</option>)}
+                 </select>
+                 <div className="flex gap-2 mt-1">
+                    <button onClick={() => { onUpdateRoom(room.id, editRoomData); setEditingRoomId(null); }} className="bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-emerald-600">Guardar</button>
+                    <button onClick={() => setEditingRoomId(null)} className="bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-gray-400">Cancelar</button>
+                 </div>
+              </div>
+            ) : (
+              <div key={room.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <Bed className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="font-bold text-sm text-gray-800">{room.name}</p>
+                    <p className="text-[10px] text-gray-500 uppercase">{room.clinic} - {room.area}</p>
+                  </div>
+                </div>
+                <div className="flex space-x-1">
+                  <button onClick={() => { setEditingRoomId(room.id); setEditRoomData({name: room.name, area: room.area, clinic: room.clinic}); }} className="text-blue-500 hover:text-blue-700 p-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Habitación">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                  </button>
+                  <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"><X className="w-4 h-4"/></button>
                 </div>
               </div>
-              <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 rounded-lg transition-colors"><X className="w-4 h-4"/></button>
-            </div>
+            )
           ))}
         </div>
       </div>
@@ -1837,37 +1959,40 @@ const ManualTab = () => (
   <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <FileText className="w-7 h-7 mr-3 text-indigo-600" /> Manual de Usuario y Operación
+        <FileText className="w-7 h-7 mr-3 text-indigo-600" /> Manual de Operación: Versión 2.0
       </h2>
       <div className="space-y-6 text-gray-700">
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">1. Roles del Sistema</h3>
-          <ul className="list-disc pl-5 space-y-2 mt-3">
-            <li><strong>Supervisor (Admin):</strong> Tiene acceso total. Puede ver el tablero general, configurar tiempos límite, registrar habitaciones, gestionar clínicas y administrar las preguntas del checklist. Es el único que puede hacer las evaluaciones de habitaciones.</li>
-            <li><strong>Personal Operativo (Limpieza, Mantenimiento, Enfermería):</strong> Poseen una vista simplificada. Solo ven las tareas que han sido asignadas a su departamento.</li>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">1. Roles del Sistema y Multi-Admin</h3>
+          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
+            <li><strong>Supervisor (Admin):</strong> Tiene acceso total a las configuraciones, auditoría y bitácoras. Puede ascender a cualquier empleado al rol de Admin desde la pestaña <span className="font-bold text-indigo-600">Config</span> &gt; Gestión de Personal &gt; Editar (lápiz azul).</li>
+            <li><strong>Personal Operativo (Staff):</strong> Solo ven y completan las tareas que han sido asignadas a su departamento (Limpieza, Mantenimiento).</li>
           </ul>
         </section>
+        
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">2. Flujo de las Habitaciones</h3>
-          <ul className="list-decimal pl-5 space-y-2 mt-3">
-            <li>Una habitación comienza su ciclo en color verde como <strong>Disponible</strong>.</li>
-            <li>Al ingresar un paciente, el supervisor la marca como <strong>Ocupada</strong> (color rojo).</li>
-            <li>Cuando el paciente es dado de alta, el sistema la pasa a <strong>Pendiente de Evaluación</strong> (color amarillo).</li>
-            <li>El supervisor entra a la habitación y realiza el <strong>Control de Limpieza</strong>.</li>
-            <li>La habitación cambia a <strong>En Tareas</strong> (color azul) mientras haya al menos una tarea pendiente de resolver.</li>
-            <li>Una vez completadas todas las tareas, la habitación regresa a <strong>Disponible</strong>.</li>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">2. Sistema de Evidencias (Checklist y Tareas)</h3>
+          <ul className="list-decimal pl-5 space-y-2 mt-3 text-sm">
+            <li>Al realizar un <strong>Checklist</strong> en una habitación, puedes pulsar "Añadir Foto" usando la cámara de tu móvil para documentar cosas que estén correctas o incorrectas. Si una opción "No Cumple", la foto es obligatoria.</li>
+            <li>El personal operativo recibirá una miniatura de la foto en su tablero de <strong>Tareas</strong>.</li>
+            <li>Una vez que el personal solucione el problema, deben subir una foto de <strong>Cierre/Solución</strong> antes de poder marcar la tarea como Completada.</li>
+            <li>Puedes hacer clic en cualquier imagen de la app para verla en Zoom/Pantalla Completa.</li>
           </ul>
         </section>
+
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Control de Asistencia y Tiempos</h3>
-          <p className="mt-3">El personal debe utilizar la barra superior para indicar en qué momento inician un descanso autorizado (ej. Almuerzo). Esto se refleja en la bitácora de asistencia que el Administrador puede revisar.</p>
+          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Bitácoras, Logs y Exportación a Excel</h3>
+          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
+            <li>En la pestaña <strong>Bitácora</strong>, encontrarás botones de "Exportar a CSV/Excel". Estos archivos pueden abrirse directamente en Office o Google Sheets. Los datos descargados respetarán cualquier filtro de fecha/mes/clínica que apliques previamente en pantalla.</li>
+            <li><strong>Auditoría de Sistema:</strong> Cada que un Admin borra a alguien, cambia el tiempo de un SLA o añade una pregunta al checklist, el sistema lo registra en esta pestaña de forma permanente por seguridad.</li>
+          </ul>
         </section>
       </div>
     </div>
   </div>
 );
 
-// --- 7. COMPONENTE PRINCIPAL (APP) ---
+// --- 8. COMPONENTE PRINCIPAL (APP) ---
 export default function App() {
   const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
   const [dbReady, setDbReady] = useState(false);
@@ -2393,6 +2518,13 @@ export default function App() {
                 await setDoc(getDocRef('h_rooms', id)!, { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE });
                 await logSystemAction('Habitaciones', `Registró nueva habitación ${id} en ${clinic}`);
                 triggerToast('Habitación añadida');
+              }
+            }}
+            onUpdateRoom={async (roomId: string, data: any) => {
+              if (db) {
+                await setDoc(getDocRef('h_rooms', roomId)!, data, { merge: true });
+                await logSystemAction('Habitaciones', `Modificó la habitación ${data.name}`);
+                triggerToast('Habitación actualizada');
               }
             }}
             onRemoveRoom={async (id: string) => { 
