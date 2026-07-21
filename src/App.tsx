@@ -145,12 +145,10 @@ const UploadCloud = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
-// --- 2. CONFIGURACIÓN DE FIREBASE ---
 const defaultFirebaseConfig = {
   apiKey: "AIzaSyDwvPOgiGz6kI0tTbXDL8wLTEHVXKP_tmE",
   authDomain: "mediroom-eb9ef.firebaseapp.com",
@@ -205,7 +203,6 @@ const getDocRef = (colName: string, docId: string) => {
   return doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
 };
 
-// --- COMPRESIÓN DE IMÁGENES GLOBALES ---
 const compressImage = (file: File, maxWidth: number = 800): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -252,8 +249,6 @@ const ImageUploadButton = ({ onImageCaptured, label = "Foto de Evidencia" }: { o
   );
 };
 
-
-// --- 4. INTERFACES TYPESCRIPT ---
 interface AppUser {
   id: string;
   name: string;
@@ -323,7 +318,6 @@ interface SystemLog {
   timestamp: number;
 }
 
-// --- 5. CONSTANTES Y CONFIGURACIONES ---
 const DEPARTMENTS = {
   ADMIN: 'Administración',
   LIMPIEZA: 'Limpieza',
@@ -424,7 +418,6 @@ const INITIAL_USERS: AppUser[] = [
   { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff', currentStatus: 'Desconectado' },
 ];
 
-// --- 6. FUNCIONES DE AYUDA Y EXPORTACIÓN ---
 const getMinutesDifference = (start: number, end: number) => {
   if (!start || !end) return 0;
   return Math.round((end - start) / 60000);
@@ -453,7 +446,6 @@ const exportToCSV = (data: any[], filename: string) => {
   document.body.removeChild(link);
 };
 
-// --- 7. COMPONENTES EXTRAÍDOS ---
 const DashboardTab = ({ 
   rooms, tasks, currentUser, appSettings, onSelectRoom, onOpenChecklist 
 }: { 
@@ -577,6 +569,81 @@ const DashboardTab = ({
   );
 };
 
+const TaskCardItem = ({ task, users, currentUser, slaMinutes, onAssign, onComplete, onViewImage }: any) => {
+  const isMine = task.assignedTo === currentUser?.id;
+  const isUrgent = task.description.includes('URGENTE:');
+
+  const [closingImg, setClosingImg] = useState<string>('');
+  const [closingComment, setClosingComment] = useState('');
+
+  return (
+    <div className={`p-4 rounded-lg shadow-sm border ${isUrgent ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' : isMine ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'}`}>
+      <div className="flex justify-between items-start mb-2">
+        <span className={`font-bold text-sm ${isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400'}`}>Hab. {task.roomId}</span>
+        <span className="flex items-center text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md border dark:border-amber-800/50">
+          <Clock className="w-3 h-3 mr-1" /> SLA: {slaMinutes}m
+        </span>
+      </div>
+
+      <p className={`text-sm mb-3 ${isUrgent ? 'font-bold text-rose-800 dark:text-rose-300' : 'text-gray-700 dark:text-slate-300'}`}>{task.description}</p>
+      
+      {task.evidenceImage && (
+        <div className="mb-4">
+          <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Evidencia Inicial</span>
+          <img src={task.evidenceImage} alt="Evidencia" onClick={() => onViewImage(task.evidenceImage!)} className="h-20 w-full object-cover rounded-lg cursor-zoom-in border border-gray-200 dark:border-slate-600 hover:opacity-80 transition-opacity" />
+        </div>
+      )}
+      
+      <div className="mb-4">
+        {currentUser?.role === 'admin' ? (
+          <select 
+            value={task.assignedTo || ''}
+            onChange={(e) => onAssign(task.id, e.target.value)}
+            className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 font-medium' : 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400'}`}
+          >
+            <option value="">Sin responsable asignado</option>
+            {users.filter((u: AppUser) => u.dept === task.dept || u.role === 'admin').map((u: AppUser) => (
+              <option key={u.id} value={u.id}>{u.name}</option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-sm font-medium text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-900 p-2 rounded border border-indigo-100 dark:border-indigo-800">
+            Responsable: {users.find((u: AppUser) => u.id === task.assignedTo)?.name || 'Sin asignar'}
+          </p>
+        )}
+      </div>
+
+      {(isMine || currentUser?.role === 'admin') && (
+        <div className="border-t border-gray-100 dark:border-slate-700 pt-3 space-y-3">
+          <ImageUploadButton onImageCaptured={setClosingImg} label="Foto de Cierre" />
+          
+          {closingImg && (
+            <div className="relative">
+              <img src={closingImg} alt="Cierre" className="h-24 w-full object-cover rounded-lg border border-emerald-200 dark:border-emerald-800" />
+              <button onClick={() => setClosingImg('')} className="absolute top-1 right-1 bg-white/80 dark:bg-black/50 p-1 rounded-full text-rose-500 hover:text-rose-700"><X className="w-4 h-4"/></button>
+            </div>
+          )}
+          
+          <input 
+            type="text" 
+            placeholder="Comentarios (opcional)..." 
+            value={closingComment} 
+            onChange={e => setClosingComment(e.target.value)}
+            className="w-full text-xs border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 rounded-md p-2 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500"
+          />
+          
+          <button 
+            onClick={() => onComplete(task.id, closingImg, closingComment)}
+            className="w-full bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" /> Marcar Completada
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const TaskColumn = ({ 
   deptName, icon, colorClass, tasks, users, currentUser, slas, onAssign, onComplete, onViewImage 
 }: { 
@@ -601,81 +668,18 @@ const TaskColumn = ({
         {deptTasks.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-slate-500 text-center py-4">Sin tareas pendientes</p>
         ) : (
-          deptTasks.map(task => {
-            const slaMinutes = slas[task.dept] || 0;
-            const isMine = task.assignedTo === currentUser?.id;
-            const isUrgent = task.description.includes('URGENTE:');
-            
-            const [closingImg, setClosingImg] = useState<string>('');
-            const [closingComment, setClosingComment] = useState('');
-
-            return (
-              <div key={task.id} className={`p-4 rounded-lg shadow-sm border ${isUrgent ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' : isMine ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`font-bold text-sm ${isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400'}`}>Hab. {task.roomId}</span>
-                  <span className="flex items-center text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md border dark:border-amber-800/50">
-                    <Clock className="w-3 h-3 mr-1" /> SLA: {slaMinutes}m
-                  </span>
-                </div>
-
-                <p className={`text-sm mb-3 ${isUrgent ? 'font-bold text-rose-800 dark:text-rose-300' : 'text-gray-700 dark:text-slate-300'}`}>{task.description}</p>
-                
-                {task.evidenceImage && (
-                  <div className="mb-4">
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Evidencia Inicial</span>
-                    <img src={task.evidenceImage} alt="Evidencia" onClick={() => onViewImage(task.evidenceImage!)} className="h-20 w-full object-cover rounded-lg cursor-zoom-in border border-gray-200 dark:border-slate-600 hover:opacity-80 transition-opacity" />
-                  </div>
-                )}
-                
-                <div className="mb-4">
-                  {currentUser?.role === 'admin' ? (
-                    <select 
-                      value={task.assignedTo || ''}
-                      onChange={(e) => onAssign(task.id, e.target.value)}
-                      className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 font-medium' : 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400'}`}
-                    >
-                      <option value="">Sin responsable asignado</option>
-                      {users.filter(u => u.dept === task.dept || u.role === 'admin').map(u => (
-                        <option key={u.id} value={u.id}>{u.name}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <p className="text-sm font-medium text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-900 p-2 rounded border border-indigo-100 dark:border-indigo-800">
-                      Responsable: {users.find(u => u.id === task.assignedTo)?.name || 'Sin asignar'}
-                    </p>
-                  )}
-                </div>
-
-                {(isMine || currentUser?.role === 'admin') && (
-                  <div className="border-t border-gray-100 dark:border-slate-700 pt-3 space-y-3">
-                    <ImageUploadButton onImageCaptured={setClosingImg} label="Foto de Cierre" />
-                    
-                    {closingImg && (
-                      <div className="relative">
-                        <img src={closingImg} alt="Cierre" className="h-24 w-full object-cover rounded-lg border border-emerald-200 dark:border-emerald-800" />
-                        <button onClick={() => setClosingImg('')} className="absolute top-1 right-1 bg-white/80 dark:bg-black/50 p-1 rounded-full text-rose-500 hover:text-rose-700"><X className="w-4 h-4"/></button>
-                      </div>
-                    )}
-                    
-                    <input 
-                      type="text" 
-                      placeholder="Comentarios (opcional)..." 
-                      value={closingComment} 
-                      onChange={e => setClosingComment(e.target.value)}
-                      className="w-full text-xs border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 rounded-md p-2 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500"
-                    />
-                    
-                    <button 
-                      onClick={() => onComplete(task.id, closingImg, closingComment)}
-                      className="w-full bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" /> Marcar Completada
-                    </button>
-                  </div>
-                )}
-              </div>
-            )
-          })
+          deptTasks.map(task => (
+             <TaskCardItem 
+               key={task.id} 
+               task={task} 
+               users={users} 
+               currentUser={currentUser} 
+               slaMinutes={slas[task.dept] || 0} 
+               onAssign={onAssign} 
+               onComplete={onComplete} 
+               onViewImage={onViewImage} 
+             />
+          ))
         )}
       </div>
     </div>
@@ -1418,7 +1422,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
 const ConfigTab = ({ 
   slas, rooms, users, checklistItems, appSettings, currentUser,
-  onUpdateSla, onAddRoom, onUpdateRoom, onRemoveRoom, onAddUser, onRemoveUser, onUpdateUser, onAddChecklist, onUpdateChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings
+  onUpdateSla, onAddRoom, onUpdateRoom, onRemoveRoom, onAddUser, onRemoveUser, onUpdateUser, onAddChecklist, onUpdateChecklist, onRemoveChecklist, onUpdateUserPassword, onUpdateSettings, triggerToast
 }: any) => {
   // Habitaciones
   const [newRoomId, setNewRoomId] = useState('');
@@ -1489,11 +1493,11 @@ const ConfigTab = ({
   };
 
   const handleSaveProfile = (userId: string) => {
-    if (!editProfileData.name.trim() || !editProfileData.username.trim()) { alert("El nombre y el usuario no pueden estar vacíos."); return; }
+    if (!editProfileData.name.trim() || !editProfileData.username.trim()) { triggerToast("El nombre y el usuario no pueden estar vacíos."); return; }
     if (editProfileData.role === 'staff') {
       const userToEdit = users.find((u: AppUser) => u.id === userId);
       const totalAdmins = users.filter((u: AppUser) => u.role === 'admin').length;
-      if (userToEdit && userToEdit.role === 'admin' && totalAdmins <= 1) { alert("No puedes quitarle el rol de Administrador a este usuario porque es el único que queda en el sistema."); return; }
+      if (userToEdit && userToEdit.role === 'admin' && totalAdmins <= 1) { triggerToast("No puedes quitarle el rol de Administrador al único que queda."); return; }
     }
     onUpdateUser(userId, { name: editProfileData.name, username: editProfileData.username, dept: editProfileData.dept, role: editProfileData.role });
     setEditingUserId(null); setActiveEditMode(null);
@@ -1718,12 +1722,7 @@ const ConfigTab = ({
                   </button>
                   {user.id !== currentUser?.id && (
                     <button 
-                      onClick={() => {
-                        if (user.role === 'admin' && users.filter((u: AppUser) => u.role === 'admin').length <= 1) {
-                          alert("No puedes eliminar al único administrador del sistema."); return;
-                        }
-                        if (window.confirm(`¿Estás seguro de eliminar al usuario ${user.name}?`)) { onRemoveUser(user.id); }
-                      }} 
+                      onClick={() => onRemoveUser(user.id)} 
                       className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-lg transition-colors" title="Eliminar Usuario"
                     >
                       <X className="w-4 h-4"/>
@@ -1832,7 +1831,7 @@ const ConfigTab = ({
                             <button onClick={() => { setEditingChecklistId(item.id); setEditChecklistData({ question: item.question, category: item.category, dept: item.dept }); }} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1.5 rounded transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-800">
                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                             </button>
-                            <button onClick={() => { if(window.confirm(`¿Eliminar la pregunta "${item.question}"?`)) onRemoveChecklist(item.id); }} className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-800"><X className="w-4 h-4"/></button>
+                            <button onClick={() => onRemoveChecklist(item.id)} className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-800"><X className="w-4 h-4"/></button>
                           </div>
                         </>
                      )}
@@ -1847,7 +1846,6 @@ const ConfigTab = ({
   );
 };
 
-// === WIZARD DEL FORMULARIO DE CHECKLIST ===
 const ChecklistModal = ({ 
   isOpen, onClose, selectedRoom, checklistItems, onSubmit 
 }: { 
@@ -1859,13 +1857,14 @@ const ChecklistModal = ({
   const [urgente, setUrgente] = useState('');
   const [urgenteImage, setUrgenteImage] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const categories = Array.from(new Set(checklistItems.map((i: ChecklistItem) => i.category || 'General')));
   const totalSteps = categories.length + 1;
 
   useEffect(() => {
     if (isOpen) {
-      setAnswers({}); setEvidenceImages({}); setComentarios(''); setUrgente(''); setUrgenteImage(''); setCurrentStep(0); 
+      setAnswers({}); setEvidenceImages({}); setComentarios(''); setUrgente(''); setUrgenteImage(''); setCurrentStep(0); setErrorMsg('');
     }
   }, [isOpen, checklistItems]);
 
@@ -1877,8 +1876,14 @@ const ChecklistModal = ({
 
   const isCurrentStepComplete = isFinalStep || currentItems.every(item => answers[item.id] !== undefined);
 
-  const handleNext = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
-  const handlePrev = () => setCurrentStep(prev => Math.max(prev - 1, 0));
+  const handleNext = () => {
+      setErrorMsg('');
+      setCurrentStep(prev => Math.min(prev + 1, totalSteps - 1));
+  }
+  const handlePrev = () => {
+      setErrorMsg('');
+      setCurrentStep(prev => Math.max(prev - 1, 0));
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -1968,6 +1973,12 @@ const ChecklistModal = ({
           )}
         </div>
 
+        {errorMsg && (
+          <div className="px-5 py-2 bg-rose-50 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-sm font-bold text-center border-t border-rose-200 dark:border-rose-800">
+             {errorMsg}
+          </div>
+        )}
+
         <div className="p-5 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center shrink-0">
           <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 dark:text-slate-600 cursor-not-allowed opacity-50' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600'}`}>
             <ChevronLeft className="w-5 h-5 mr-1" /> Anterior
@@ -1981,7 +1992,8 @@ const ChecklistModal = ({
             <button onClick={() => {
               const anyFailuresWithoutEvidence = currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id]);
               if (anyFailuresWithoutEvidence) {
-                 alert("Por favor asegúrese de haber subido una foto para todos los elementos marcados como 'No Cumple' antes de finalizar.");
+                 setErrorMsg("Por favor asegúrese de haber subido una foto para todos los elementos marcados como 'No Cumple' antes de finalizar.");
+                 setTimeout(() => setErrorMsg(''), 4000);
                  return;
               }
               onSubmit(answers, evidenceImages, comentarios, urgente, urgenteImage, selectedRoom);
@@ -1995,7 +2007,6 @@ const ChecklistModal = ({
   );
 };
 
-// === NUEVA PESTAÑA DE MANUAL DE USUARIO (VERSIÓN 4.0) ===
 const ManualTab = () => (
   <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto pb-12">
     <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
@@ -2005,8 +2016,6 @@ const ManualTab = () => (
       <p className="text-gray-500 dark:text-slate-400 mb-8 border-b dark:border-slate-700 pb-4">Guía detallada e integral para el uso del sistema MediRoom Control (Versión 4.0).</p>
 
       <div className="space-y-10 text-gray-700 dark:text-slate-300">
-        
-        {/* Sección 1 */}
         <section>
           <div className="flex items-center mb-4">
             <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">1</div>
@@ -2015,16 +2024,15 @@ const ManualTab = () => (
           <div className="pl-11 space-y-4 text-sm leading-relaxed">
             <p>El personal operativo utiliza el sistema principalmente para recibir y resolver tareas. Su flujo de trabajo es el siguiente:</p>
             <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
-              <p><strong>Paso 1: Iniciar Turno.</strong> Al ingresar al sistema con su usuario y contraseña, su estado se marca automáticamente como <span className="text-emerald-600 font-bold">Disponible</span>. Pueden cambiar su estado en la barra superior si toman un descanso (ej. Almuerzo).</p>
+              <p><strong>Paso 1: Iniciar Turno.</strong> Al ingresar al sistema con su usuario y contraseña, su estado se marca automáticamente como <span className="text-emerald-600 font-bold">Disponible</span>. Pueden cambiar su estado en la barra superior si toman un descanso.</p>
               <p><strong>Paso 2: Revisar Tareas Asignadas.</strong> En la pestaña "Tareas", verán las alertas específicas de su departamento. Si una tarea tiene la palabra <strong>URGENTE</strong>, su tarjeta será roja.</p>
               <p><strong>Paso 3: Ver el Problema.</strong> Si el supervisor tomó una foto de un problema al hacer la evaluación, verán una miniatura de la foto en su tarjeta de tarea. Pueden tocarla para verla en pantalla completa.</p>
-              <p><strong>Paso 4: Solucionar y Evidenciar.</strong> Una vez que reparen o limpien la zona, deben presionar el botón <strong>"Añadir Foto"</strong> para tomar una evidencia del trabajo terminado con la cámara del celular. Opcionalmente, añaden un comentario y presionan <strong>"Marcar Completada"</strong>.</p>
-              <p><strong>Paso 5: Fin de Turno.</strong> Al finalizar su jornada, presionan el botón de "Cerrar Sesión" (ícono de puerta en la barra superior). Esto los marcará como <span className="text-gray-500 font-bold">Desconectados</span> en los reportes del sistema.</p>
+              <p><strong>Paso 4: Solucionar y Evidenciar.</strong> Una vez que reparen o limpien la zona, deben presionar el botón <strong>"Foto de Cierre"</strong> para tomar una evidencia del trabajo terminado con la cámara del celular. Opcionalmente, añaden un comentario y presionan <strong>"Marcar Completada"</strong>.</p>
+              <p><strong>Paso 5: Fin de Turno.</strong> Al finalizar su jornada, presionan el botón de "Cerrar Sesión" (ícono de puerta). Esto los marcará como <span className="text-gray-500 font-bold">Desconectados</span>.</p>
             </div>
           </div>
         </section>
 
-        {/* Sección 2 */}
         <section>
           <div className="flex items-center mb-4">
             <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">2</div>
@@ -2034,15 +2042,14 @@ const ManualTab = () => (
             <p>Los Supervisores controlan el ciclo de vida de la habitación y auditan la calidad.</p>
             <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
               <p><strong>Paso 1: Ingreso y Alta.</strong> En el "Tablero General", haz clic en una habitación Disponible (verde) y presiona <strong>"Marcar como Ocupada"</strong> cuando ingrese un paciente. Cuando el paciente se retire, haz clic y presiona <strong>"Desocupar Habitación"</strong>. La habitación pasará a estado amarillo (Pendiente de Evaluación).</p>
-              <p><strong>Paso 2: Evaluación (Checklist).</strong> Haz clic en la habitación amarilla y selecciona <strong>"Iniciar Evaluación"</strong>. Se abrirá el formulario paso a paso.</p>
-              <p><strong>Paso 3: Registro de Fallas y Evidencias.</strong> Por cada punto a revisar, marca "✓ Cumple" o "✗ No Cumple". Si marcas que NO cumple, el sistema te pedirá obligatoriamente <strong>tomar una foto de evidencia</strong>. Si SÍ cumple, puedes subir foto de manera opcional para dejar constancia del buen trabajo.</p>
+              <p><strong>Paso 2: Evaluación (Checklist).</strong> Haz clic en la habitación amarilla y selecciona <strong>"Iniciar Evaluación"</strong>.</p>
+              <p><strong>Paso 3: Registro de Fallas y Evidencias.</strong> Por cada punto a revisar, marca "✓ Cumple" o "✗ No Cumple". Si marcas que NO cumple, el sistema te pedirá obligatoriamente <strong>tomar una foto de evidencia</strong>. Si SÍ cumple, puedes subir foto de manera opcional.</p>
               <p><strong>Paso 4: Comentarios y Urgencias.</strong> En el último paso del checklist, puedes añadir un comentario general o reportar un problema Crítico/Urgente adjuntando su respectiva foto.</p>
               <p><strong>Paso 5: Asignación.</strong> Al finalizar el checklist, la habitación pasa a "En Tareas" (azul). Ve a la pestaña "Tareas" para asignar responsables a las fallas detectadas.</p>
             </div>
           </div>
         </section>
 
-        {/* Sección 3 */}
         <section>
           <div className="flex items-center mb-4">
             <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">3</div>
@@ -2052,14 +2059,13 @@ const ManualTab = () => (
             <p>El sistema cuenta con un motor de trazabilidad total en la pestaña de <strong>Bitácora</strong>.</p>
             <ul className="list-disc pl-5 space-y-2">
               <li><strong>Filtros Avanzados:</strong> Usa los selectores de "Mes" y el rango "Desde/Hasta" (calendarios) para acotar los datos. Puedes filtrar por Sede, Usuario o Categoría.</li>
-              <li><strong>Descargar a Excel:</strong> Una vez filtrados los datos, haz clic en <strong>"Descargar Excel"</strong> (botón azul). Se descargará un archivo CSV compatible con Excel, Sheets o Numbers.</li>
-              <li><strong>Auditoría Visual (Muro de Evidencias):</strong> En la sub-pestaña "Evidencias", verás una cuadrícula interactiva con todas las fotos tomadas en el hospital para facilitar auditorías visuales rápidas.</li>
-              <li><strong>Auditoría de Sistema:</strong> Rastrea silenciosamente en la sub-pestaña "Auditoría" qué administrador hizo cambios críticos (ej. cambiar contraseñas, borrar usuarios o modificar tiempos SLA).</li>
+              <li><strong>Descargar a Excel:</strong> Una vez filtrados los datos, haz clic en <strong>"Descargar Excel"</strong>. Se descargará un archivo CSV compatible con Excel, Sheets o Numbers.</li>
+              <li><strong>Auditoría Visual (Muro de Evidencias):</strong> En la sub-pestaña "Evidencias", verás una cuadrícula interactiva con todas las fotos tomadas en el hospital para facilitar auditorías visuales.</li>
+              <li><strong>Auditoría de Sistema:</strong> Rastrea silenciosamente en la sub-pestaña "Auditoría" qué administrador hizo cambios críticos.</li>
             </ul>
           </div>
         </section>
 
-        {/* Sección 4 */}
         <section>
           <div className="flex items-center mb-4">
             <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">4</div>
@@ -2067,9 +2073,9 @@ const ManualTab = () => (
           </div>
           <div className="pl-11 space-y-4 text-sm leading-relaxed">
             <ul className="list-disc pl-5 space-y-2 bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              <li><strong>Modo Oscuro (Dark Mode):</strong> En la barra superior, junto a la campana de notificaciones, presiona el <strong>icono de la Luna</strong> para activar el Modo Oscuro. Se guardará tu preferencia automáticamente y aplica un fondo oscuro a toda la pantalla en cualquier dispositivo.</li>
+              <li><strong>Modo Oscuro (Dark Mode):</strong> En la barra superior, junto a la campana de notificaciones, presiona el <strong>icono de la Luna</strong> para activar el Modo Oscuro. Se guardará tu preferencia automáticamente.</li>
               <li><strong>Personalizar Logo:</strong> En la pestaña "Config", haz clic en el botón <strong>"Subir Imagen"</strong>. Tu imagen se comprimirá automáticamente en el sistema y aparecerá en la cabecera.</li>
-              <li><strong>Tiempos SLA (Service Level Agreement):</strong> Configura cuántos minutos tiene cada departamento para solucionar una tarea antes de que marque "Fuera de SLA" en los reportes de productividad.</li>
+              <li><strong>Tiempos SLA (Service Level Agreement):</strong> Configura cuántos minutos tiene cada departamento para solucionar una tarea antes de que marque "Fuera de SLA" en los reportes.</li>
               <li><strong>Permisos y Usuarios:</strong> Usa el ícono del <strong>lápiz azul</strong> en los perfiles de usuario para editar nombres, usuarios o <strong>ascender a un empleado al rol "Supervisor (Admin)"</strong>.</li>
               <li><strong>Protección Anti-Bloqueo:</strong> El sistema impedirá borrar o degradar al último administrador para que tu hospital nunca quede sin acceso al panel.</li>
             </ul>
@@ -2081,13 +2087,12 @@ const ManualTab = () => (
   </div>
 );
 
-// --- 8. COMPONENTE PRINCIPAL (APP) ---
 export default function App() {
   const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
   const [dbReady, setDbReady] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-  // --- EFECTO GLOBAL DE TEMA (FORZAR EN RAÍZ HTML) ---
+  // --- EFECTO GLOBAL DE TEMA ---
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -2098,11 +2103,9 @@ export default function App() {
     }
   }, [theme]);
 
-  // Estados de aplicación
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Datos Firebase
   const [rooms, setRooms] = useState<Room[]>([]);
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
@@ -2113,16 +2116,12 @@ export default function App() {
   const [userLogs, setUserLogs] = useState<UserLog[]>([]);
   const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
   
-  // UI Modal State
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  
-  // Global Image Viewer
   const [zoomImageSrc, setZoomImageSrc] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Login State
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -2135,7 +2134,6 @@ export default function App() {
     localStorage.setItem('theme', newTheme);
   };
 
-  // Inicializar Firebase Auth
   useEffect(() => {
     if (firebaseError) { setDbReady(true); return; }
     const initAuth = async () => {
@@ -2168,7 +2166,6 @@ export default function App() {
     } catch (err) { console.error("Seed Error:", err); }
   };
 
-  // Suscripciones Real-time a Firestore
   useEffect(() => {
     if (!authUser || !db) {
       if (authUser && !db) {
@@ -2191,82 +2188,52 @@ export default function App() {
     }
 
     const settingsRef = getDocRef('h_settings', 'main');
-    if (settingsRef) {
-      unsubs.push(onSnapshot(settingsRef, (docSnap) => {
-        if (docSnap.exists()) setAppSettings(docSnap.data() as AppSettings);
-      }, errHandler));
-    }
+    if (settingsRef) unsubs.push(onSnapshot(settingsRef, (docSnap) => { if (docSnap.exists()) setAppSettings(docSnap.data() as AppSettings); }, errHandler));
 
     const logsRef = getColRef('h_user_logs');
-    if (logsRef) {
-      unsubs.push(onSnapshot(logsRef, (s) => {
-        setUserLogs(s.docs.map(d => ({id: d.id, ...d.data()} as UserLog)));
-      }, errHandler));
-    }
+    if (logsRef) unsubs.push(onSnapshot(logsRef, (s) => setUserLogs(s.docs.map(d => ({id: d.id, ...d.data()} as UserLog))), errHandler));
 
     const sysLogsRef = getColRef('h_system_logs');
-    if (sysLogsRef) {
-      unsubs.push(onSnapshot(sysLogsRef, (s) => {
-        setSystemLogs(s.docs.map(d => ({id: d.id, ...d.data()} as SystemLog)));
-      }, errHandler));
-    }
+    if (sysLogsRef) unsubs.push(onSnapshot(sysLogsRef, (s) => setSystemLogs(s.docs.map(d => ({id: d.id, ...d.data()} as SystemLog))), errHandler));
 
     const checklistRef = getColRef('h_checklistItems');
     if (checklistRef) {
       unsubs.push(onSnapshot(checklistRef, (s) => {
         const items = s.docs.map(d => ({id: d.id, ...d.data()} as ChecklistItem));
-        if (items.length < 10) INITIAL_CHECKLIST.forEach(c => {
-          const docR = getDocRef('h_checklistItems', c.id);
-          if (docR) setDoc(docR, c);
-        });
+        if (items.length < 10) INITIAL_CHECKLIST.forEach(c => { const docR = getDocRef('h_checklistItems', c.id); if (docR) setDoc(docR, c); });
         else setChecklistItems(items);
       }, errHandler));
     }
 
     const roomsRef = getColRef('h_rooms');
-    if (roomsRef) {
-      unsubs.push(onSnapshot(roomsRef, (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
-    }
+    if (roomsRef) unsubs.push(onSnapshot(roomsRef, (s) => setRooms(s.docs.map(d => ({id: d.id, ...d.data()} as Room))), errHandler));
 
     const tasksRef = getColRef('h_tasks');
-    if (tasksRef) {
-      unsubs.push(onSnapshot(tasksRef, (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
-    }
+    if (tasksRef) unsubs.push(onSnapshot(tasksRef, (s) => setTasks(s.docs.map(d => ({id: d.id, ...d.data()} as Task))), errHandler));
 
     const notifRef = getColRef('h_notifications');
-    if (notifRef) {
-      unsubs.push(onSnapshot(notifRef, (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
-    }
+    if (notifRef) unsubs.push(onSnapshot(notifRef, (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()} as Notification))), errHandler));
 
     const slasRef = getDocRef('h_slas', 'main');
-    if (slasRef) {
-      unsubs.push(onSnapshot(slasRef, (docSnap) => { if (docSnap.exists()) setSlas(docSnap.data() as Record<string, number>); }, errHandler));
-    }
+    if (slasRef) unsubs.push(onSnapshot(slasRef, (docSnap) => { if (docSnap.exists()) setSlas(docSnap.data() as Record<string, number>); }, errHandler));
 
     return () => unsubs.forEach(u => u());
   }, [authUser]);
 
-  // --- MOTOR DE AUDITORÍA DE SISTEMA ---
   const logSystemAction = async (actionCategory: string, details: string) => {
     if (!db || !currentUser?.id) return;
     const logId = `sys_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
     const logRef = getDocRef('h_system_logs', logId);
-    if (logRef) {
-      await setDoc(logRef, { id: logId, userId: currentUser.id, actionCategory, details, timestamp: Date.now() });
-    }
+    if (logRef) await setDoc(logRef, { id: logId, userId: currentUser.id, actionCategory, details, timestamp: Date.now() });
   };
 
-  // --- LOGICA DE CONTROL DE HORAS ---
   const handleUserStatusChange = async (userId: string, newStatus: string) => {
     if (!db) return;
     const userRef = getDocRef('h_users', userId);
     if (userRef) await setDoc(userRef, { currentStatus: newStatus }, { merge: true });
-    
     const logId = `log_${Date.now()}_${userId}`;
     const logRef = getDocRef('h_user_logs', logId);
-    if (logRef) {
-      await setDoc(logRef, { id: logId, userId: userId, action: newStatus, timestamp: Date.now() });
-    }
+    if (logRef) await setDoc(logRef, { id: logId, userId: userId, action: newStatus, timestamp: Date.now() });
   };
 
   const handleUpdateUserPassword = async (userId: string, newPass: string) => {
@@ -2279,7 +2246,6 @@ export default function App() {
     }
   };
 
-  // --- MANEJADORES DE LÓGICA DE NEGOCIO ---
   const handleVacateRoom = async (roomId: string) => { 
     if (!db) return;
     const rRef = getDocRef('h_rooms', roomId);
@@ -2357,7 +2323,6 @@ export default function App() {
     let roomNeedsTasks = false;
 
     checklistItems.forEach(item => {
-      // Registrar tarea si es fallo
       if (answers[item.id] === false) { 
         const taskId = `t_${Date.now()}_${item.id}`;
         const tRef = getDocRef('h_tasks', taskId);
@@ -2369,7 +2334,6 @@ export default function App() {
         }
         roomNeedsTasks = true;
       } 
-      // Si cumple pero tiene imagen de evidencia, la guardamos también como tarea completada informativa
       else if (answers[item.id] === true && evidenceImages[item.id]) {
         const taskId = `t_ev_${Date.now()}_${item.id}`;
         const tRef = getDocRef('h_tasks', taskId);
@@ -2385,9 +2349,7 @@ export default function App() {
     if (comentarios.trim()) {
       users.filter(u => u.role === 'admin').forEach((admin, i) => {
         const notRef = getDocRef('h_notifications', `n_${Date.now()}_${i}`);
-        if (notRef) {
-          promises.push(setDoc(notRef, { id: `n_${Date.now()}_${i}`, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now() }));
-        }
+        if (notRef) promises.push(setDoc(notRef, { id: `n_${Date.now()}_${i}`, userId: admin.id, message: `Comentario Hab. ${room.name}: "${comentarios}"`, read: false, createdAt: Date.now() }));
       });
     }
 
@@ -2400,9 +2362,8 @@ export default function App() {
     }
 
     const rRef = getDocRef('h_rooms', room.id);
-    if (rRef) {
-      promises.push(setDoc(rRef, { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
-    }
+    if (rRef) promises.push(setDoc(rRef, { status: roomNeedsTasks ? ROOM_STATUS.MANTENIMIENTO : ROOM_STATUS.DISPONIBLE }, { merge: true }));
+    
     await Promise.all(promises);
     await logSystemAction('Checklist', `Envió evaluación de limpieza de Hab. ${room.id} (${roomNeedsTasks ? 'Generó Tareas' : 'Aprobada'})`);
     triggerToast('Evaluación enviada con éxito');
@@ -2410,7 +2371,6 @@ export default function App() {
     setSelectedRoom(null);
   };
 
-  // --- LOGIN Y LOGOUT ---
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const user = users.find(u => u.username.toLowerCase() === loginUsername.trim().toLowerCase() && u.password === loginPassword.trim());
@@ -2423,13 +2383,10 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    if (currentUser) {
-      await handleUserStatusChange(currentUser.id, 'Desconectado');
-    }
+    if (currentUser) await handleUserStatusChange(currentUser.id, 'Desconectado');
     setCurrentUser(null);
   };
 
-  // --- CARGA Y LOGIN UI ---
   if (firebaseError) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-100'} flex flex-col items-center justify-center p-4 transition-colors duration-300`}>
@@ -2497,7 +2454,6 @@ export default function App() {
     <div className={`${theme === 'dark' ? 'dark' : ''}`}>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans pb-10 relative transition-colors duration-300">
         
-        {/* Notificación Toast In-App */}
         {toastMessage && (
           <div className="fixed bottom-5 right-5 bg-indigo-900 dark:bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in flex items-center space-x-3">
             <CheckCircle className="w-5 h-5 text-emerald-400 dark:text-emerald-200 shrink-0" />
@@ -2505,7 +2461,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Visor de Imagen / Lightbox */}
         {zoomImageSrc && (
           <div 
             onClick={() => setZoomImageSrc(null)}
@@ -2558,12 +2513,10 @@ export default function App() {
 
                 <div className="flex items-center space-x-4 border-l border-gray-200 dark:border-slate-700 pl-4">
                   
-                  {/* Theme Toggle Button */}
                   <button onClick={toggleTheme} className="text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-1" title="Alternar Modo Oscuro">
                     {theme === 'light' ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
                   </button>
 
-                  {/* STATUS BAR (Control de Horas) */}
                   <div className="flex items-center bg-gray-50 dark:bg-slate-900 rounded-full p-1 border border-gray-200 dark:border-slate-700">
                     <div className={`w-2 h-2 rounded-full ml-2 ${realCurrentUser.currentStatus === 'Disponible' ? 'bg-emerald-500' : realCurrentUser.currentStatus === 'Desconectado' ? 'bg-gray-400' : 'bg-amber-500'}`}></div>
                     <select 
@@ -2706,12 +2659,12 @@ export default function App() {
                   triggerToast('Configuración del sistema guardada');
                 }
               }}
+              triggerToast={triggerToast}
             />
           )}
           {activeTab === 'manual' && <ManualTab />}
         </main>
 
-        {/* Modal de Detalles de Habitación */}
         {selectedRoom && !isChecklistModalOpen && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-40">
             <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border dark:border-slate-700">
@@ -2741,7 +2694,6 @@ export default function App() {
                       <p className="text-blue-800 dark:text-blue-300 font-medium text-sm">Acondicionando habitación.</p>
                       <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 dark:text-blue-400 text-sm font-bold underline hover:text-blue-900 dark:hover:text-blue-300 block w-full transition-colors">Ver tareas en curso</button>
                       
-                      {/* BOTÓN DE RESPALDO PARA ADMIN */}
                       {currentUser?.role === 'admin' && (
                         <button 
                           onClick={async () => {
@@ -2765,7 +2717,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Modal Checklist Completado (WIZARD) */}
         <ChecklistModal isOpen={isChecklistModalOpen} onClose={() => { setIsChecklistModalOpen(false); setSelectedRoom(null); }} selectedRoom={selectedRoom} checklistItems={checklistItems} onSubmit={handleChecklistSubmit} />
       </div>
     </div>
