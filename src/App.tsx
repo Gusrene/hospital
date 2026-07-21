@@ -129,6 +129,21 @@ const DownloadIcon = ({ className }: { className?: string }) => (
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
   </svg>
 );
+const Moon = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+  </svg>
+);
+const Sun = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+  </svg>
+);
+const UploadCloud = ({ className }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /><path d="M12 12v9" /><path d="m16 16-4-4-4 4" />
+  </svg>
+);
 
 // --- 1. IMPORTACIONES DE FIREBASE ---
 import { initializeApp } from 'firebase/app';
@@ -190,7 +205,7 @@ const getDocRef = (colName: string, docId: string) => {
   return doc(db, 'artifacts', safeAppId, 'public', 'data', colName, docId.toString());
 };
 
-// --- 3. COMPRESIÓN DE IMÁGENES ---
+// --- COMPRESIÓN DE IMÁGENES GLOBALES ---
 const compressImage = (file: File, maxWidth: number = 800): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -230,12 +245,13 @@ const ImageUploadButton = ({ onImageCaptured, label = "Foto de Evidencia" }: { o
   return (
     <div>
       <input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-      <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg text-sm border border-indigo-200 transition-colors w-full sm:w-auto">
+      <button onClick={() => fileInputRef.current?.click()} className="flex items-center justify-center px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 font-bold rounded-lg text-sm border border-indigo-200 dark:border-indigo-800 transition-colors w-full sm:w-auto">
         <CameraIcon className="w-4 h-4 mr-2" /> {label}
       </button>
     </div>
   );
 };
+
 
 // --- 4. INTERFACES TYPESCRIPT ---
 interface AppUser {
@@ -408,7 +424,7 @@ const INITIAL_USERS: AppUser[] = [
   { id: 'u3', name: 'Luis (Mantenimiento)', username: 'luis', password: '123', dept: DEPARTMENTS.MANTENIMIENTO, role: 'staff', currentStatus: 'Desconectado' },
 ];
 
-// --- 6. FUNCIONES DE AYUDA Y EXPORTACIÓN A EXCEL ---
+// --- 6. FUNCIONES DE AYUDA Y EXPORTACIÓN ---
 const getMinutesDifference = (start: number, end: number) => {
   if (!start || !end) return 0;
   return Math.round((end - start) / 60000);
@@ -427,7 +443,6 @@ const exportToCSV = (data: any[], filename: string) => {
     ...data.map(row => header.map(fieldName => `"${(row[fieldName] || '').toString().replace(/"/g, '""')}"`).join(','))
   ].join('\r\n');
 
-  // El BOM '\uFEFF' fuerza a Excel a reconocer caracteres UTF-8 (Tildes, Ñ)
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
@@ -437,7 +452,6 @@ const exportToCSV = (data: any[], filename: string) => {
   link.click();
   document.body.removeChild(link);
 };
-
 
 // --- 7. COMPONENTES EXTRAÍDOS ---
 const DashboardTab = ({ 
@@ -459,33 +473,33 @@ const DashboardTab = ({
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case ROOM_STATUS.DISPONIBLE: return 'bg-emerald-100 border-emerald-500 text-emerald-800';
-      case ROOM_STATUS.OCUPADA: return 'bg-rose-100 border-rose-500 text-rose-800';
-      case ROOM_STATUS.EVALUACION: return 'bg-amber-100 border-amber-500 text-amber-800';
-      case ROOM_STATUS.MANTENIMIENTO: return 'bg-blue-100 border-blue-500 text-blue-800';
-      default: return 'bg-gray-100 border-gray-500 text-gray-800';
+      case ROOM_STATUS.DISPONIBLE: return 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-500 text-emerald-800 dark:text-emerald-300';
+      case ROOM_STATUS.OCUPADA: return 'bg-rose-100 dark:bg-rose-900/40 border-rose-500 text-rose-800 dark:text-rose-300';
+      case ROOM_STATUS.EVALUACION: return 'bg-amber-100 dark:bg-amber-900/40 border-amber-500 text-amber-800 dark:text-amber-300';
+      case ROOM_STATUS.MANTENIMIENTO: return 'bg-blue-100 dark:bg-blue-900/40 border-blue-500 text-blue-800 dark:text-blue-300';
+      default: return 'bg-gray-100 dark:bg-slate-800 border-gray-500 text-gray-800 dark:text-slate-300';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case ROOM_STATUS.DISPONIBLE: return <CheckCircle className="w-6 h-6 text-emerald-600" />;
-      case ROOM_STATUS.OCUPADA: return <User className="w-6 h-6 text-rose-600" />;
-      case ROOM_STATUS.EVALUACION: return <CheckSquare className="w-6 h-6 text-amber-600" />;
-      case ROOM_STATUS.MANTENIMIENTO: return <Wrench className="w-6 h-6 text-blue-600" />;
-      default: return <Bed className="w-6 h-6 text-gray-600" />;
+      case ROOM_STATUS.DISPONIBLE: return <CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />;
+      case ROOM_STATUS.OCUPADA: return <User className="w-6 h-6 text-rose-600 dark:text-rose-400" />;
+      case ROOM_STATUS.EVALUACION: return <CheckSquare className="w-6 h-6 text-amber-600 dark:text-amber-400" />;
+      case ROOM_STATUS.MANTENIMIENTO: return <Wrench className="w-6 h-6 text-blue-600 dark:text-blue-400" />;
+      default: return <Bed className="w-6 h-6 text-gray-600 dark:text-gray-400" />;
     }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center">
-          <LayoutDashboard className="w-6 h-6 mr-2 text-indigo-600"/> Tablero General
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 flex items-center">
+          <LayoutDashboard className="w-6 h-6 mr-2 text-indigo-600 dark:text-indigo-400"/> Tablero General
         </h2>
         <div className="flex items-center space-x-2">
-          <Building className="w-5 h-5 text-gray-500" />
-          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border border-gray-300 rounded-lg p-2 text-sm bg-white font-medium text-gray-700 outline-none focus:ring-2 focus:ring-indigo-500">
+          <Building className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border border-gray-300 dark:border-slate-600 rounded-lg p-2 text-sm bg-white dark:bg-slate-800 font-medium text-gray-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="Todas">Todas las Clínicas</option>
             {clinicsList.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -493,25 +507,25 @@ const DashboardTab = ({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-          <p className="text-sm text-gray-500 font-medium">Total Habitaciones</p>
-          <p className="text-3xl font-bold text-gray-800 mt-1">{stats.total}</p>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
+          <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Total Habitaciones</p>
+          <p className="text-3xl font-bold text-gray-800 dark:text-slate-100 mt-1">{stats.total}</p>
         </div>
-        <div className="bg-emerald-50 p-4 rounded-xl shadow-sm border border-emerald-100">
-          <p className="text-sm text-emerald-600 font-medium">Disponibles</p>
-          <p className="text-3xl font-bold text-emerald-700 mt-1">{stats.disponibles}</p>
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-800/50">
+          <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium">Disponibles</p>
+          <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">{stats.disponibles}</p>
         </div>
-        <div className="bg-rose-50 p-4 rounded-xl shadow-sm border border-rose-100">
-          <p className="text-sm text-rose-600 font-medium">Ocupadas</p>
-          <p className="text-3xl font-bold text-rose-700 mt-1">{stats.ocupadas}</p>
+        <div className="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-xl shadow-sm border border-rose-100 dark:border-rose-800/50">
+          <p className="text-sm text-rose-600 dark:text-rose-400 font-medium">Ocupadas</p>
+          <p className="text-3xl font-bold text-rose-700 dark:text-rose-300 mt-1">{stats.ocupadas}</p>
         </div>
-        <div className="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-100">
-          <p className="text-sm text-amber-600 font-medium">Por Evaluar</p>
-          <p className="text-3xl font-bold text-amber-700 mt-1">{stats.evaluacion}</p>
+        <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl shadow-sm border border-amber-100 dark:border-amber-800/50">
+          <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">Por Evaluar</p>
+          <p className="text-3xl font-bold text-amber-700 dark:text-amber-300 mt-1">{stats.evaluacion}</p>
         </div>
-        <div className="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-100">
-          <p className="text-sm text-blue-600 font-medium">En Tareas</p>
-          <p className="text-3xl font-bold text-blue-700 mt-1">{stats.mantenimiento}</p>
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl shadow-sm border border-blue-100 dark:border-blue-800/50">
+          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">En Tareas</p>
+          <p className="text-3xl font-bold text-blue-700 dark:text-blue-300 mt-1">{stats.mantenimiento}</p>
         </div>
       </div>
       
@@ -520,13 +534,13 @@ const DashboardTab = ({
           <div 
             key={room.id} 
             onClick={() => onSelectRoom(room)}
-            className={`p-5 rounded-xl border-l-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow bg-white ${getStatusColor(room.status).replace('bg-', 'border-').split(' ')[1]}`}
+            className={`p-5 rounded-xl border-l-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow bg-white dark:bg-slate-800 ${getStatusColor(room.status).replace('bg-', 'border-').split(' ')[0]}`}
           >
             <div className="flex justify-between items-start mb-3">
               <div>
-                <h3 className="font-bold text-lg text-gray-800">{room.name}</h3>
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">{room.clinic}</span>
-                <span className="text-xs text-indigo-500 font-medium">{room.area}</span>
+                <h3 className="font-bold text-lg text-gray-800 dark:text-slate-100">{room.name}</h3>
+                <span className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase tracking-wider block">{room.clinic}</span>
+                <span className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">{room.area}</span>
               </div>
               {getStatusIcon(room.status)}
             </div>
@@ -537,7 +551,7 @@ const DashboardTab = ({
               </span>
               
               {room.status === ROOM_STATUS.MANTENIMIENTO && (
-                <p className="text-sm font-medium text-blue-600 mt-2">
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
                   {tasks.filter(t => t.roomId === room.id && t.status !== 'Completada').length} tareas pendientes
                 </p>
               )}
@@ -557,7 +571,7 @@ const DashboardTab = ({
             </div>
           </div>
         ))}
-        {filteredRooms.length === 0 && <p className="text-gray-500 col-span-full">No hay habitaciones registradas en esta clínica.</p>}
+        {filteredRooms.length === 0 && <p className="text-gray-500 dark:text-slate-400 col-span-full">No hay habitaciones registradas en esta clínica.</p>}
       </div>
     </div>
   );
@@ -574,44 +588,42 @@ const TaskColumn = ({
   if (currentUser?.role === 'staff' && currentUser?.dept !== deptName && currentUser?.dept !== DEPARTMENTS.ADMIN) return null;
 
   return (
-    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex-1 min-w-[300px]">
-      <div className="flex items-center space-x-2 mb-4 border-b pb-2">
+    <div className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-200 dark:border-slate-700 flex-1 min-w-[300px]">
+      <div className="flex items-center space-x-2 mb-4 border-b dark:border-slate-700 pb-2">
         <span className={colorClass}>{icon}</span>
-        <h3 className="font-bold text-gray-700">{deptName}</h3>
-        <span className="bg-gray-200 text-gray-700 py-0.5 px-2 rounded-full text-xs font-bold">
+        <h3 className="font-bold text-gray-700 dark:text-slate-200">{deptName}</h3>
+        <span className="bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-300 py-0.5 px-2 rounded-full text-xs font-bold">
           {deptTasks.length}
         </span>
       </div>
       
       <div className="space-y-3">
         {deptTasks.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">Sin tareas pendientes</p>
+          <p className="text-sm text-gray-500 dark:text-slate-500 text-center py-4">Sin tareas pendientes</p>
         ) : (
           deptTasks.map(task => {
             const slaMinutes = slas[task.dept] || 0;
             const isMine = task.assignedTo === currentUser?.id;
             const isUrgent = task.description.includes('URGENTE:');
             
-            // Estados internos por cada tarea para manejar el cierre
             const [closingImg, setClosingImg] = useState<string>('');
             const [closingComment, setClosingComment] = useState('');
 
             return (
-              <div key={task.id} className={`p-4 rounded-lg shadow-sm border ${isUrgent ? 'bg-rose-50 border-rose-200' : isMine ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-gray-100'}`}>
+              <div key={task.id} className={`p-4 rounded-lg shadow-sm border ${isUrgent ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800' : isMine ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800' : 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700'}`}>
                 <div className="flex justify-between items-start mb-2">
-                  <span className={`font-bold text-sm ${isUrgent ? 'text-rose-600' : 'text-blue-600'}`}>Hab. {task.roomId}</span>
-                  <span className="flex items-center text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
+                  <span className={`font-bold text-sm ${isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-blue-600 dark:text-blue-400'}`}>Hab. {task.roomId}</span>
+                  <span className="flex items-center text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-md border dark:border-amber-800/50">
                     <Clock className="w-3 h-3 mr-1" /> SLA: {slaMinutes}m
                   </span>
                 </div>
 
-                <p className={`text-sm mb-3 ${isUrgent ? 'font-bold text-rose-800' : 'text-gray-700'}`}>{task.description}</p>
+                <p className={`text-sm mb-3 ${isUrgent ? 'font-bold text-rose-800 dark:text-rose-300' : 'text-gray-700 dark:text-slate-300'}`}>{task.description}</p>
                 
-                {/* Visualizador de Evidencia de Fallo */}
                 {task.evidenceImage && (
                   <div className="mb-4">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Evidencia (Falla)</span>
-                    <img src={task.evidenceImage} alt="Evidencia" onClick={() => onViewImage(task.evidenceImage!)} className="h-20 w-full object-cover rounded-lg cursor-zoom-in border border-gray-200 hover:opacity-80 transition-opacity" />
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Evidencia Inicial</span>
+                    <img src={task.evidenceImage} alt="Evidencia" onClick={() => onViewImage(task.evidenceImage!)} className="h-20 w-full object-cover rounded-lg cursor-zoom-in border border-gray-200 dark:border-slate-600 hover:opacity-80 transition-opacity" />
                   </div>
                 )}
                 
@@ -620,7 +632,7 @@ const TaskColumn = ({
                     <select 
                       value={task.assignedTo || ''}
                       onChange={(e) => onAssign(task.id, e.target.value)}
-                      className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white border-indigo-200 text-indigo-700 font-medium' : 'border-gray-300 bg-gray-50 text-gray-500'}`}
+                      className={`w-full text-sm border rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none ${task.assignedTo ? 'bg-white dark:bg-slate-900 border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 font-medium' : 'border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-gray-500 dark:text-slate-400'}`}
                     >
                       <option value="">Sin responsable asignado</option>
                       {users.filter(u => u.dept === task.dept || u.role === 'admin').map(u => (
@@ -628,21 +640,20 @@ const TaskColumn = ({
                       ))}
                     </select>
                   ) : (
-                    <p className="text-sm font-medium text-indigo-700 bg-white p-2 rounded border border-indigo-100">
+                    <p className="text-sm font-medium text-indigo-700 dark:text-indigo-400 bg-white dark:bg-slate-900 p-2 rounded border border-indigo-100 dark:border-indigo-800">
                       Responsable: {users.find(u => u.id === task.assignedTo)?.name || 'Sin asignar'}
                     </p>
                   )}
                 </div>
 
-                {/* BOTONERA DE CIERRE CON EVIDENCIA */}
                 {(isMine || currentUser?.role === 'admin') && (
-                  <div className="border-t border-gray-100 pt-3 space-y-3">
-                    <ImageUploadButton onImageCaptured={setClosingImg} label="Añadir Evidencia de Solución" />
+                  <div className="border-t border-gray-100 dark:border-slate-700 pt-3 space-y-3">
+                    <ImageUploadButton onImageCaptured={setClosingImg} label="Foto de Cierre" />
                     
                     {closingImg && (
                       <div className="relative">
-                        <img src={closingImg} alt="Cierre" className="h-24 w-full object-cover rounded-lg border border-emerald-200" />
-                        <button onClick={() => setClosingImg('')} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-rose-500 hover:text-rose-700"><X className="w-4 h-4"/></button>
+                        <img src={closingImg} alt="Cierre" className="h-24 w-full object-cover rounded-lg border border-emerald-200 dark:border-emerald-800" />
+                        <button onClick={() => setClosingImg('')} className="absolute top-1 right-1 bg-white/80 dark:bg-black/50 p-1 rounded-full text-rose-500 hover:text-rose-700"><X className="w-4 h-4"/></button>
                       </div>
                     )}
                     
@@ -651,12 +662,12 @@ const TaskColumn = ({
                       placeholder="Comentarios (opcional)..." 
                       value={closingComment} 
                       onChange={e => setClosingComment(e.target.value)}
-                      className="w-full text-xs border border-gray-300 rounded-md p-2 focus:outline-none focus:border-indigo-500"
+                      className="w-full text-xs border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-200 rounded-md p-2 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-500"
                     />
                     
                     <button 
                       onClick={() => onComplete(task.id, closingImg, closingComment)}
-                      className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center"
+                      className="w-full bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-sm font-semibold py-2 rounded-lg transition-colors flex items-center justify-center"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" /> Marcar Completada
                     </button>
@@ -694,7 +705,7 @@ const TasksTab = ({ tasks, appSettings, rooms, users, currentUser, slas, onAssig
       'Habitación': t.roomId,
       'Sede/Clínica': rooms.find((r: Room) => r.id === t.roomId)?.clinic || '-',
       'Departamento': t.dept,
-      'Descripción': t.description.replace(/(\r\n|\n|\r)/gm, " "), // Limpiar saltos de línea
+      'Descripción': t.description.replace(/(\r\n|\n|\r)/gm, " "),
       'Estado': t.status,
       'Fecha de Creación': new Date(t.createdAt).toLocaleString('es-ES'),
       'Responsable Asignado': users.find((u: AppUser) => u.id === t.assignedTo)?.name || 'Sin Asignar'
@@ -705,27 +716,27 @@ const TasksTab = ({ tasks, appSettings, rooms, users, currentUser, slas, onAssig
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center">
-          <ListTodo className="w-6 h-6 mr-2 text-indigo-600"/> Tareas Activas y SLAs
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 flex items-center">
+          <ListTodo className="w-6 h-6 mr-2 text-indigo-600 dark:text-indigo-400"/> Tareas Activas y SLAs
         </h2>
         
-        <div className="flex flex-wrap items-center gap-3 bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm text-sm">
+        <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm text-sm">
           <div className="flex items-center space-x-1">
-            <FilterIcon className="w-4 h-4 text-gray-400" />
-            <span className="text-xs font-bold text-gray-500 uppercase">Filtros:</span>
+            <FilterIcon className="w-4 h-4 text-gray-400 dark:text-slate-400" />
+            <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase">Filtros:</span>
           </div>
-          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
+          <select value={filterClinic} onChange={e => setFilterClinic(e.target.value)} className="border-gray-200 dark:border-slate-600 border rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 text-gray-700 dark:text-slate-200 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
             <option value="Todas">Todas las Clínicas</option>
             {clinicsList.map((c: any) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select value={filterUser} onChange={e => setFilterUser(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
+          <select value={filterUser} onChange={e => setFilterUser(e.target.value)} className="border-gray-200 dark:border-slate-600 border rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 text-gray-700 dark:text-slate-200 outline-none font-medium focus:ring-1 focus:ring-indigo-500">
             <option value="Todos">Todos los Responsables</option>
             <option value="unassigned">Sin Asignar</option>
             {users.map((u: any) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
-          <input type="text" placeholder="Habitación (ej. 101)" value={searchRoom} onChange={e => setSearchRoom(e.target.value)} className="border-gray-200 border rounded-lg p-1.5 bg-gray-50 text-gray-700 outline-none placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 w-36" />
+          <input type="text" placeholder="Habitación (ej. 101)" value={searchRoom} onChange={e => setSearchRoom(e.target.value)} className="border-gray-200 dark:border-slate-600 border rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 text-gray-700 dark:text-slate-200 outline-none placeholder-gray-400 dark:placeholder-slate-500 focus:ring-1 focus:ring-indigo-500 w-36" />
           
-          <button onClick={handleExportTasks} className="ml-auto bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 font-bold flex items-center transition-colors">
+          <button onClick={handleExportTasks} className="ml-auto bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 font-bold flex items-center transition-colors">
             <DownloadIcon className="w-4 h-4 mr-1.5" /> Exportar CSV
           </button>
         </div>
@@ -746,7 +757,6 @@ const TasksTab = ({ tasks, appSettings, rooms, users, currentUser, slas, onAssig
 const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettings, onViewImage }: { tasks: Task[], rooms: Room[], users: AppUser[], slas: Record<string, number>, userLogs: UserLog[], systemLogs: SystemLog[], appSettings: AppSettings, onViewImage: (src: string) => void }) => {
   const [reportView, setReportView] = useState<'tareas' | 'asistencia' | 'sistema' | 'checklists'>('tareas');
   
-  // Filtros compartidos
   const clinicsList = appSettings.clinics || ['Sede Central'];
   const monthsList = [ { val: '0', label: 'Enero' }, { val: '1', label: 'Febrero' }, { val: '2', label: 'Marzo' }, { val: '3', label: 'Abril' }, { val: '4', label: 'Mayo' }, { val: '5', label: 'Junio' }, { val: '6', label: 'Julio' }, { val: '7', label: 'Agosto' }, { val: '8', label: 'Septiembre' }, { val: '9', label: 'Octubre' }, { val: '10', label: 'Noviembre' }, { val: '11', label: 'Diciembre' } ];
 
@@ -849,12 +859,10 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
   const uniqueLogActions = useMemo(() => Array.from(new Set(userLogs.map(l => l.action))), [userLogs]);
   const uniqueSystemCategories = useMemo(() => Array.from(new Set(systemLogs.map(l => l.actionCategory))), [systemLogs]);
 
-  // Filtro de auditoría de Checklist
   const checklistEvidenceTasks = useMemo(() => {
     return tasks.filter(t => t.evidenceImage || t.description.includes('Fallo detectado:'));
   }, [tasks]);
 
-  // EXPORTACIONES A EXCEL
   const handleExportTaskReport = () => {
     const exportData = filteredReportData.map(t => ({
       'ID Tarea': t.id,
@@ -898,17 +906,17 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center">
-          <BarChart className="w-6 h-6 mr-2 text-indigo-600"/> Módulo de Reportes y Bitácoras
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 flex items-center">
+          <BarChart className="w-6 h-6 mr-2 text-indigo-600 dark:text-indigo-400"/> Módulo de Reportes y Bitácoras
         </h2>
-        <div className="flex flex-wrap gap-2 bg-gray-200 p-1 rounded-xl">
-          <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'tareas' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Productividad</button>
-          <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'asistencia' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>Asistencia</button>
-          <button onClick={() => setReportView('checklists')} className={`px-4 py-2 text-sm font-bold flex items-center rounded-lg transition-all ${reportView === 'checklists' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>
-            <CheckSquare className="w-4 h-4 mr-1.5" /> Evidencias Checklist
+        <div className="flex flex-wrap gap-2 bg-gray-200 dark:bg-slate-800 p-1 rounded-xl">
+          <button onClick={() => setReportView('tareas')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'tareas' ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}>Productividad</button>
+          <button onClick={() => setReportView('asistencia')} className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${reportView === 'asistencia' ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}>Asistencia</button>
+          <button onClick={() => setReportView('checklists')} className={`px-4 py-2 text-sm font-bold flex items-center rounded-lg transition-all ${reportView === 'checklists' ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}>
+            <CheckSquare className="w-4 h-4 mr-1.5" /> Evidencias
           </button>
-          <button onClick={() => setReportView('sistema')} className={`px-4 py-2 text-sm font-bold flex items-center rounded-lg transition-all ${reportView === 'sistema' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}>
-            <ShieldCheck className="w-4 h-4 mr-1.5" /> Auditoría Sistema
+          <button onClick={() => setReportView('sistema')} className={`px-4 py-2 text-sm font-bold flex items-center rounded-lg transition-all ${reportView === 'sistema' ? 'bg-white dark:bg-slate-700 text-indigo-700 dark:text-indigo-300 shadow-sm' : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}>
+            <ShieldCheck className="w-4 h-4 mr-1.5" /> Auditoría
           </button>
         </div>
       </div>
@@ -916,67 +924,67 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
       {reportView === 'tareas' && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 font-medium">Total Creadas</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">{taskKPIs.creadas}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Total Creadas</p>
+                <p className="text-2xl font-bold text-gray-800 dark:text-slate-100 mt-1">{taskKPIs.creadas}</p>
               </div>
-              <div className="bg-gray-100 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600"/></div>
+              <div className="bg-gray-100 dark:bg-slate-700 p-3 rounded-lg"><FileText className="w-6 h-6 text-gray-600 dark:text-gray-300"/></div>
             </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 font-medium">Completadas</p>
-                <p className="text-2xl font-bold text-emerald-600 mt-1">{taskKPIs.completadas}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Completadas</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{taskKPIs.completadas}</p>
               </div>
-              <div className="bg-emerald-50 p-3 rounded-lg"><CheckCircle className="w-6 h-6 text-emerald-600"/></div>
+              <div className="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-lg"><CheckCircle className="w-6 h-6 text-emerald-600 dark:text-emerald-400"/></div>
             </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 font-medium">Cumplimiento SLA</p>
-                <p className={`text-2xl font-bold mt-1 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>{taskKPIs.porcenSla}%</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Cumplimiento SLA</p>
+                <p className={`text-2xl font-bold mt-1 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>{taskKPIs.porcenSla}%</p>
               </div>
-              <div className={`${taskKPIs.porcenSla >= 80 ? 'bg-emerald-50' : 'bg-amber-50'} p-3 rounded-lg`}>
-                <BarChart className={`w-6 h-6 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}/>
+              <div className={`${taskKPIs.porcenSla >= 80 ? 'bg-emerald-50 dark:bg-emerald-900/30' : 'bg-amber-50 dark:bg-amber-900/30'} p-3 rounded-lg`}>
+                <BarChart className={`w-6 h-6 ${taskKPIs.porcenSla >= 80 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}/>
               </div>
             </div>
-            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 font-medium">Fuera de SLA</p>
-                <p className="text-2xl font-bold text-rose-600 mt-1">{taskKPIs.fueraSla}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">Fuera de SLA</p>
+                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{taskKPIs.fueraSla}</p>
               </div>
-              <div className="bg-rose-50 p-3 rounded-lg"><AlertTriangle className="w-6 h-6 text-rose-600"/></div>
+              <div className="bg-rose-50 dark:bg-rose-900/30 p-3 rounded-lg"><AlertTriangle className="w-6 h-6 text-rose-600 dark:text-rose-400"/></div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 mb-6">
+            <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center">
               <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Historial de Tareas
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Clínica / Sede</label>
-                <select value={taskClinic} onChange={e => setTaskClinic(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Clínica / Sede</label>
+                <select value={taskClinic} onChange={e => setTaskClinic(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todas">Todas las Clínicas</option>
                   {clinicsList.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Departamento</label>
-                <select value={taskDept} onChange={e => setTaskDept(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Departamento</label>
+                <select value={taskDept} onChange={e => setTaskDept(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos los Departamentos</option>
                   {Object.values(DEPARTMENTS).map(d => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Responsable</label>
-                <select value={taskUser} onChange={e => setTaskUser(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Responsable</label>
+                <select value={taskUser} onChange={e => setTaskUser(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Estatus SLA / Proceso</label>
-                <select value={taskSlaFilter} onChange={e => setTaskSlaFilter(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Estatus SLA / Proceso</label>
+                <select value={taskSlaFilter} onChange={e => setTaskSlaFilter(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Ver Todos</option>
                   <option value="Cumplio">Cumplió SLA</option>
                   <option value="Fallo">Fuera de SLA</option>
@@ -984,28 +992,28 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Filtrar por Mes</label>
-                <select value={taskMonth} onChange={e => setTaskMonth(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Filtrar por Mes</label>
+                <select value={taskMonth} onChange={e => setTaskMonth(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos los meses</option>
                   {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Rango de Días (Desde / Hasta)</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Rango de Días (Desde / Hasta)</label>
                 <div className="flex items-center space-x-2">
-                  <input type="date" value={taskStartDate} onChange={e => setTaskStartDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={taskStartDate} onChange={e => setTaskStartDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                   <span className="text-gray-400 font-bold">-</span>
-                  <input type="date" value={taskEndDate} onChange={e => setTaskEndDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={taskEndDate} onChange={e => setTaskEndDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-gray-700">Historial de Tareas</h3>
-                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 inline-block mt-1">{filteredReportData.length} resultados</span>
+                <h3 className="font-bold text-gray-700 dark:text-slate-200">Historial de Tareas</h3>
+                <span className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-bold px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-800 inline-block mt-1">{filteredReportData.length} resultados</span>
               </div>
               <button onClick={handleExportTaskReport} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
                 <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
@@ -1013,57 +1021,57 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[900px]">
-                <thead className="bg-white border-b">
+                <thead className="bg-white dark:bg-slate-800 border-b dark:border-slate-700">
                   <tr>
-                    <th className="p-4 font-semibold text-gray-600">Hab.</th>
-                    <th className="p-4 font-semibold text-gray-600">Área</th>
-                    <th className="p-4 font-semibold text-gray-600">Descripción / Fotos</th>
-                    <th className="p-4 font-semibold text-gray-600">Responsable</th>
-                    <th className="p-4 font-semibold text-gray-600">Tiempos</th>
-                    <th className="p-4 font-semibold text-gray-600">SLA</th>
-                    <th className="p-4 font-semibold text-gray-600">Estatus</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Hab.</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Área</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Descripción / Fotos</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Responsable</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Tiempos</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">SLA</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Estatus</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredReportData.sort((a, b) => b.createdAt - a.createdAt).map(row => (
-                    <tr key={row.id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-bold text-gray-800">{row.roomId}</td>
-                      <td className="p-4 text-gray-600">{row.dept}</td>
+                    <tr key={row.id} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                      <td className="p-4 font-bold text-gray-800 dark:text-slate-200">{row.roomId}</td>
+                      <td className="p-4 text-gray-600 dark:text-slate-400">{row.dept}</td>
                       <td className="p-4">
-                        <p className="text-gray-700 max-w-xs truncate" title={row.description}>{row.description}</p>
-                        {row.closingComment && <p className="text-xs text-indigo-600 mt-1 italic">"{row.closingComment}"</p>}
+                        <p className="text-gray-700 dark:text-slate-300 max-w-xs truncate" title={row.description}>{row.description}</p>
+                        {row.closingComment && <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-1 italic">"{row.closingComment}"</p>}
                         <div className="flex gap-2 mt-2">
-                           {row.evidenceImage && <div onClick={() => onViewImage(row.evidenceImage!)} className="w-8 h-8 rounded border-2 border-rose-300 cursor-zoom-in bg-cover bg-center" style={{backgroundImage: `url(${row.evidenceImage})`}} title="Foto de Falla / Inicio"></div>}
-                           {row.closingImage && <div onClick={() => onViewImage(row.closingImage!)} className="w-8 h-8 rounded border-2 border-emerald-300 cursor-zoom-in bg-cover bg-center" style={{backgroundImage: `url(${row.closingImage})`}} title="Foto de Solución / Cierre"></div>}
+                           {row.evidenceImage && <div onClick={() => onViewImage(row.evidenceImage!)} className="w-8 h-8 rounded border-2 border-rose-300 dark:border-rose-700 cursor-zoom-in bg-cover bg-center" style={{backgroundImage: `url(${row.evidenceImage})`}} title="Foto de Falla / Inicio"></div>}
+                           {row.closingImage && <div onClick={() => onViewImage(row.closingImage!)} className="w-8 h-8 rounded border-2 border-emerald-300 dark:border-emerald-700 cursor-zoom-in bg-cover bg-center" style={{backgroundImage: `url(${row.closingImage})`}} title="Foto de Solución / Cierre"></div>}
                         </div>
                       </td>
-                      <td className="p-4 text-gray-600">
+                      <td className="p-4 text-gray-600 dark:text-slate-400">
                         {users.find(u => u.id === row.assignedTo)?.name || '-'}
                       </td>
                       <td className="p-4">
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-slate-500">
                           Creada: {formatTime(row.createdAt)} <br/>
                           {row.status === 'Completada' && row.completedAt && <>Cierre: {formatTime(row.completedAt)}</>}
                         </div>
                       </td>
                       <td className="p-4">
                         {row.status === 'Completada' ? (
-                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${row.cumplioSla ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                          <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-bold ${row.cumplioSla ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400'}`}>
                             {row.timeTaken} / {row.sla}m
                           </span>
                         ) : (
-                          <span className="text-gray-400 text-xs">SLA: {row.sla}m</span>
+                          <span className="text-gray-400 dark:text-slate-500 text-xs">SLA: {row.sla}m</span>
                         )}
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.status === 'Completada' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${row.status === 'Completada' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
                           {row.status}
                         </span>
                       </td>
                     </tr>
                   ))}
                   {filteredReportData.length === 0 && (
-                    <tr><td colSpan={7} className="p-6 text-center text-gray-500">No se encontraron tareas con los filtros aplicados.</td></tr>
+                    <tr><td colSpan={7} className="p-6 text-center text-gray-500 dark:text-slate-400">No se encontraron tareas con los filtros aplicados.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1075,49 +1083,49 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
       {reportView === 'asistencia' && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-gray-400 uppercase">Activos Hoy</span>
-                <p className="text-3xl font-extrabold text-indigo-600 mt-1">{attendanceStats.activos}</p>
-                <p className="text-xs text-gray-400 mt-1">Registrados: {attendanceStats.totalRegistered}</p>
+                <span className="text-xs font-semibold text-gray-400 dark:text-slate-500 uppercase">Activos Hoy</span>
+                <p className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-1">{attendanceStats.activos}</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Registrados: {attendanceStats.totalRegistered}</p>
               </div>
-              <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600"><Users className="w-6 h-6"/></div>
+              <div className="bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-xl text-indigo-600 dark:text-indigo-400"><Users className="w-6 h-6"/></div>
             </div>
-            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-100 shadow-sm flex items-center justify-between animate-pulse-subtle">
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 shadow-sm flex items-center justify-between animate-pulse-subtle">
               <div>
-                <span className="text-xs font-semibold text-emerald-600 uppercase">Disponibles Ahora</span>
-                <p className="text-3xl font-extrabold text-emerald-700 mt-1">{attendanceStats.disponibles}</p>
-                <p className="text-xs text-emerald-600/80 mt-1">Listos para tareas</p>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase">Disponibles Ahora</span>
+                <p className="text-3xl font-extrabold text-emerald-700 dark:text-emerald-300 mt-1">{attendanceStats.disponibles}</p>
+                <p className="text-xs text-emerald-600/80 dark:text-emerald-500 mt-1">Listos para tareas</p>
               </div>
-              <div className="bg-emerald-100 p-3 rounded-xl text-emerald-700"><CheckCircle className="w-6 h-6"/></div>
+              <div className="bg-emerald-100 dark:bg-emerald-900/50 p-3 rounded-xl text-emerald-700 dark:text-emerald-400"><CheckCircle className="w-6 h-6"/></div>
             </div>
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-100 shadow-sm flex items-center justify-between">
+            <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl border border-amber-100 dark:border-amber-800/50 shadow-sm flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-amber-600 uppercase">En Descanso / Receso</span>
-                <p className="text-3xl font-extrabold text-amber-700 mt-1">{attendanceStats.descansos}</p>
-                <p className="text-xs text-amber-600/80 mt-1">En pausa temporal</p>
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase">En Descanso / Receso</span>
+                <p className="text-3xl font-extrabold text-amber-700 dark:text-amber-300 mt-1">{attendanceStats.descansos}</p>
+                <p className="text-xs text-amber-600/80 dark:text-amber-500 mt-1">En pausa temporal</p>
               </div>
-              <div className="bg-amber-100 p-3 rounded-xl text-amber-700"><Clock className="w-6 h-6"/></div>
+              <div className="bg-amber-100 dark:bg-amber-900/50 p-3 rounded-xl text-amber-700 dark:text-amber-400"><Clock className="w-6 h-6"/></div>
             </div>
-            <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div className="bg-slate-100 dark:bg-slate-800 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
               <div>
-                <span className="text-xs font-semibold text-slate-500 uppercase">Desconectados</span>
-                <p className="text-3xl font-extrabold text-slate-700 mt-1">{attendanceStats.offline}</p>
-                <p className="text-xs text-slate-500/80 mt-1">Fuera de turno</p>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">Desconectados</span>
+                <p className="text-3xl font-extrabold text-slate-700 dark:text-slate-300 mt-1">{attendanceStats.offline}</p>
+                <p className="text-xs text-slate-500/80 dark:text-slate-400 mt-1">Fuera de turno</p>
               </div>
-              <div className="bg-slate-200 p-3 rounded-xl text-slate-700"><LogOut className="w-6 h-6" /></div>
+              <div className="bg-slate-200 dark:bg-slate-700 p-3 rounded-xl text-slate-700 dark:text-slate-300"><LogOut className="w-6 h-6" /></div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 mb-6">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
               <div>
-                <h3 className="font-bold text-gray-800 text-lg flex items-center">
-                  <Users className="w-6 h-6 text-indigo-600 mr-2" /> Monitor de Asistencia de Personal en Tiempo Real
+                <h3 className="font-bold text-gray-800 dark:text-slate-100 text-lg flex items-center">
+                  <Users className="w-6 h-6 text-indigo-600 dark:text-indigo-400 mr-2" /> Monitor de Asistencia de Personal
                 </h3>
-                <p className="text-xs text-gray-500 mt-1">Consulta los estados del turno del personal operativo en vivo</p>
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">Consulta los estados del turno del personal operativo en vivo</p>
               </div>
-              <span className="inline-flex items-center text-xs font-normal text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+              <span className="inline-flex items-center text-xs font-normal text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-100 dark:border-emerald-800">
                 <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-ping"></div> Actualizado en tiempo real
               </span>
             </div>
@@ -1130,37 +1138,37 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
                 return (
                   <div key={u.id} className={`p-4 rounded-2xl border transition-all duration-300 shadow-sm hover:-translate-y-0.5 bg-gradient-to-br ${
-                    isAvailable ? 'from-emerald-50/50 to-white border-emerald-200 hover:border-emerald-300' :
-                    isBreak ? 'from-amber-50/50 to-white border-amber-200 hover:border-amber-300' :
-                    'from-slate-50/50 to-white border-slate-200 hover:border-slate-300'
+                    isAvailable ? 'from-emerald-50/50 dark:from-emerald-900/20 to-white dark:to-slate-800 border-emerald-200 dark:border-emerald-800/50' :
+                    isBreak ? 'from-amber-50/50 dark:from-amber-900/20 to-white dark:to-slate-800 border-amber-200 dark:border-amber-800/50' :
+                    'from-slate-50/50 dark:from-slate-800/50 to-white dark:to-slate-800 border-slate-200 dark:border-slate-700'
                   }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`relative p-2.5 rounded-full ${
-                          isAvailable ? 'bg-emerald-100 text-emerald-700' : 
-                          isBreak ? 'bg-amber-100 text-amber-700' : 
-                          'bg-slate-200 text-slate-700'
+                          isAvailable ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-400' : 
+                          isBreak ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400' : 
+                          'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                         }`}>
                           <User className="w-5 h-5" />
-                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-800 ${
                             isAvailable ? 'bg-emerald-500 animate-pulse' : 
                             isOnline ? 'bg-amber-500' : 
                             'bg-gray-400'
                           }`}></span>
                         </div>
                         <div>
-                          <p className="font-bold text-gray-800 text-sm leading-tight">{u.name}</p>
-                          <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-wider block mt-1 w-max">{u.dept}</span>
+                          <p className="font-bold text-gray-800 dark:text-slate-200 text-sm leading-tight">{u.name}</p>
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800 uppercase tracking-wider block mt-1 w-max">{u.dept}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
-                      <span className="text-gray-500">Estado actual:</span>
+                    <div className="mt-4 pt-3 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between text-xs">
+                      <span className="text-gray-500 dark:text-slate-400">Estado actual:</span>
                       <span className={`font-bold uppercase tracking-wider px-2.5 py-1 rounded-md text-[10px] ${
-                        isAvailable ? 'bg-emerald-100 text-emerald-800' : 
-                        isOnline ? 'bg-amber-100 text-amber-800' : 
-                        'bg-slate-200 text-slate-700'
+                        isAvailable ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300' : 
+                        isOnline ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300' : 
+                        'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
                       }`}>
                         {u.currentStatus || 'Desconectado'}
                       </span>
@@ -1171,21 +1179,21 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 mb-6">
+            <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center">
               <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Bitácora de Asistencia
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Colaborador / Usuario</label>
-                <select value={asistenciaUser} onChange={e => setAsistenciaUser(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Colaborador / Usuario</label>
+                <select value={asistenciaUser} onChange={e => setAsistenciaUser(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos los Usuarios</option>
                   {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Tipo de Evento</label>
-                <select value={asistenciaAction} onChange={e => setAsistenciaAction(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Tipo de Evento</label>
+                <select value={asistenciaAction} onChange={e => setAsistenciaAction(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos los Eventos</option>
                   <option value="Disponible">Disponible (Inició Turno)</option>
                   <option value="Desconectado">Desconectado (Terminó Turno)</option>
@@ -1195,28 +1203,28 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Filtrar por Mes</label>
-                <select value={asistenciaMonth} onChange={e => setAsistenciaMonth(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Filtrar por Mes</label>
+                <select value={asistenciaMonth} onChange={e => setAsistenciaMonth(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos los meses</option>
                   {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Rango de Días (Desde / Hasta)</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Rango de Días (Desde / Hasta)</label>
                 <div className="flex items-center space-x-2">
-                  <input type="date" value={asistenciaStartDate} onChange={e => setAsistenciaStartDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={asistenciaStartDate} onChange={e => setAsistenciaStartDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                   <span className="text-gray-400 font-bold">-</span>
-                  <input type="date" value={asistenciaEndDate} onChange={e => setAsistenciaEndDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={asistenciaEndDate} onChange={e => setAsistenciaEndDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-gray-700">Bitácora Histórica de Asistencia</h3>
-                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 mt-1 inline-block">{filteredUserLogs.length} eventos</span>
+                <h3 className="font-bold text-gray-700 dark:text-slate-200">Bitácora Histórica de Asistencia</h3>
+                <span className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-bold px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-800 mt-1 inline-block">{filteredUserLogs.length} eventos</span>
               </div>
               <button onClick={handleExportAttendanceReport} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
                 <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
@@ -1224,12 +1232,12 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[600px]">
-                <thead className="bg-white border-b">
+                <thead className="bg-white dark:bg-slate-800 border-b dark:border-slate-700">
                   <tr>
-                    <th className="p-4 font-semibold text-gray-600">Fecha y Hora</th>
-                    <th className="p-4 font-semibold text-gray-600">Usuario</th>
-                    <th className="p-4 font-semibold text-gray-600">Rol / Depto</th>
-                    <th className="p-4 font-semibold text-gray-600">Acción Registrada</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Fecha y Hora</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Usuario</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Rol / Depto</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Acción Registrada</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1238,14 +1246,14 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
                     const isOnline = log.action === 'Disponible';
                     const isOffline = log.action === 'Desconectado';
                     return (
-                      <tr key={log.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 text-gray-600 font-medium">
+                      <tr key={log.id} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="p-4 text-gray-600 dark:text-slate-400 font-medium">
                           {new Date(log.timestamp).toLocaleDateString('es-ES')} - {formatTime(log.timestamp)}
                         </td>
-                        <td className="p-4 font-bold text-gray-800">{u?.name || 'Usuario Desconocido'}</td>
-                        <td className="p-4 text-gray-600">{u?.role === 'admin' ? 'Supervisor' : u?.dept}</td>
+                        <td className="p-4 font-bold text-gray-800 dark:text-slate-200">{u?.name || 'Usuario Desconocido'}</td>
+                        <td className="p-4 text-gray-600 dark:text-slate-400">{u?.role === 'admin' ? 'Supervisor' : u?.dept}</td>
                         <td className="p-4">
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' : isOffline ? 'bg-gray-100 text-gray-700 border' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${isOnline ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : isOffline ? 'bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-slate-300 border dark:border-slate-600' : 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800'}`}>
                             {log.action}
                           </span>
                         </td>
@@ -1253,7 +1261,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
                     );
                   })}
                   {filteredUserLogs.length === 0 && (
-                    <tr><td colSpan={4} className="p-6 text-center text-gray-500">No se encontraron eventos de asistencia.</td></tr>
+                    <tr><td colSpan={4} className="p-6 text-center text-gray-500 dark:text-slate-400">No se encontraron eventos de asistencia.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1264,12 +1272,12 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
       {reportView === 'checklists' && (
         <>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col justify-center items-center text-center">
-            <div className="bg-indigo-50 p-4 rounded-full mb-4">
-              <CheckSquare className="w-10 h-10 text-indigo-600" />
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6 mb-6 flex flex-col justify-center items-center text-center">
+            <div className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-full mb-4">
+              <CheckSquare className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">Auditoría Visual de Evaluaciones</h3>
-            <p className="text-sm text-gray-500 mt-2 max-w-lg">Aquí se listan todas las respuestas a los checklists que han incluido evidencia fotográfica, tanto de cumplimientos positivos como de fallos reportados.</p>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">Auditoría Visual de Evaluaciones</h3>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mt-2 max-w-lg">Aquí se listan todas las respuestas a los checklists que han incluido evidencia fotográfica, tanto de cumplimientos positivos como de fallos reportados.</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1279,7 +1287,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
               const roomName = rooms.find(r => r.id === task.roomId)?.name || task.roomId;
 
               return (
-                <div key={task.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${isFallo ? 'border-rose-200' : 'border-emerald-200'}`}>
+                <div key={task.id} className={`bg-white dark:bg-slate-800 rounded-2xl border overflow-hidden shadow-sm hover:shadow-md transition-shadow ${isFallo ? 'border-rose-200 dark:border-rose-800' : 'border-emerald-200 dark:border-emerald-800'}`}>
                    {task.evidenceImage ? (
                      <div 
                         className="h-48 w-full bg-cover bg-center cursor-zoom-in relative group" 
@@ -1291,17 +1299,17 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
                        </div>
                      </div>
                    ) : (
-                     <div className="h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">Sin Foto</div>
+                     <div className="h-24 bg-gray-100 dark:bg-slate-700 flex items-center justify-center text-gray-400 dark:text-slate-500 text-sm">Sin Foto</div>
                    )}
                    <div className="p-5">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-bold text-gray-800">{roomName}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isFallo ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                        <span className="font-bold text-gray-800 dark:text-slate-200">{roomName}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isFallo ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
                           {isFallo ? 'No Cumple' : 'Sí Cumple'}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{preguntaExtract}</p>
-                      <div className="text-xs text-gray-400 border-t border-gray-100 pt-3 flex justify-between">
+                      <p className="text-sm text-gray-600 dark:text-slate-400 mb-3">{preguntaExtract}</p>
+                      <div className="text-xs text-gray-400 dark:text-slate-500 border-t border-gray-100 dark:border-slate-700 pt-3 flex justify-between">
                          <span>{new Date(task.createdAt).toLocaleDateString()}</span>
                          <span>{formatTime(task.createdAt)}</span>
                       </div>
@@ -1310,7 +1318,7 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
               )
             })}
             {checklistEvidenceTasks.length === 0 && (
-              <div className="col-span-full py-10 text-center text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+              <div className="col-span-full py-10 text-center text-gray-500 dark:text-slate-500 bg-white dark:bg-slate-800 rounded-xl border border-dashed border-gray-300 dark:border-slate-600">
                 Aún no hay evaluaciones con fotografías adjuntas.
               </div>
             )}
@@ -1320,48 +1328,48 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
 
       {reportView === 'sistema' && (
         <>
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-5 mb-6">
+            <h4 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center">
               <FilterIcon className="w-4 h-4 mr-1.5" /> Filtrar Auditoría de Sistema
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Usuario Admin.</label>
-                <select value={sysLogUser} onChange={e => setSysLogUser(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Usuario Admin.</label>
+                <select value={sysLogUser} onChange={e => setSysLogUser(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos</option>
                   {users.filter(u => u.role === 'admin').map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Categoría</label>
-                <select value={sysLogCategory} onChange={e => setSysLogCategory(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Categoría</label>
+                <select value={sysLogCategory} onChange={e => setSysLogCategory(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todas">Todas</option>
                   {uniqueSystemCategories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Mes</label>
-                <select value={sysMonth} onChange={e => setSysMonth(e.target.value)} className="w-full border rounded-lg p-2 bg-gray-50 outline-none">
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Mes</label>
+                <select value={sysMonth} onChange={e => setSysMonth(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none">
                   <option value="Todos">Todos</option>
                   {monthsList.map(m => <option key={m.val} value={m.val}>{m.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 mb-1">Rango (Desde / Hasta)</label>
+                <label className="block text-xs font-semibold text-gray-500 dark:text-slate-400 mb-1">Rango (Desde / Hasta)</label>
                 <div className="flex items-center space-x-2">
-                  <input type="date" value={sysStartDate} onChange={e => setSysStartDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={sysStartDate} onChange={e => setSysStartDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                   <span className="text-gray-400 font-bold">-</span>
-                  <input type="date" value={sysEndDate} onChange={e => setSysEndDate(e.target.value)} className="border rounded-lg p-1.5 bg-gray-50 outline-none w-full text-xs" />
+                  <input type="date" value={sysEndDate} onChange={e => setSysEndDate(e.target.value)} className="border dark:border-slate-600 rounded-lg p-1.5 bg-gray-50 dark:bg-slate-900 dark:text-slate-200 outline-none w-full text-xs" />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-gray-700">Historial de Modificaciones Administrativas</h3>
-                <span className="text-xs bg-indigo-50 text-indigo-700 font-bold px-3 py-1 rounded-full border border-indigo-200 mt-1 inline-block">{filteredSystemLogs.length} registros</span>
+                <h3 className="font-bold text-gray-700 dark:text-slate-200">Historial de Modificaciones Administrativas</h3>
+                <span className="text-xs bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-bold px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-800 mt-1 inline-block">{filteredSystemLogs.length} registros</span>
               </div>
               <button onClick={handleExportSystemAudit} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center shadow-sm transition-colors">
                 <DownloadIcon className="w-4 h-4 mr-2" /> Descargar Excel
@@ -1369,34 +1377,34 @@ const ReportsTab = ({ tasks, rooms, users, slas, userLogs, systemLogs, appSettin
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[700px]">
-                <thead className="bg-white border-b">
+                <thead className="bg-white dark:bg-slate-800 border-b dark:border-slate-700">
                   <tr>
-                    <th className="p-4 font-semibold text-gray-600">Fecha y Hora</th>
-                    <th className="p-4 font-semibold text-gray-600">Usuario Responsable</th>
-                    <th className="p-4 font-semibold text-gray-600">Categoría</th>
-                    <th className="p-4 font-semibold text-gray-600">Detalles de la Acción</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Fecha y Hora</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Usuario Responsable</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Categoría</th>
+                    <th className="p-4 font-semibold text-gray-600 dark:text-slate-300">Detalles de la Acción</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredSystemLogs.sort((a,b) => b.timestamp - a.timestamp).map(log => {
                     const u = users.find(x => x.id === log.userId);
                     return (
-                      <tr key={log.id} className="border-b hover:bg-gray-50">
-                        <td className="p-4 text-gray-600 font-medium">
+                      <tr key={log.id} className="border-b dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                        <td className="p-4 text-gray-600 dark:text-slate-400 font-medium">
                           {new Date(log.timestamp).toLocaleDateString('es-ES')} - {formatTime(log.timestamp)}
                         </td>
-                        <td className="p-4 font-bold text-gray-800">{u?.name || 'Sistema / Desconocido'}</td>
+                        <td className="p-4 font-bold text-gray-800 dark:text-slate-200">{u?.name || 'Sistema / Desconocido'}</td>
                         <td className="p-4">
-                          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 uppercase tracking-wider border border-slate-200">
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 uppercase tracking-wider border border-slate-200 dark:border-slate-600">
                             {log.actionCategory}
                           </span>
                         </td>
-                        <td className="p-4 text-gray-700">{log.details}</td>
+                        <td className="p-4 text-gray-700 dark:text-slate-300">{log.details}</td>
                       </tr>
                     );
                   })}
                   {filteredSystemLogs.length === 0 && (
-                    <tr><td colSpan={4} className="p-6 text-center text-gray-500">No hay registros de auditoría en el sistema aún.</td></tr>
+                    <tr><td colSpan={4} className="p-6 text-center text-gray-500 dark:text-slate-500">No hay registros de auditoría en el sistema aún.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -1451,6 +1459,17 @@ const ConfigTab = ({
   const clinics = appSettings?.clinics || ['Sede Central'];
   const breakTypes = appSettings?.breakTypes || [];
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      try {
+        const base64Image = await compressImage(e.target.files[0], 400); // 400px es suficiente para un logo
+        setAppLogo(base64Image);
+      } catch (err) {
+        console.error("Error compressing logo", err);
+      }
+    }
+  };
+
   const handleSaveSettings = () => { onUpdateSettings({ ...appSettings, appName, logoUrl: appLogo }); };
   const handleAddClinic = () => { if(newClinic.trim() && !clinics.includes(newClinic.trim())) { onUpdateSettings({ ...appSettings, clinics: [...clinics, newClinic.trim()] }); setNewClinic(''); } };
   const handleRemoveClinic = (cToRemove: string) => { onUpdateSettings({ ...appSettings, clinics: clinics.filter((c: string) => c !== cToRemove) }); };
@@ -1496,31 +1515,43 @@ const ConfigTab = ({
     <div className="space-y-6 max-w-4xl animate-in fade-in duration-500">
       
       {/* PERSONALIZACIÓN Y CLÍNICAS */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Settings className="w-6 h-6 mr-2 text-gray-600"/> Personalización del Sistema
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+          <Settings className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Personalización del Sistema
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">Nombre de la Aplicación</label>
-            <input type="text" value={appName} onChange={(e) => setAppName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" placeholder="Ej. Hospital San José" />
+            <label className="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-1 block">Nombre de la Aplicación</label>
+            <input type="text" value={appName} onChange={(e) => setAppName(e.target.value)} className="w-full border dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej. Hospital San José" />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">URL del Logotipo (Opcional)</label>
-            <input type="text" value={appLogo} onChange={(e) => setAppLogo(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" placeholder="https://mi-web.com/logo.png" />
+            <label className="text-sm font-semibold text-gray-600 dark:text-slate-300 mb-1 block">Logotipo del Sistema</label>
+            <div className="flex items-center space-x-4">
+              {appLogo ? (
+                <div className="relative">
+                  <img src={appLogo} alt="Logo" className="h-14 object-contain bg-gray-50 dark:bg-slate-700 p-2 rounded-lg border dark:border-slate-600" />
+                  <button onClick={() => setAppLogo('')} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 shadow-md hover:bg-rose-600"><X className="w-3 h-3"/></button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center px-4 py-2 bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 font-bold rounded-lg text-sm border border-indigo-200 dark:border-indigo-800 cursor-pointer transition-colors w-full h-[58px]">
+                  <UploadCloud className="w-5 h-5 mr-2" /> Subir Imagen
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                </label>
+              )}
+            </div>
           </div>
         </div>
-        <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors mb-8">Guardar Personalización</button>
+        <button onClick={handleSaveSettings} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors mb-8 shadow-sm">Guardar Personalización</button>
 
-        <div className="border-t pt-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center"><Building className="w-5 h-5 mr-2 text-gray-500"/> Gestión de Clínicas / Sucursales</h3>
+        <div className="border-t dark:border-slate-700 pt-6">
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center"><Building className="w-5 h-5 mr-2 text-gray-500 dark:text-slate-400"/> Gestión de Clínicas / Sucursales</h3>
           <div className="flex gap-3 mb-4">
-            <input type="text" placeholder="Nueva clínica..." value={newClinic} onChange={(e) => setNewClinic(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
-            <button onClick={handleAddClinic} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+            <input type="text" placeholder="Nueva clínica..." value={newClinic} onChange={(e) => setNewClinic(e.target.value)} className="flex-1 border dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <button onClick={handleAddClinic} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg shadow-sm">Añadir</button>
           </div>
           <div className="flex flex-wrap gap-2">
             {clinics.map((c: string) => (
-              <span key={c} className="bg-gray-100 text-gray-800 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center border border-gray-200">
+              <span key={c} className="bg-gray-100 dark:bg-slate-700 text-gray-800 dark:text-slate-200 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center border border-gray-200 dark:border-slate-600">
                 {c} 
                 {clinics.length > 1 && <button onClick={() => handleRemoveClinic(c)} className="ml-2 text-rose-500 hover:text-rose-700"><X className="w-3 h-3"/></button>}
               </span>
@@ -1530,45 +1561,45 @@ const ConfigTab = ({
       </div>
 
       {/* CONFIGURACIÓN DE DESCANSOS */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-          <Clock className="w-6 h-6 mr-2 text-gray-600"/> Tipos de Descanso (Control de Asistencia)
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-4 flex items-center">
+          <Clock className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Tipos de Descanso (Control de Asistencia)
         </h2>
-        <p className="text-sm text-gray-500 mb-6">Configura las pausas permitidas para el personal. Estas opciones aparecerán en su Status Bar.</p>
+        <p className="text-sm text-gray-500 dark:text-slate-400 mb-6">Configura las pausas permitidas para el personal. Estas opciones aparecerán en su Status Bar.</p>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Ej. Hora de Almuerzo" value={newBreakName} onChange={(e) => setNewBreakName(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Ej. Hora de Almuerzo" value={newBreakName} onChange={(e) => setNewBreakName(e.target.value)} className="flex-1 border dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none" />
           <div className="flex items-center">
-            <input type="number" placeholder="Minutos" value={newBreakDuration} onChange={(e) => setNewBreakDuration(e.target.value)} className="w-24 border rounded-l-lg p-2 focus:ring-2 focus:ring-indigo-500 border-r-0" />
-            <span className="bg-gray-100 border border-gray-300 border-l-0 px-3 py-2 rounded-r-lg text-gray-500 text-sm font-medium">min</span>
+            <input type="number" placeholder="Minutos" value={newBreakDuration} onChange={(e) => setNewBreakDuration(e.target.value)} className="w-24 border dark:border-slate-600 rounded-l-lg p-2 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 border-r-0 outline-none" />
+            <span className="bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 border-l-0 px-3 py-2 rounded-r-lg text-gray-500 dark:text-slate-300 text-sm font-medium">min</span>
           </div>
-          <button onClick={handleAddBreak} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+          <button onClick={handleAddBreak} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-sm transition-colors">Añadir</button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {breakTypes.map((b: any) => (
-            <div key={b.id} className="flex items-center justify-between p-3 bg-amber-50 rounded-lg border border-amber-100">
+            <div key={b.id} className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-100 dark:border-amber-800/50">
               <div>
-                <p className="font-bold text-sm text-amber-900">{b.name}</p>
-                <p className="text-xs text-amber-700">Duración: {b.duration} min</p>
+                <p className="font-bold text-sm text-amber-900 dark:text-amber-400">{b.name}</p>
+                <p className="text-xs text-amber-700 dark:text-amber-500">Duración: {b.duration} min</p>
               </div>
               <button onClick={() => handleRemoveBreak(b.id)} className="text-rose-500 hover:text-rose-700 p-1.5"><X className="w-4 h-4"/></button>
             </div>
           ))}
-          {breakTypes.length === 0 && <p className="text-gray-500 text-sm col-span-full">No hay descansos configurados.</p>}
+          {breakTypes.length === 0 && <p className="text-gray-500 dark:text-slate-400 text-sm col-span-full">No hay descansos configurados.</p>}
         </div>
       </div>
 
       {/* SLAs */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <AlertTriangle className="w-6 h-6 mr-2 text-gray-600"/> Tiempos Máximos de Tarea (SLAs)
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+          <AlertTriangle className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Tiempos Máximos de Tarea (SLAs)
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Object.values(DEPARTMENTS).map((dept: any) => (
-            <div key={dept} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <span className="font-semibold text-gray-700 text-sm block mb-2">{dept}</span>
+            <div key={dept} className="p-4 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700">
+              <span className="font-semibold text-gray-700 dark:text-slate-300 text-sm block mb-2">{dept}</span>
               <div className="flex items-center space-x-2">
-                <input type="number" value={slas[dept] || 0} onChange={(e) => onUpdateSla(dept, e.target.value)} className="w-full text-right border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
-                <span className="text-gray-500 text-sm font-medium">min</span>
+                <input type="number" value={slas[dept] || 0} onChange={(e) => onUpdateSla(dept, e.target.value)} className="w-full text-right border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-md p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"/>
+                <span className="text-gray-500 dark:text-slate-400 text-sm font-medium">min</span>
               </div>
             </div>
           ))}
@@ -1576,52 +1607,52 @@ const ConfigTab = ({
       </div>
 
       {/* Habitaciones */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Bed className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Habitaciones
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+          <Bed className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Gestión de Habitaciones
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
-          <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border rounded-lg p-2 bg-white">
+          <input type="text" placeholder="Número (ej. 301)..." value={newRoomId} onChange={(e) => setNewRoomId(e.target.value)} className="flex-1 border dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <select value={newRoomArea} onChange={(e) => setNewRoomArea(e.target.value)} className="border dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 outline-none">
             {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
           </select>
-          <select value={newRoomClinic} onChange={(e) => setNewRoomClinic(e.target.value)} className="border rounded-lg p-2 bg-white text-indigo-700 font-semibold">
+          <select value={newRoomClinic} onChange={(e) => setNewRoomClinic(e.target.value)} className="border dark:border-slate-600 rounded-lg p-2 bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 font-semibold outline-none">
             {clinics.map((c: string) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <button onClick={() => { onAddRoom(newRoomId, newRoomArea, newRoomClinic); setNewRoomId(''); }} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">
+          <button onClick={() => { onAddRoom(newRoomId, newRoomArea, newRoomClinic); setNewRoomId(''); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-sm transition-colors">
             Agregar
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {rooms.map((room: Room) => (
              editingRoomId === room.id ? (
-              <div key={room.id} className="flex flex-col gap-2 p-3 bg-indigo-50 rounded-lg border border-indigo-200 animate-in fade-in duration-200">
-                 <input type="text" value={editRoomData.name} onChange={e => setEditRoomData({...editRoomData, name: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm outline-none" placeholder="Nombre" />
-                 <select value={editRoomData.area} onChange={e => setEditRoomData({...editRoomData, area: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm bg-white outline-none">
+              <div key={room.id} className="flex flex-col gap-2 p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg border border-indigo-200 dark:border-indigo-800 animate-in fade-in duration-200">
+                 <input type="text" value={editRoomData.name} onChange={e => setEditRoomData({...editRoomData, name: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm outline-none" placeholder="Nombre" />
+                 <select value={editRoomData.area} onChange={e => setEditRoomData({...editRoomData, area: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm outline-none">
                     {AREAS.map(area => <option key={area} value={area}>{area}</option>)}
                  </select>
-                 <select value={editRoomData.clinic} onChange={e => setEditRoomData({...editRoomData, clinic: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm bg-white outline-none">
+                 <select value={editRoomData.clinic} onChange={e => setEditRoomData({...editRoomData, clinic: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm outline-none">
                     {clinics.map((c: string) => <option key={c} value={c}>{c}</option>)}
                  </select>
                  <div className="flex gap-2 mt-1">
                     <button onClick={() => { onUpdateRoom(room.id, editRoomData); setEditingRoomId(null); }} className="bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-emerald-600">Guardar</button>
-                    <button onClick={() => setEditingRoomId(null)} className="bg-gray-300 text-gray-700 px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-gray-400">Cancelar</button>
+                    <button onClick={() => setEditingRoomId(null)} className="bg-gray-300 dark:bg-slate-600 text-gray-700 dark:text-slate-200 px-3 py-1.5 rounded text-xs font-bold w-full hover:bg-gray-400 dark:hover:bg-slate-500">Cancelar</button>
                  </div>
               </div>
             ) : (
-              <div key={room.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div key={room.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-900 rounded-lg border border-gray-200 dark:border-slate-700">
                 <div className="flex items-center space-x-3">
-                  <Bed className="w-5 h-5 text-gray-400" />
+                  <Bed className="w-5 h-5 text-gray-400 dark:text-slate-500" />
                   <div>
-                    <p className="font-bold text-sm text-gray-800">{room.name}</p>
-                    <p className="text-[10px] text-gray-500 uppercase">{room.clinic} - {room.area}</p>
+                    <p className="font-bold text-sm text-gray-800 dark:text-slate-200">{room.name}</p>
+                    <p className="text-[10px] text-gray-500 dark:text-slate-400 uppercase">{room.clinic} - {room.area}</p>
                   </div>
                 </div>
                 <div className="flex space-x-1">
-                  <button onClick={() => { setEditingRoomId(room.id); setEditRoomData({name: room.name, area: room.area, clinic: room.clinic}); }} className="text-blue-500 hover:text-blue-700 p-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Habitación">
+                  <button onClick={() => { setEditingRoomId(room.id); setEditRoomData({name: room.name, area: room.area, clinic: room.clinic}); }} className="text-blue-500 hover:text-blue-700 p-1.5 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors" title="Editar Habitación">
                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                   </button>
-                  <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors"><X className="w-4 h-4"/></button>
+                  <button onClick={() => onRemoveRoom(room.id)} className="text-rose-500 hover:text-rose-700 p-1.5 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-lg transition-colors"><X className="w-4 h-4"/></button>
                 </div>
               </div>
             )
@@ -1630,48 +1661,48 @@ const ConfigTab = ({
       </div>
 
       {/* Usuarios */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <Users className="w-6 h-6 mr-2 text-gray-600"/> Gestión de Personal
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+          <Users className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Gestión de Personal
         </h2>
-        {userFormError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm font-medium mb-4">{userFormError}</div>}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 p-5 rounded-xl border">
-          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Nombre</label><input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
-          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Usuario</label><input type="text" value={newUserLogin} onChange={(e) => setNewUserLogin(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
-          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Contraseña</label><input type="password" value={newUserPass} onChange={(e) => setNewUserPass(e.target.value)} className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" /></div>
-          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Departamento</label>
-            <select value={newUserDept} onChange={(e) => setNewUserDept(e.target.value)} className="w-full border rounded-lg p-2 bg-white">
+        {userFormError && <div className="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-lg text-sm font-medium mb-4">{userFormError}</div>}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 bg-gray-50 dark:bg-slate-900 p-5 rounded-xl border dark:border-slate-700">
+          <div><label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1 block">Nombre</label><input type="text" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} className="w-full border dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1 block">Usuario</label><input type="text" value={newUserLogin} onChange={(e) => setNewUserLogin(e.target.value)} className="w-full border dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1 block">Contraseña</label><input type="password" value={newUserPass} onChange={(e) => setNewUserPass(e.target.value)} className="w-full border dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" /></div>
+          <div><label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1 block">Departamento</label>
+            <select value={newUserDept} onChange={(e) => setNewUserDept(e.target.value)} className="w-full border dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 outline-none">
               {Object.values(DEPARTMENTS).map(dept => <option key={dept} value={dept}>{dept}</option>)}
             </select>
           </div>
-          <div><label className="text-xs font-semibold text-gray-600 mb-1 block">Rol</label>
-            <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)} className="w-full border rounded-lg p-2 bg-white">
+          <div><label className="text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1 block">Rol</label>
+            <select value={newUserRole} onChange={(e) => setNewUserRole(e.target.value as any)} className="w-full border dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 outline-none">
               <option value="staff">Operativo</option>
               <option value="admin">Supervisor</option>
             </select>
           </div>
-          <div className="flex items-end"><button onClick={handleAddUser} className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg">Añadir</button></div>
+          <div className="flex items-end"><button onClick={handleAddUser} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg shadow-sm transition-colors">Añadir</button></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {users.map((user: AppUser) => (
-            <div key={user.id} className={`flex flex-col p-4 bg-white rounded-xl border shadow-sm transition-all ${user.role === 'admin' ? 'border-indigo-200 shadow-indigo-100/50' : 'border-gray-200'}`}>
+            <div key={user.id} className={`flex flex-col p-4 bg-white dark:bg-slate-800 rounded-xl border shadow-sm transition-all ${user.role === 'admin' ? 'border-indigo-200 dark:border-indigo-800/50 shadow-indigo-100/50 dark:shadow-none' : 'border-gray-200 dark:border-slate-700'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2.5 rounded-full ${user.role === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'bg-indigo-50 text-indigo-600'}`}>
+                  <div className={`p-2.5 rounded-full ${user.role === 'admin' ? 'bg-indigo-600 text-white shadow-md' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'}`}>
                     <User className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-gray-800 flex items-center">
+                    <p className="font-bold text-sm text-gray-800 dark:text-slate-200 flex items-center">
                       {user.name} 
-                      {user.id === currentUser?.id && <span className="ml-2 text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Tú</span>}
+                      {user.id === currentUser?.id && <span className="ml-2 text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Tú</span>}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">Login: <span className="text-gray-700 font-medium">{user.username}</span></p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Login: <span className="text-gray-700 dark:text-slate-300 font-medium">{user.username}</span></p>
                     <div className="flex gap-2 mt-2">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${user.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${user.role === 'admin' ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'}`}>
                         {user.role === 'admin' ? 'Admin / Supervisor' : 'Operativo (Staff)'}
                       </span>
-                      <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded uppercase">
+                      <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded uppercase">
                         {user.dept}
                       </span>
                     </div>
@@ -1679,10 +1710,10 @@ const ConfigTab = ({
                 </div>
                 
                 <div className="flex space-x-2">
-                  <button onClick={() => handleOpenEditProfile(user)} className="text-blue-500 hover:text-blue-700 p-2 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors" title="Editar Perfil y Permisos">
+                  <button onClick={() => handleOpenEditProfile(user)} className="text-blue-500 hover:text-blue-700 p-2 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-colors" title="Editar Perfil y Permisos">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                   </button>
-                  <button onClick={() => { setEditingUserId(user.id); setActiveEditMode('password'); setEditPasswordValue(''); }} className="text-amber-500 hover:text-amber-700 p-2 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors" title="Cambiar Contraseña">
+                  <button onClick={() => { setEditingUserId(user.id); setActiveEditMode('password'); setEditPasswordValue(''); }} className="text-amber-500 hover:text-amber-700 p-2 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 rounded-lg transition-colors" title="Cambiar Contraseña">
                     <Lock className="w-4 h-4"/>
                   </button>
                   {user.id !== currentUser?.id && (
@@ -1693,7 +1724,7 @@ const ConfigTab = ({
                         }
                         if (window.confirm(`¿Estás seguro de eliminar al usuario ${user.name}?`)) { onRemoveUser(user.id); }
                       }} 
-                      className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors" title="Eliminar Usuario"
+                      className="text-rose-500 hover:text-rose-700 p-2 bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 rounded-lg transition-colors" title="Eliminar Usuario"
                     >
                       <X className="w-4 h-4"/>
                     </button>
@@ -1702,49 +1733,49 @@ const ConfigTab = ({
               </div>
               
               {editingUserId === user.id && activeEditMode === 'password' && (
-                <div className="mt-4 p-4 bg-amber-50/50 border border-amber-200 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <label className="text-xs font-bold text-amber-800 mb-2 block">Nueva Contraseña para {user.name}</label>
+                <div className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <label className="text-xs font-bold text-amber-800 dark:text-amber-500 mb-2 block">Nueva Contraseña para {user.name}</label>
                   <div className="flex items-center space-x-2">
-                    <input type="text" placeholder="Escribe la nueva clave..." value={editPasswordValue} onChange={(e) => setEditPasswordValue(e.target.value)} className="flex-1 border border-amber-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-amber-500" />
-                    <button onClick={() => handleSavePassword(user.id)} className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-amber-700 transition-colors">Guardar Clave</button>
-                    <button onClick={() => {setEditingUserId(null); setActiveEditMode(null);}} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors">Cancelar</button>
+                    <input type="text" placeholder="Escribe la nueva clave..." value={editPasswordValue} onChange={(e) => setEditPasswordValue(e.target.value)} className="flex-1 border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-amber-500" />
+                    <button onClick={() => handleSavePassword(user.id)} className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors">Guardar Clave</button>
+                    <button onClick={() => {setEditingUserId(null); setActiveEditMode(null);}} className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Cancelar</button>
                   </div>
                 </div>
               )}
 
               {editingUserId === user.id && activeEditMode === 'profile' && (
-                <div className="mt-4 p-5 bg-blue-50/50 border border-blue-200 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
-                  <h4 className="text-sm font-bold text-blue-900 mb-4 border-b border-blue-200 pb-2">Modificar Perfil y Privilegios</h4>
+                <div className="mt-4 p-5 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/50 rounded-xl animate-in fade-in slide-in-from-top-2 duration-200">
+                  <h4 className="text-sm font-bold text-blue-900 dark:text-blue-400 mb-4 border-b border-blue-200 dark:border-blue-800/50 pb-2">Modificar Perfil y Privilegios</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="text-xs font-semibold text-blue-800 mb-1 block">Nombre Completo</label>
-                      <input type="text" value={editProfileData.name} onChange={(e) => setEditProfileData({...editProfileData, name: e.target.value})} className="w-full border border-blue-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="text-xs font-semibold text-blue-800 dark:text-blue-500 mb-1 block">Nombre Completo</label>
+                      <input type="text" value={editProfileData.name} onChange={(e) => setEditProfileData({...editProfileData, name: e.target.value})} className="w-full border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-blue-800 mb-1 block">Usuario (Login)</label>
-                      <input type="text" value={editProfileData.username} onChange={(e) => setEditProfileData({...editProfileData, username: e.target.value})} className="w-full border border-blue-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="text-xs font-semibold text-blue-800 dark:text-blue-500 mb-1 block">Usuario (Login)</label>
+                      <input type="text" value={editProfileData.username} onChange={(e) => setEditProfileData({...editProfileData, username: e.target.value})} className="w-full border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-blue-800 mb-1 block">Departamento</label>
-                      <select value={editProfileData.dept} onChange={(e) => setEditProfileData({...editProfileData, dept: e.target.value})} className="w-full border border-blue-300 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                      <label className="text-xs font-semibold text-blue-800 dark:text-blue-500 mb-1 block">Departamento</label>
+                      <select value={editProfileData.dept} onChange={(e) => setEditProfileData({...editProfileData, dept: e.target.value})} className="w-full border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-lg p-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
                         {Object.values(DEPARTMENTS).map(dept => <option key={dept} value={dept}>{dept}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-blue-800 mb-1 block">Nivel de Acceso (Rol)</label>
+                      <label className="text-xs font-semibold text-blue-800 dark:text-blue-500 mb-1 block">Nivel de Acceso (Rol)</label>
                       <select 
                         value={editProfileData.role} 
                         onChange={(e) => setEditProfileData({...editProfileData, role: e.target.value as any})} 
-                        className={`w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 font-bold ${editProfileData.role === 'admin' ? 'bg-indigo-50 border-indigo-300 text-indigo-800 focus:ring-indigo-500' : 'bg-white border-blue-300 text-gray-700 focus:ring-blue-500'}`}
+                        className={`w-full border rounded-lg p-2 text-sm outline-none focus:ring-2 font-bold ${editProfileData.role === 'admin' ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-300 focus:ring-indigo-500' : 'bg-white dark:bg-slate-800 border-blue-300 dark:border-blue-800 text-gray-700 dark:text-slate-200 focus:ring-blue-500'}`}
                       >
                         <option value="staff">Operativo (Solo lectura y tareas)</option>
                         <option value="admin">Supervisor (Control Total)</option>
                       </select>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2 pt-2 border-t border-blue-200">
-                    <button onClick={() => {setEditingUserId(null); setActiveEditMode(null);}} className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors">Cancelar</button>
-                    <button onClick={() => handleSaveProfile(user.id)} className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition-colors">Guardar Cambios</button>
+                  <div className="flex justify-end gap-2 pt-2 border-t border-blue-200 dark:border-blue-800/50">
+                    <button onClick={() => {setEditingUserId(null); setActiveEditMode(null);}} className="bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">Cancelar</button>
+                    <button onClick={() => handleSaveProfile(user.id)} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-bold shadow-sm transition-colors">Guardar Cambios</button>
                   </div>
                 </div>
               )}
@@ -1754,54 +1785,54 @@ const ConfigTab = ({
       </div>
 
       {/* Checklist (Con Edición) */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center">
-          <CheckSquare className="w-6 h-6 mr-2 text-gray-600"/> Gestión del Checklist (Formulario)
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+          <CheckSquare className="w-6 h-6 mr-2 text-gray-600 dark:text-slate-400"/> Gestión del Checklist (Formulario)
         </h2>
         <div className="flex flex-col md:flex-row gap-3 mb-6">
-          <input type="text" placeholder="Categoría (ej. Paredes)..." value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full md:w-48 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" list="categories-list" />
+          <input type="text" placeholder="Categoría (ej. Paredes)..." value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full md:w-48 border dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" list="categories-list" />
           <datalist id="categories-list">{categories.map(cat => <option key={cat as string} value={cat as string} />)}</datalist>
           
-          <input type="text" placeholder="Nueva pregunta..." value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} className="flex-1 border rounded-lg p-2 focus:ring-2 focus:ring-indigo-500" />
+          <input type="text" placeholder="Nueva pregunta..." value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} className="flex-1 border dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 outline-none" />
           
-          <select value={newDept} onChange={(e) => setNewDept(e.target.value)} className="border rounded-lg p-2 bg-white md:w-40">
+          <select value={newDept} onChange={(e) => setNewDept(e.target.value)} className="border dark:border-slate-600 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded-lg p-2 md:w-40 outline-none">
             {Object.values(DEPARTMENTS).filter(d => d !== DEPARTMENTS.ADMIN).map(dept => <option key={dept} value={dept}>{dept}</option>)}
           </select>
-          <button onClick={() => { onAddChecklist(newQuestion, newCategory, newDept); setNewQuestion(''); }} className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg">Añadir</button>
+          <button onClick={() => { onAddChecklist(newQuestion, newCategory, newDept); setNewQuestion(''); }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-sm transition-colors">Añadir</button>
         </div>
         
         <div className="space-y-4">
           {Object.entries(groupedChecklist).map(([cat, items]: [string, any]) => (
-             <details key={cat} className="group border border-gray-200 rounded-lg bg-gray-50">
-               <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-800 marker:content-none">
+             <details key={cat} className="group border border-gray-200 dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-900">
+               <summary className="flex cursor-pointer items-center justify-between p-4 font-semibold text-gray-800 dark:text-slate-200 marker:content-none">
                  {cat} <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" />
                </summary>
-               <div className="p-4 pt-0 space-y-2 bg-white border-t border-gray-200">
+               <div className="p-4 pt-0 space-y-2 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700">
                  {items.map((item: ChecklistItem) => (
-                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-gray-100 rounded-lg mb-2 gap-2 bg-white shadow-sm">
+                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-gray-100 dark:border-slate-700 rounded-lg mb-2 gap-2 bg-white dark:bg-slate-800 shadow-sm">
                      {editingChecklistId === item.id ? (
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-2 w-full animate-in fade-in duration-200">
-                          <input type="text" value={editChecklistData.category} onChange={e => setEditChecklistData({...editChecklistData, category: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm" placeholder="Categoría" />
-                          <input type="text" value={editChecklistData.question} onChange={e => setEditChecklistData({...editChecklistData, question: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm" placeholder="Pregunta" />
+                          <input type="text" value={editChecklistData.category} onChange={e => setEditChecklistData({...editChecklistData, category: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm outline-none" placeholder="Categoría" />
+                          <input type="text" value={editChecklistData.question} onChange={e => setEditChecklistData({...editChecklistData, question: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm outline-none" placeholder="Pregunta" />
                           <div className="flex gap-2">
-                            <select value={editChecklistData.dept} onChange={e => setEditChecklistData({...editChecklistData, dept: e.target.value})} className="border border-indigo-300 rounded p-1.5 text-sm flex-1">
+                            <select value={editChecklistData.dept} onChange={e => setEditChecklistData({...editChecklistData, dept: e.target.value})} className="border border-indigo-300 dark:border-indigo-700 bg-white dark:bg-slate-900 text-gray-800 dark:text-slate-100 rounded p-1.5 text-sm flex-1 outline-none">
                                {Object.values(DEPARTMENTS).filter(d => d !== DEPARTMENTS.ADMIN).map(dept => <option key={dept} value={dept}>{dept}</option>)}
                             </select>
-                            <button onClick={() => { onUpdateChecklist(item.id, editChecklistData); setEditingChecklistId(null); }} className="bg-emerald-500 text-white p-1.5 rounded hover:bg-emerald-600"><CheckCircle className="w-4 h-4"/></button>
-                            <button onClick={() => setEditingChecklistId(null)} className="bg-gray-200 text-gray-700 p-1.5 rounded hover:bg-gray-300"><X className="w-4 h-4"/></button>
+                            <button onClick={() => { onUpdateChecklist(item.id, editChecklistData); setEditingChecklistId(null); }} className="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded transition-colors"><CheckCircle className="w-4 h-4"/></button>
+                            <button onClick={() => setEditingChecklistId(null)} className="bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500 text-gray-700 dark:text-slate-200 p-1.5 rounded transition-colors"><X className="w-4 h-4"/></button>
                           </div>
                         </div>
                      ) : (
                         <>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-gray-800">{item.question}</p>
-                            <span className="text-[10px] font-bold text-indigo-600 uppercase bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 inline-block">{item.dept}</span>
+                            <p className="text-sm font-semibold text-gray-800 dark:text-slate-200">{item.question}</p>
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800 mt-1 inline-block">{item.dept}</span>
                           </div>
                           <div className="flex gap-2 shrink-0">
-                            <button onClick={() => { setEditingChecklistId(item.id); setEditChecklistData({ question: item.question, category: item.category, dept: item.dept }); }} className="text-blue-500 hover:bg-blue-50 p-1.5 rounded transition-colors border border-transparent hover:border-blue-200">
+                            <button onClick={() => { setEditingChecklistId(item.id); setEditChecklistData({ question: item.question, category: item.category, dept: item.dept }); }} className="text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 p-1.5 rounded transition-colors border border-transparent hover:border-blue-200 dark:hover:border-blue-800">
                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                             </button>
-                            <button onClick={() => { if(window.confirm(`¿Eliminar la pregunta "${item.question}"?`)) onRemoveChecklist(item.id); }} className="text-rose-500 hover:bg-rose-50 p-1.5 rounded transition-colors border border-transparent hover:border-rose-200"><X className="w-4 h-4"/></button>
+                            <button onClick={() => { if(window.confirm(`¿Eliminar la pregunta "${item.question}"?`)) onRemoveChecklist(item.id); }} className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1.5 rounded transition-colors border border-transparent hover:border-rose-200 dark:hover:border-rose-800"><X className="w-4 h-4"/></button>
                           </div>
                         </>
                      )}
@@ -1851,56 +1882,55 @@ const ChecklistModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="bg-amber-500 p-5 text-white flex justify-between items-center shrink-0">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border dark:border-slate-700">
+        <div className="bg-amber-500 dark:bg-amber-600 p-5 text-white flex justify-between items-center shrink-0">
           <div>
             <h3 className="font-bold text-xl flex items-center"><CheckSquare className="w-6 h-6 mr-2"/> CONTROL DE LIMPIEZA</h3>
             <p className="text-amber-100 text-sm font-medium mt-1">{selectedRoom.name} - {selectedRoom.area}</p>
           </div>
-          <button onClick={onClose} className="hover:bg-amber-600 p-2 rounded-full transition-colors bg-amber-500/50"><X className="w-6 h-6"/></button>
+          <button onClick={onClose} className="hover:bg-amber-600 dark:hover:bg-amber-700 p-2 rounded-full transition-colors bg-amber-500/50 dark:bg-amber-800/50"><X className="w-6 h-6"/></button>
         </div>
         
-        <div className="bg-gray-100 h-2 w-full shrink-0">
-          <div className="bg-indigo-600 h-full transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}></div>
+        <div className="bg-gray-100 dark:bg-slate-800 h-2 w-full shrink-0">
+          <div className="bg-indigo-600 dark:bg-indigo-500 h-full transition-all duration-500 ease-out" style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}></div>
         </div>
         
-        <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
-          <div className="flex justify-between items-end mb-6 border-b border-gray-200 pb-4">
-            <h4 className="text-2xl font-bold text-gray-800">{currentCategory as string}</h4>
-            <span className="text-sm font-bold text-indigo-600 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200">
+        <div className="p-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
+          <div className="flex justify-between items-end mb-6 border-b border-gray-200 dark:border-slate-700 pb-4">
+            <h4 className="text-2xl font-bold text-gray-800 dark:text-slate-100">{currentCategory as string}</h4>
+            <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/40 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-800">
               Paso {currentStep + 1} de {totalSteps}
             </span>
           </div>
 
           {!isFinalStep ? (
             <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <p className="text-sm text-blue-800 mb-4 bg-blue-50 p-4 rounded-xl border border-blue-200 font-medium shadow-sm">
+              <p className="text-sm text-blue-800 dark:text-blue-300 mb-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-200 dark:border-blue-800/50 font-medium shadow-sm">
                 Debe evaluar <strong>todos los elementos</strong> para continuar. Marque explícitamente "✓ Cumple" o "✗ No Cumple" según corresponda.
               </p>
               
               {currentItems.map((item: ChecklistItem) => (
-                <div key={item.id} className="flex flex-col p-4 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:border-indigo-300">
+                <div key={item.id} className="flex flex-col p-4 bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-600">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-800 text-base">{item.question}</p>
-                      <span className="text-[10px] font-bold text-indigo-600 uppercase mt-1 inline-block bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{item.dept}</span>
+                      <p className="font-semibold text-gray-800 dark:text-slate-200 text-base">{item.question}</p>
+                      <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase mt-1 inline-block bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800">{item.dept}</span>
                     </div>
-                    <div className="flex bg-gray-100 rounded-lg p-1 shrink-0 border border-gray-200">
-                      <button onClick={() => setAnswers({...answers, [item.id]: true})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === true ? 'bg-white text-emerald-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✓ Cumple</button>
-                      <button onClick={() => setAnswers({...answers, [item.id]: false})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === false ? 'bg-white text-rose-600 shadow-sm border border-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>✗ No Cumple</button>
+                    <div className="flex bg-gray-100 dark:bg-slate-900 rounded-lg p-1 shrink-0 border border-gray-200 dark:border-slate-700">
+                      <button onClick={() => setAnswers({...answers, [item.id]: true})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === true ? 'bg-white dark:bg-slate-700 text-emerald-600 dark:text-emerald-400 shadow-sm border border-gray-200 dark:border-slate-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>✓ Cumple</button>
+                      <button onClick={() => setAnswers({...answers, [item.id]: false})} className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${answers[item.id] === false ? 'bg-white dark:bg-slate-700 text-rose-600 dark:text-rose-400 shadow-sm border border-gray-200 dark:border-slate-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}>✗ No Cumple</button>
                     </div>
                   </div>
 
-                  {/* ZONA DE EVIDENCIA DINÁMICA (Aparece tanto al cumplir como al fallar) */}
                   {answers[item.id] !== undefined && (
-                    <div className={`mt-2 pt-3 border-t border-gray-100 flex flex-col sm:flex-row items-center gap-3 animate-in fade-in duration-300`}>
+                    <div className={`mt-2 pt-3 border-t border-gray-100 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-3 animate-in fade-in duration-300`}>
                        <ImageUploadButton 
                           onImageCaptured={(base64) => setEvidenceImages({...evidenceImages, [item.id]: base64})} 
                           label={evidenceImages[item.id] ? "Cambiar Evidencia" : answers[item.id] === false ? "Fallo: Tomar Foto (Obligatorio)" : "Añadir Foto (Opcional)"} 
                        />
                        {evidenceImages[item.id] && (
                          <div className="relative">
-                            <img src={evidenceImages[item.id]} alt="Evidencia" className="h-12 w-16 object-cover rounded border border-gray-300" />
+                            <img src={evidenceImages[item.id]} alt="Evidencia" className="h-12 w-16 object-cover rounded border border-gray-300 dark:border-slate-600" />
                             <button onClick={() => { const newEv = {...evidenceImages}; delete newEv[item.id]; setEvidenceImages(newEv); }} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-0.5"><X className="w-3 h-3"/></button>
                          </div>
                        )}
@@ -1911,17 +1941,17 @@ const ChecklistModal = ({
             </div>
           ) : (
             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
-                <label className="block text-sm font-bold text-gray-700 mb-2">19. Comentario Adicional</label>
-                <textarea value={comentarios} onChange={e => setComentarios(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 min-h-[100px] bg-gray-50" placeholder="Observaciones generales acerca de la habitación..."></textarea>
+              <div className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700">
+                <label className="block text-sm font-bold text-gray-700 dark:text-slate-300 mb-2">19. Comentario Adicional</label>
+                <textarea value={comentarios} onChange={e => setComentarios(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 min-h-[100px] bg-gray-50 dark:bg-slate-900 text-gray-800 dark:text-slate-100 outline-none" placeholder="Observaciones generales acerca de la habitación..."></textarea>
               </div>
-              <div className="bg-rose-50 p-5 rounded-2xl shadow-sm border border-rose-200">
-                <label className="block text-sm font-bold text-rose-700 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
-                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 bg-white rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px] mb-3" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
+              <div className="bg-rose-50 dark:bg-rose-900/20 p-5 rounded-2xl shadow-sm border border-rose-200 dark:border-rose-800/50">
+                <label className="block text-sm font-bold text-rose-700 dark:text-rose-400 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
+                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px] mb-3 outline-none" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
                 {urgente.trim().length > 0 && (
                   <div className="flex items-center gap-3">
                     <ImageUploadButton onImageCaptured={setUrgenteImage} label={urgenteImage ? "Cambiar Foto de Urgencia" : "Añadir Foto del Problema Urgente"} />
-                    {urgenteImage && <img src={urgenteImage} className="h-12 w-16 object-cover rounded border border-rose-300" alt="Urgente" />}
+                    {urgenteImage && <img src={urgenteImage} className="h-12 w-16 object-cover rounded border border-rose-300 dark:border-rose-700" alt="Urgente" />}
                   </div>
                 )}
               </div>
@@ -1929,8 +1959,8 @@ const ChecklistModal = ({
           )}
         </div>
 
-        <div className="p-5 border-t border-gray-200 bg-white flex justify-between items-center shrink-0">
-          <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 cursor-not-allowed opacity-50' : 'text-gray-700 hover:bg-gray-100 border border-gray-200'}`}>
+        <div className="p-5 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center shrink-0">
+          <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed opacity-50' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600'}`}>
             <ChevronLeft className="w-5 h-5 mr-1" /> Anterior
           </button>
           
@@ -1938,7 +1968,7 @@ const ChecklistModal = ({
             <button 
               onClick={handleNext} 
               disabled={!isCurrentStepComplete || currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id])} 
-              className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${(!isCurrentStepComplete || currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id])) ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+              className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${(!isCurrentStepComplete || currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id])) ? 'bg-indigo-300 dark:bg-indigo-800 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
               title={currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id]) ? "Por favor adjunte una foto de evidencia a los elementos que No Cumplen antes de continuar" : ""}
             >
               Siguiente <ChevronRight className="w-5 h-5 ml-1" />
@@ -1954,24 +1984,24 @@ const ChecklistModal = ({
   );
 };
 
-// === NUEVA PESTAÑA DE MANUAL DE USUARIO ===
+// === NUEVA PESTAÑA DE MANUAL DE USUARIO (VERSIÓN 3.0) ===
 const ManualTab = () => (
   <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <FileText className="w-7 h-7 mr-3 text-indigo-600" /> Manual de Operación: Versión 2.0
+    <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
+        <FileText className="w-7 h-7 mr-3 text-indigo-600 dark:text-indigo-400" /> Manual de Operación: Versión 3.0
       </h2>
-      <div className="space-y-6 text-gray-700">
+      <div className="space-y-6 text-gray-700 dark:text-slate-300">
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">1. Roles del Sistema y Multi-Admin</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">1. Roles del Sistema y Multi-Admin</h3>
           <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
-            <li><strong>Supervisor (Admin):</strong> Tiene acceso total a las configuraciones, auditoría y bitácoras. Puede ascender a cualquier empleado al rol de Admin desde la pestaña <span className="font-bold text-indigo-600">Config</span> &gt; Gestión de Personal &gt; Editar (lápiz azul).</li>
+            <li><strong>Supervisor (Admin):</strong> Tiene acceso total a las configuraciones, auditoría y bitácoras. Puede ascender a cualquier empleado al rol de Admin desde la pestaña <span className="font-bold text-indigo-600 dark:text-indigo-400">Config</span> {' > '} Gestión de Personal {' > '} Editar (lápiz azul).</li>
             <li><strong>Personal Operativo (Staff):</strong> Solo ven y completan las tareas que han sido asignadas a su departamento (Limpieza, Mantenimiento).</li>
           </ul>
         </section>
         
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">2. Sistema de Evidencias (Checklist y Tareas)</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">2. Sistema de Evidencias (Checklist y Tareas)</h3>
           <ul className="list-decimal pl-5 space-y-2 mt-3 text-sm">
             <li>Al realizar un <strong>Checklist</strong> en una habitación, puedes pulsar "Añadir Foto" usando la cámara de tu móvil para documentar cosas que estén correctas o incorrectas. Si una opción "No Cumple", la foto es obligatoria.</li>
             <li>El personal operativo recibirá una miniatura de la foto en su tablero de <strong>Tareas</strong>.</li>
@@ -1981,10 +2011,18 @@ const ManualTab = () => (
         </section>
 
         <section>
-          <h3 className="text-lg font-bold text-gray-800 mb-2 border-b pb-2">3. Bitácoras, Logs y Exportación a Excel</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">3. Bitácoras, Logs y Exportación a Excel</h3>
           <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
-            <li>En la pestaña <strong>Bitácora</strong>, encontrarás botones de "Exportar a CSV/Excel". Estos archivos pueden abrirse directamente en Office o Google Sheets. Los datos descargados respetarán cualquier filtro de fecha/mes/clínica que apliques previamente en pantalla.</li>
+            <li>En la pestaña <strong>Bitácora</strong>, encontrarás botones de "Descargar Excel". Estos archivos pueden abrirse directamente en Office o Google Sheets. Los datos descargados respetarán cualquier filtro de fecha/mes/clínica que apliques previamente en pantalla.</li>
             <li><strong>Auditoría de Sistema:</strong> Cada que un Admin borra a alguien, cambia el tiempo de un SLA o añade una pregunta al checklist, el sistema lo registra en esta pestaña de forma permanente por seguridad.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">4. Personalización y Temas (Dark Mode)</h3>
+          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
+            <li><strong>Logo:</strong> Puedes cambiar el logotipo general en la pestaña <span className="font-bold text-indigo-600 dark:text-indigo-400">Config</span>. Solo haz clic en "Subir Imagen" y selecciona un archivo de tu dispositivo; se comprimirá de forma automática.</li>
+            <li><strong>Modo Oscuro (Dark Mode):</strong> En la barra superior, al lado del icono de notificaciones de la campana, encontrarás un icono de Sol / Luna. Haz clic para alternar entre el modo Claro y Oscuro, lo cual es ideal para reducir el cansancio visual durante turnos de noche o auditorías prolongadas. El sistema recordará tu preferencia.</li>
           </ul>
         </section>
       </div>
@@ -1996,6 +2034,7 @@ const ManualTab = () => (
 export default function App() {
   const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
   const [dbReady, setDbReady] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
   // Estados de aplicación
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
@@ -2027,6 +2066,12 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
 
   const triggerToast = (msg: string) => { setToastMessage(msg); setTimeout(() => setToastMessage(null), 3000); };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  };
 
   // Inicializar Firebase Auth
   useEffect(() => {
@@ -2325,10 +2370,10 @@ export default function App() {
   // --- CARGA Y LOGIN UI ---
   if (firebaseError) {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
+      <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-100'} flex flex-col items-center justify-center p-4 transition-colors duration-300`}>
         <AlertTriangle className="w-16 h-16 text-rose-500 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 text-center">Falta conectar la Base de Datos</h2>
-        <p className="text-gray-600 text-center max-w-md mt-4 bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 text-center">Falta conectar la Base de Datos</h2>
+        <p className="text-gray-600 dark:text-slate-300 text-center max-w-md mt-4 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700">
           Has publicado la aplicación con éxito en Vercel, pero necesita un proyecto de <strong>Firebase</strong> real.
         </p>
       </div>
@@ -2337,39 +2382,46 @@ export default function App() {
 
   if (!authUser || !dbReady) {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
-        <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-        <h2 className="text-xl font-semibold text-gray-700">Iniciando sistema...</h2>
+      <div className={`min-h-screen ${theme === 'dark' ? 'dark bg-slate-900' : 'bg-slate-100'} flex flex-col items-center justify-center p-4 transition-colors duration-300`}>
+        <Loader2 className="w-12 h-12 text-indigo-600 dark:text-indigo-400 animate-spin mb-4" />
+        <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-300">Iniciando sistema...</h2>
       </div>
     );
   }
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4" style={{ backgroundImage: 'linear-gradient(to bottom right, #f8fafc, #e2e8f0)' }}>
-        <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-10 border border-gray-100">
-          <div className="flex flex-col items-center mb-8">
-            {appSettings.logoUrl ? (
-              <img src={appSettings.logoUrl} alt="Logo" className="h-20 object-contain mb-4" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-            ) : (
-              <div className="bg-indigo-100 p-4 rounded-2xl mb-4"><Lock className="w-10 h-10 text-indigo-600" /></div>
-            )}
-            <h1 className="text-2xl font-bold text-gray-800 text-center">{appSettings.appName}</h1>
-            <p className="text-sm text-gray-500 mt-2 flex items-center bg-gray-50 px-3 py-1 rounded-full"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema En Línea</p>
+      <div className={`${theme === 'dark' ? 'dark' : ''}`}>
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-4 transition-colors duration-300" style={{ backgroundImage: theme === 'dark' ? 'none' : 'linear-gradient(to bottom right, #f8fafc, #e2e8f0)' }}>
+          <div className="absolute top-4 right-4">
+            <button onClick={toggleTheme} className="p-2 bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-full shadow-sm transition-colors border border-gray-200 dark:border-slate-700">
+              {theme === 'light' ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
+            </button>
           </div>
-          
-          <form onSubmit={handleLoginSubmit} className="space-y-5">
-            {loginError && <div className="bg-rose-50 text-rose-600 p-3 rounded-lg text-sm text-center font-medium border border-rose-100">{loginError}</div>}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Usuario</label>
-              <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 outline-none" placeholder="Tu nombre de usuario" required />
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl w-full max-w-md p-10 border border-gray-100 dark:border-slate-700 transition-colors duration-300">
+            <div className="flex flex-col items-center mb-8">
+              {appSettings.logoUrl ? (
+                <img src={appSettings.logoUrl} alt="Logo" className="h-20 object-contain mb-4" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              ) : (
+                <div className="bg-indigo-100 dark:bg-indigo-900/40 p-4 rounded-2xl mb-4"><Lock className="w-10 h-10 text-indigo-600 dark:text-indigo-400" /></div>
+              )}
+              <h1 className="text-2xl font-bold text-gray-800 dark:text-slate-100 text-center">{appSettings.appName}</h1>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mt-2 flex items-center bg-gray-50 dark:bg-slate-900 px-3 py-1 rounded-full"><span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> Sistema En Línea</p>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
-              <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 outline-none" placeholder="••••••••" required />
-            </div>
-            <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors mt-2">Iniciar Sesión Segura</button>
-          </form>
+            
+            <form onSubmit={handleLoginSubmit} className="space-y-5">
+              {loginError && <div className="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 p-3 rounded-lg text-sm text-center font-medium border border-rose-100 dark:border-rose-800/50">{loginError}</div>}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Usuario</label>
+                <input type="text" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-slate-900 dark:text-slate-100 outline-none transition-colors" placeholder="Tu nombre de usuario" required />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">Contraseña</label>
+                <input type="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="w-full border border-gray-300 dark:border-slate-600 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-slate-900 dark:text-slate-100 outline-none transition-colors" placeholder="••••••••" required />
+              </div>
+              <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors mt-2">Iniciar Sesión Segura</button>
+            </form>
+          </div>
         </div>
       </div>
     );
@@ -2380,273 +2432,280 @@ export default function App() {
   const realCurrentUser = users.find(u => u.id === currentUser.id) || currentUser;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-10 relative">
-      
-      {/* Notificación Toast In-App */}
-      {toastMessage && (
-        <div className="fixed bottom-5 right-5 bg-indigo-900 text-white font-bold py-3.5 px-6 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in flex items-center space-x-3">
-          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
+    <div className={`${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans pb-10 relative transition-colors duration-300">
+        
+        {/* Notificación Toast In-App */}
+        {toastMessage && (
+          <div className="fixed bottom-5 right-5 bg-indigo-900 dark:bg-indigo-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-bottom-5 fade-in flex items-center space-x-3">
+            <CheckCircle className="w-5 h-5 text-emerald-400 dark:text-emerald-200 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
 
-      {/* Visor de Imagen / Lightbox */}
-      {zoomImageSrc && (
-        <div 
-          onClick={() => setZoomImageSrc(null)}
-          className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 cursor-zoom-out"
-        >
-          <img src={zoomImageSrc} alt="Zoom" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
-          <button className="absolute top-5 right-5 text-white/70 hover:text-white p-3 bg-white/10 rounded-full">
-            <X className="w-8 h-8" />
-          </button>
-        </div>
-      )}
+        {/* Visor de Imagen / Lightbox */}
+        {zoomImageSrc && (
+          <div 
+            onClick={() => setZoomImageSrc(null)}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 cursor-zoom-out"
+          >
+            <img src={zoomImageSrc} alt="Zoom" className="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl" />
+            <button className="absolute top-5 right-5 text-white/70 hover:text-white p-3 bg-white/10 rounded-full transition-colors">
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+        )}
 
-      <header className="bg-white text-gray-800 shadow-sm border-b border-gray-200 relative z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
-            
-            <div className="flex items-center space-x-3 mb-3 md:mb-0">
-              {appSettings.logoUrl ? (
-                <img src={appSettings.logoUrl} alt="Logo" className="h-8 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
-              ) : (
-                <Activity className="w-8 h-8 text-indigo-600" />
-              )}
-              <span className="font-bold text-xl tracking-tight text-indigo-900 hidden sm:block">{appSettings.appName}</span>
-            </div>
-            
-            <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
-              <nav className="flex flex-wrap justify-center space-x-1">
-                {currentUser.role === 'admin' && (
-                  <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'dashboard' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                    <LayoutDashboard className="w-4 h-4 mr-1.5" /> Tablero
-                  </button>
+        <header className="bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 shadow-sm border-b border-gray-200 dark:border-slate-700 relative z-30 transition-colors duration-300">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row items-center justify-between h-auto md:h-16 py-3 md:py-0">
+              
+              <div className="flex items-center space-x-3 mb-3 md:mb-0">
+                {appSettings.logoUrl ? (
+                  <img src={appSettings.logoUrl} alt="Logo" className="h-8 object-contain" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                ) : (
+                  <Activity className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 )}
-                <button onClick={() => setActiveTab('tasks')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'tasks' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  <ListTodo className="w-4 h-4 mr-1.5" /> Tareas
-                </button>
-                {currentUser.role === 'admin' && (
-                  <>
-                    <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                      <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
+                <span className="font-bold text-xl tracking-tight text-indigo-900 dark:text-indigo-100 hidden sm:block">{appSettings.appName}</span>
+              </div>
+              
+              <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-4">
+                <nav className="flex flex-wrap justify-center space-x-1">
+                  {currentUser.role === 'admin' && (
+                    <button onClick={() => setActiveTab('dashboard')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'dashboard' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                      <LayoutDashboard className="w-4 h-4 mr-1.5" /> Tablero
                     </button>
-                    <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                      <Settings className="w-4 h-4 mr-1.5" /> Config
-                    </button>
-                  </>
-                )}
-                <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-50 text-indigo-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  <FileText className="w-4 h-4 mr-1.5" /> Manual
-                </button>
-              </nav>
-
-              <div className="flex items-center space-x-4 border-l border-gray-200 pl-4">
-                
-                {/* STATUS BAR (Control de Horas) */}
-                <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-200">
-                  <div className={`w-2 h-2 rounded-full ml-2 ${realCurrentUser.currentStatus === 'Disponible' ? 'bg-emerald-500' : realCurrentUser.currentStatus === 'Desconectado' ? 'bg-gray-400' : 'bg-amber-500'}`}></div>
-                  <select 
-                    value={realCurrentUser.currentStatus || 'Disponible'} 
-                    onChange={(e) => handleUserStatusChange(currentUser.id, e.target.value)}
-                    className="bg-transparent border-none text-xs font-bold text-gray-700 focus:ring-0 cursor-pointer outline-none pl-1 pr-2"
-                  >
-                    <option value="Disponible">Disponible</option>
-                    {appSettings.breakTypes?.map(b => (
-                      <option key={b.id} value={b.name}>{b.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="relative">
-                  <button onClick={() => { setIsNotifOpen(!isNotifOpen); markNotificationsAsRead(); }} className="text-gray-500 hover:text-indigo-600 transition-colors relative">
-                    <Bell className="w-6 h-6" />
-                    {unreadNotifs > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadNotifs}</span>}
+                  )}
+                  <button onClick={() => setActiveTab('tasks')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'tasks' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                    <ListTodo className="w-4 h-4 mr-1.5" /> Tareas
                   </button>
-                  {isNotifOpen && (
-                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden text-gray-800 z-50">
-                      <div className="bg-gray-50 p-3 border-b font-bold text-sm">Notificaciones</div>
-                      <div className="max-h-64 overflow-y-auto">
-                        {userNotifs.length === 0 ? <div className="p-4 text-sm text-gray-500 text-center">Sin notificaciones</div> : 
-                          userNotifs.sort((a,b) => b.createdAt - a.createdAt).map(n => (
-                            <div key={n.id} className={`p-3 border-b text-sm ${!n.read ? 'bg-indigo-50/50 font-semibold' : 'text-gray-600'}`}>
-                              <p>{n.message}</p><span className="text-[10px] text-gray-400 mt-1 block">{formatTime(n.createdAt)}</span>
-                            </div>
-                          ))
-                        }
+                  {currentUser.role === 'admin' && (
+                    <>
+                      <button onClick={() => setActiveTab('reports')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'reports' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                        <BarChart className="w-4 h-4 mr-1.5" /> Bitácora
+                      </button>
+                      <button onClick={() => setActiveTab('config')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'config' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                        <Settings className="w-4 h-4 mr-1.5" /> Config
+                      </button>
+                    </>
+                  )}
+                  <button onClick={() => setActiveTab('manual')} className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center ${activeTab === 'manual' ? 'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>
+                    <FileText className="w-4 h-4 mr-1.5" /> Manual
+                  </button>
+                </nav>
+
+                <div className="flex items-center space-x-4 border-l border-gray-200 dark:border-slate-700 pl-4">
+                  
+                  {/* Theme Toggle Button */}
+                  <button onClick={toggleTheme} className="text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors p-1" title="Alternar Modo Oscuro">
+                    {theme === 'light' ? <Moon className="w-5 h-5"/> : <Sun className="w-5 h-5"/>}
+                  </button>
+
+                  {/* STATUS BAR (Control de Horas) */}
+                  <div className="flex items-center bg-gray-50 dark:bg-slate-900 rounded-full p-1 border border-gray-200 dark:border-slate-700">
+                    <div className={`w-2 h-2 rounded-full ml-2 ${realCurrentUser.currentStatus === 'Disponible' ? 'bg-emerald-500' : realCurrentUser.currentStatus === 'Desconectado' ? 'bg-gray-400' : 'bg-amber-500'}`}></div>
+                    <select 
+                      value={realCurrentUser.currentStatus || 'Disponible'} 
+                      onChange={(e) => handleUserStatusChange(currentUser.id, e.target.value)}
+                      className="bg-transparent border-none text-xs font-bold text-gray-700 dark:text-slate-200 focus:ring-0 cursor-pointer outline-none pl-1 pr-2"
+                    >
+                      <option value="Disponible">Disponible</option>
+                      {appSettings.breakTypes?.map(b => (
+                        <option key={b.id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="relative">
+                    <button onClick={() => { setIsNotifOpen(!isNotifOpen); markNotificationsAsRead(); }} className="text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors relative">
+                      <Bell className="w-6 h-6" />
+                      {unreadNotifs > 0 && <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{unreadNotifs}</span>}
+                    </button>
+                    {isNotifOpen && (
+                      <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden text-gray-800 dark:text-slate-200 z-50">
+                        <div className="bg-gray-50 dark:bg-slate-900 p-3 border-b dark:border-slate-700 font-bold text-sm">Notificaciones</div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {userNotifs.length === 0 ? <div className="p-4 text-sm text-gray-500 dark:text-slate-400 text-center">Sin notificaciones</div> : 
+                            userNotifs.sort((a,b) => b.createdAt - a.createdAt).map(n => (
+                              <div key={n.id} className={`p-3 border-b dark:border-slate-700 text-sm ${!n.read ? 'bg-indigo-50/50 dark:bg-indigo-900/20 font-semibold' : 'text-gray-600 dark:text-slate-400'}`}>
+                                <p>{n.message}</p><span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 block">{formatTime(n.createdAt)}</span>
+                              </div>
+                            ))
+                          }
+                        </div>
                       </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="text-right hidden sm:block">
+                      <p className="font-bold text-gray-800 dark:text-slate-100 leading-tight">{currentUser.name}</p>
+                      <p className="text-gray-500 dark:text-slate-400 text-xs">{currentUser.role === 'admin' ? 'Supervisor' : currentUser.dept}</p>
+                    </div>
+                    <button onClick={handleLogout} className="p-2 bg-gray-100 dark:bg-slate-700 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-gray-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors" title="Cerrar Sesión">
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {activeTab === 'dashboard' && currentUser.role === 'admin' && (
+            <DashboardTab rooms={rooms} tasks={tasks} appSettings={appSettings} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
+          )}
+          {activeTab === 'tasks' && (
+            <TasksTab tasks={tasks} appSettings={appSettings} rooms={rooms} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} onViewImage={setZoomImageSrc} />
+          )}
+          {activeTab === 'reports' && currentUser.role === 'admin' && (
+            <ReportsTab tasks={tasks} rooms={rooms} users={users} slas={slas} userLogs={userLogs} systemLogs={systemLogs} appSettings={appSettings} onViewImage={setZoomImageSrc} />
+          )}
+          {activeTab === 'config' && currentUser.role === 'admin' && (
+            <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} appSettings={appSettings} currentUser={currentUser}
+              onUpdateSla={async (dept: string, val: string) => { 
+                if (db) {
+                  await setDoc(getDocRef('h_slas', 'main')!, { [dept]: parseInt(val) || 0 }, { merge: true }); 
+                  await logSystemAction('Configuración', `Actualizó SLA de ${dept} a ${val} min`);
+                  triggerToast('SLA Actualizado');
+                }
+              }}
+              onAddRoom={async (id: string, area: string, clinic: string) => { 
+                if(id && db && !rooms.some(r=>r.id===id)) {
+                  await setDoc(getDocRef('h_rooms', id)!, { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE });
+                  await logSystemAction('Habitaciones', `Registró nueva habitación ${id} en ${clinic}`);
+                  triggerToast('Habitación añadida');
+                }
+              }}
+              onUpdateRoom={async (roomId: string, data: any) => {
+                if (db) {
+                  await setDoc(getDocRef('h_rooms', roomId)!, data, { merge: true });
+                  await logSystemAction('Habitaciones', `Modificó la habitación ${data.name}`);
+                  triggerToast('Habitación actualizada');
+                }
+              }}
+              onRemoveRoom={async (id: string) => { 
+                if (db) {
+                  await deleteDoc(getDocRef('h_rooms', id)!); 
+                  await logSystemAction('Habitaciones', `Eliminó la habitación ${id}`);
+                  triggerToast('Habitación eliminada');
+                }
+              }}
+              onAddUser={async (userData: any) => { 
+                if (db) {
+                  await setDoc(getDocRef('h_users', `u_${Date.now()}`)!, { id: `u_${Date.now()}`, ...userData });
+                  await logSystemAction('Usuarios', `Registró nuevo usuario: ${userData.username}`);
+                  triggerToast('Usuario añadido al sistema');
+                }
+              }}
+              onUpdateUser={async (userId: string, updatedData: any) => { 
+                if (db) {
+                  await setDoc(getDocRef('h_users', userId)!, updatedData, { merge: true }); 
+                  await logSystemAction('Usuarios', `Modificó el perfil/rol del usuario ${updatedData.username}`);
+                  triggerToast('Perfil de usuario actualizado');
+                }
+              }}
+              onRemoveUser={async (id: string) => { 
+                if (db) { 
+                  await deleteDoc(getDocRef('h_users', id)!); 
+                  await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>{ const tR = getDocRef('h_tasks', t.id); return tR ? setDoc(tR, {assignedTo: null}, {merge:true}) : Promise.resolve() }));
+                  await logSystemAction('Usuarios', `Eliminó un usuario del sistema (${id})`);
+                  triggerToast('Usuario eliminado');
+                } 
+              }}
+              onAddChecklist={async (q: string, c: string, d: string) => { 
+                if(q && db) { 
+                  const id=Date.now().toString(); 
+                  await setDoc(getDocRef('h_checklistItems', id)!, {id, category: c, question: q, dept: d});
+                  await logSystemAction('Checklist', `Agregó la pregunta "${q}"`);
+                  triggerToast('Pregunta añadida al formulario');
+                } 
+              }}
+              onUpdateChecklist={async (id: string, data: any) => {
+                if (db) {
+                  await setDoc(getDocRef('h_checklistItems', id)!, data, { merge: true });
+                  await logSystemAction('Checklist', `Editó una pregunta del formulario (Categoría: ${data.category})`);
+                  triggerToast('Pregunta actualizada');
+                }
+              }}
+              onRemoveChecklist={async (id: string) => { 
+                if (db) {
+                  await deleteDoc(getDocRef('h_checklistItems', id)!); 
+                  await logSystemAction('Checklist', `Eliminó una pregunta del formulario`);
+                  triggerToast('Pregunta eliminada');
+                }
+              }}
+              onUpdateUserPassword={handleUpdateUserPassword}
+              onUpdateSettings={async (settings: any) => { 
+                if (db) {
+                  await setDoc(getDocRef('h_settings', 'main')!, settings, {merge:true});
+                  await logSystemAction('Configuración', `Modificó las preferencias generales (Logo/Nombre/Clínicas/Descansos)`);
+                  triggerToast('Configuración del sistema guardada');
+                }
+              }}
+            />
+          )}
+          {activeTab === 'manual' && <ManualTab />}
+        </main>
+
+        {/* Modal de Detalles de Habitación */}
+        {selectedRoom && !isChecklistModalOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-40">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border dark:border-slate-700">
+              <div className="bg-indigo-600 dark:bg-indigo-500 p-4 flex justify-between items-center text-white">
+                <h3 className="font-bold text-lg">{selectedRoom.name}</h3>
+                <button onClick={() => setSelectedRoom(null)} className="hover:bg-indigo-700 dark:hover:bg-indigo-600 p-1 rounded-full transition-colors"><X className="w-5 h-5"/></button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="text-center">
+                  <span className="text-sm text-gray-500 dark:text-slate-400 uppercase tracking-wide font-bold">Estado Actual</span>
+                  <p className="text-xl font-bold text-indigo-900 dark:text-indigo-300 mt-1">{selectedRoom.status}</p>
+                  <p className="text-sm text-gray-600 dark:text-slate-400 mt-1">{selectedRoom.clinic} - {selectedRoom.area}</p>
+                </div>
+                <div className="flex flex-col gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                  {selectedRoom.status === ROOM_STATUS.OCUPADA && (
+                    <button onClick={() => handleVacateRoom(selectedRoom.id)} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-sm transition-colors">Desocupar Habitación</button>
+                  )}
+                  {selectedRoom.status === ROOM_STATUS.EVALUACION && (
+                    <button onClick={() => setIsChecklistModalOpen(true)} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl flex justify-center items-center shadow-sm transition-colors"><CheckSquare className="w-5 h-5 mr-2"/> Iniciar Evaluación</button>
+                  )}
+                  {selectedRoom.status === ROOM_STATUS.DISPONIBLE && (
+                    <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-sm transition-colors">Marcar como Ocupada</button>
+                  )}
+                  {selectedRoom.status === ROOM_STATUS.MANTENIMIENTO && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-xl p-4 text-center">
+                      <Wrench className="w-8 h-8 text-blue-500 dark:text-blue-400 mx-auto mb-2" />
+                      <p className="text-blue-800 dark:text-blue-300 font-medium text-sm">Acondicionando habitación.</p>
+                      <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 dark:text-blue-400 text-sm font-bold underline hover:text-blue-900 dark:hover:text-blue-300 block w-full transition-colors">Ver tareas en curso</button>
+                      
+                      {/* BOTÓN DE RESPALDO PARA ADMIN */}
+                      {currentUser?.role === 'admin' && (
+                        <button 
+                          onClick={async () => {
+                            const rRef = getDocRef('h_rooms', selectedRoom.id);
+                            if (rRef) {
+                              await setDoc(rRef, { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
+                              triggerToast('Habitación desbloqueada a Disponible');
+                            }
+                            setSelectedRoom(null);
+                          }} 
+                          className="mt-4 w-full bg-white dark:bg-slate-800 border border-blue-300 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 text-sm font-bold py-2 rounded-lg transition-colors"
+                        >
+                          Forzar Desbloqueo (Admin)
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
-
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="text-right hidden sm:block">
-                    <p className="font-bold text-gray-800 leading-tight">{currentUser.name}</p>
-                    <p className="text-gray-500 text-xs">{currentUser.role === 'admin' ? 'Supervisor' : currentUser.dept}</p>
-                  </div>
-                  <button onClick={handleLogout} className="p-2 bg-gray-100 hover:bg-rose-100 text-gray-600 hover:text-rose-600 rounded-lg transition-colors" title="Cerrar Sesión">
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        )}
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && currentUser.role === 'admin' && (
-          <DashboardTab rooms={rooms} tasks={tasks} appSettings={appSettings} currentUser={currentUser} onSelectRoom={setSelectedRoom} onOpenChecklist={() => setIsChecklistModalOpen(true)} />
-        )}
-        {activeTab === 'tasks' && (
-          <TasksTab tasks={tasks} rooms={rooms} appSettings={appSettings} users={users} currentUser={currentUser} slas={slas} onAssign={handleAssignTask} onComplete={handleCompleteTask} onViewImage={setZoomImageSrc} />
-        )}
-        {activeTab === 'reports' && currentUser.role === 'admin' && (
-          <ReportsTab tasks={tasks} rooms={rooms} appSettings={appSettings} users={users} slas={slas} userLogs={userLogs} systemLogs={systemLogs} onViewImage={setZoomImageSrc} />
-        )}
-        {activeTab === 'config' && currentUser.role === 'admin' && (
-          <ConfigTab slas={slas} rooms={rooms} users={users} checklistItems={checklistItems} appSettings={appSettings} currentUser={currentUser}
-            onUpdateSla={async (dept: string, val: string) => { 
-              if (db) {
-                await setDoc(getDocRef('h_slas', 'main')!, { [dept]: parseInt(val) || 0 }, { merge: true }); 
-                await logSystemAction('Configuración', `Actualizó SLA de ${dept} a ${val} min`);
-                triggerToast('SLA Actualizado');
-              }
-            }}
-            onAddRoom={async (id: string, area: string, clinic: string) => { 
-              if(id && db && !rooms.some(r=>r.id===id)) {
-                await setDoc(getDocRef('h_rooms', id)!, { id, name: `Hab. ${id}`, area, clinic, status: ROOM_STATUS.DISPONIBLE });
-                await logSystemAction('Habitaciones', `Registró nueva habitación ${id} en ${clinic}`);
-                triggerToast('Habitación añadida');
-              }
-            }}
-            onUpdateRoom={async (roomId: string, data: any) => {
-              if (db) {
-                await setDoc(getDocRef('h_rooms', roomId)!, data, { merge: true });
-                await logSystemAction('Habitaciones', `Modificó la habitación ${data.name}`);
-                triggerToast('Habitación actualizada');
-              }
-            }}
-            onRemoveRoom={async (id: string) => { 
-              if (db) {
-                await deleteDoc(getDocRef('h_rooms', id)!); 
-                await logSystemAction('Habitaciones', `Eliminó la habitación ${id}`);
-                triggerToast('Habitación eliminada');
-              }
-            }}
-            onAddUser={async (userData: any) => { 
-              if (db) {
-                await setDoc(getDocRef('h_users', `u_${Date.now()}`)!, { id: `u_${Date.now()}`, ...userData });
-                await logSystemAction('Usuarios', `Registró nuevo usuario: ${userData.username}`);
-                triggerToast('Usuario añadido al sistema');
-              }
-            }}
-            onUpdateUser={async (userId: string, updatedData: any) => { 
-              if (db) {
-                await setDoc(getDocRef('h_users', userId)!, updatedData, { merge: true }); 
-                await logSystemAction('Usuarios', `Modificó el perfil/rol del usuario ${updatedData.username}`);
-                triggerToast('Perfil de usuario actualizado');
-              }
-            }}
-            onRemoveUser={async (id: string) => { 
-              if (db) { 
-                await deleteDoc(getDocRef('h_users', id)!); 
-                await Promise.all(tasks.filter(t=>t.assignedTo===id).map(t=>{ const tR = getDocRef('h_tasks', t.id); return tR ? setDoc(tR, {assignedTo: null}, {merge:true}) : Promise.resolve() }));
-                await logSystemAction('Usuarios', `Eliminó un usuario del sistema (${id})`);
-                triggerToast('Usuario eliminado');
-              } 
-            }}
-            onAddChecklist={async (q: string, c: string, d: string) => { 
-              if(q && db) { 
-                const id=Date.now().toString(); 
-                await setDoc(getDocRef('h_checklistItems', id)!, {id, category: c, question: q, dept: d});
-                await logSystemAction('Checklist', `Agregó la pregunta "${q}"`);
-                triggerToast('Pregunta añadida al formulario');
-              } 
-            }}
-            onUpdateChecklist={async (id: string, data: any) => {
-              if (db) {
-                await setDoc(getDocRef('h_checklistItems', id)!, data, { merge: true });
-                await logSystemAction('Checklist', `Editó una pregunta del formulario (Categoría: ${data.category})`);
-                triggerToast('Pregunta actualizada');
-              }
-            }}
-            onRemoveChecklist={async (id: string) => { 
-              if (db) {
-                await deleteDoc(getDocRef('h_checklistItems', id)!); 
-                await logSystemAction('Checklist', `Eliminó una pregunta del formulario`);
-                triggerToast('Pregunta eliminada');
-              }
-            }}
-            onUpdateUserPassword={handleUpdateUserPassword}
-            onUpdateSettings={async (settings: any) => { 
-              if (db) {
-                await setDoc(getDocRef('h_settings', 'main')!, settings, {merge:true});
-                await logSystemAction('Configuración', `Modificó las preferencias generales (Logo/Nombre/Clínicas/Descansos)`);
-                triggerToast('Configuración del sistema guardada');
-              }
-            }}
-          />
-        )}
-        {activeTab === 'manual' && <ManualTab />}
-      </main>
-
-      {/* Modal de Detalles de Habitación */}
-      {selectedRoom && !isChecklistModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-40">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
-              <h3 className="font-bold text-lg">{selectedRoom.name}</h3>
-              <button onClick={() => setSelectedRoom(null)} className="hover:bg-indigo-700 p-1 rounded-full"><X className="w-5 h-5"/></button>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="text-center">
-                <span className="text-sm text-gray-500 uppercase tracking-wide font-bold">Estado Actual</span>
-                <p className="text-xl font-bold text-indigo-900 mt-1">{selectedRoom.status}</p>
-                <p className="text-sm text-gray-600 mt-1">{selectedRoom.clinic} - {selectedRoom.area}</p>
-              </div>
-              <div className="flex flex-col gap-3 pt-4 border-t">
-                {selectedRoom.status === ROOM_STATUS.OCUPADA && (
-                  <button onClick={() => handleVacateRoom(selectedRoom.id)} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-sm">Desocupar Habitación</button>
-                )}
-                {selectedRoom.status === ROOM_STATUS.EVALUACION && (
-                  <button onClick={() => setIsChecklistModalOpen(true)} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl flex justify-center items-center"><CheckSquare className="w-5 h-5 mr-2"/> Iniciar Evaluación</button>
-                )}
-                {selectedRoom.status === ROOM_STATUS.DISPONIBLE && (
-                  <button onClick={() => handleOccupyRoom(selectedRoom.id)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">Marcar como Ocupada</button>
-                )}
-                {selectedRoom.status === ROOM_STATUS.MANTENIMIENTO && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
-                    <Wrench className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-blue-800 font-medium text-sm">Acondicionando habitación.</p>
-                    <button onClick={() => { setSelectedRoom(null); setActiveTab('tasks'); }} className="mt-3 text-blue-700 text-sm font-bold underline hover:text-blue-900 block w-full">Ver tareas en curso</button>
-                    
-                    {/* BOTÓN DE RESPALDO PARA ADMIN */}
-                    {currentUser?.role === 'admin' && (
-                      <button 
-                        onClick={async () => {
-                          const rRef = getDocRef('h_rooms', selectedRoom.id);
-                          if (rRef) {
-                            await setDoc(rRef, { status: ROOM_STATUS.DISPONIBLE }, { merge: true });
-                            triggerToast('Habitación desbloqueada a Disponible');
-                          }
-                          setSelectedRoom(null);
-                        }} 
-                        className="mt-4 w-full bg-white border border-blue-300 hover:bg-blue-100 text-blue-700 text-sm font-bold py-2 rounded-lg transition-colors"
-                      >
-                        Forzar Desbloqueo (Admin)
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Checklist Completado (WIZARD) */}
-      <ChecklistModal isOpen={isChecklistModalOpen} onClose={() => { setIsChecklistModalOpen(false); setSelectedRoom(null); }} selectedRoom={selectedRoom} checklistItems={checklistItems} onSubmit={handleChecklistSubmit} />
+        {/* Modal Checklist Completado (WIZARD) */}
+        <ChecklistModal isOpen={isChecklistModalOpen} onClose={() => { setIsChecklistModalOpen(false); setSelectedRoom(null); }} selectedRoom={selectedRoom} checklistItems={checklistItems} onSubmit={handleChecklistSubmit} />
+      </div>
     </div>
   );
 }
