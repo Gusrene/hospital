@@ -1947,11 +1947,20 @@ const ChecklistModal = ({
               </div>
               <div className="bg-rose-50 dark:bg-rose-900/20 p-5 rounded-2xl shadow-sm border border-rose-200 dark:border-rose-800/50">
                 <label className="block text-sm font-bold text-rose-700 dark:text-rose-400 mb-2 flex items-center"><AlertTriangle className="w-5 h-5 mr-2" /> 20. Evento Urgente de Atender</label>
-                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-slate-100 rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px] mb-3 outline-none" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
-                {urgente.trim().length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <ImageUploadButton onImageCaptured={setUrgenteImage} label={urgenteImage ? "Cambiar Foto de Urgencia" : "Añadir Foto del Problema Urgente"} />
-                    {urgenteImage && <img src={urgenteImage} className="h-12 w-16 object-cover rounded border border-rose-300 dark:border-rose-700" alt="Urgente" />}
+                <textarea value={urgente} onChange={e => setUrgente(e.target.value)} className="w-full border border-rose-300 dark:border-rose-700 bg-white dark:bg-slate-900 rounded-xl p-3 focus:ring-2 focus:ring-rose-500 min-h-[100px] mb-3 text-gray-800 dark:text-slate-100 outline-none" placeholder="Describa el problema crítico si lo hay (generará una tarea urgente para el supervisor)..."></textarea>
+                
+                {urgente.trim() && (
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 pt-3 border-t border-rose-200 dark:border-rose-800/50">
+                    <ImageUploadButton 
+                      onImageCaptured={(base64) => setUrgenteImage(base64)} 
+                      label={urgenteImage ? "Cambiar Foto de Urgencia" : "Subir Foto de la Urgencia"} 
+                    />
+                    {urgenteImage && (
+                      <div className="relative">
+                        <img src={urgenteImage} alt="Evidencia Urgente" className="h-16 w-24 object-cover rounded border border-rose-300 dark:border-rose-700" />
+                        <button onClick={() => setUrgenteImage('')} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-0.5"><X className="w-4 h-4"/></button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1960,21 +1969,23 @@ const ChecklistModal = ({
         </div>
 
         <div className="p-5 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-center shrink-0">
-          <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 dark:text-slate-500 cursor-not-allowed opacity-50' : 'text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600'}`}>
+          <button onClick={handlePrev} disabled={currentStep === 0} className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center ${currentStep === 0 ? 'text-gray-400 dark:text-slate-600 cursor-not-allowed opacity-50' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-600'}`}>
             <ChevronLeft className="w-5 h-5 mr-1" /> Anterior
           </button>
           
           {!isFinalStep ? (
-            <button 
-              onClick={handleNext} 
-              disabled={!isCurrentStepComplete || currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id])} 
-              className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${(!isCurrentStepComplete || currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id])) ? 'bg-indigo-300 dark:bg-indigo-800 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-              title={currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id]) ? "Por favor adjunte una foto de evidencia a los elementos que No Cumplen antes de continuar" : ""}
-            >
+            <button onClick={handleNext} disabled={!isCurrentStepComplete} className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-colors flex items-center ${!isCurrentStepComplete ? 'bg-indigo-300 dark:bg-indigo-800/50 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600'}`}>
               Siguiente <ChevronRight className="w-5 h-5 ml-1" />
             </button>
           ) : (
-            <button onClick={() => onSubmit(answers, evidenceImages, comentarios, urgente, urgenteImage, selectedRoom)} className="px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-colors flex items-center">
+            <button onClick={() => {
+              const anyFailuresWithoutEvidence = currentItems.some(item => answers[item.id] === false && !evidenceImages[item.id]);
+              if (anyFailuresWithoutEvidence) {
+                 alert("Por favor asegúrese de haber subido una foto para todos los elementos marcados como 'No Cumple' antes de finalizar.");
+                 return;
+              }
+              onSubmit(answers, evidenceImages, comentarios, urgente, urgenteImage, selectedRoom);
+            }} className="px-6 py-3 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white shadow-md transition-colors flex items-center">
               <CheckCircle className="w-5 h-5 mr-2"/> Finalizar
             </button>
           )}
@@ -1984,47 +1995,87 @@ const ChecklistModal = ({
   );
 };
 
-// === NUEVA PESTAÑA DE MANUAL DE USUARIO (VERSIÓN 3.0) ===
+// === NUEVA PESTAÑA DE MANUAL DE USUARIO (VERSIÓN 4.0) ===
 const ManualTab = () => (
-  <div className="space-y-6 animate-in fade-in duration-500 max-w-4xl mx-auto">
+  <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto pb-12">
     <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700">
-      <h2 className="text-2xl font-bold text-gray-800 dark:text-slate-100 mb-6 flex items-center">
-        <FileText className="w-7 h-7 mr-3 text-indigo-600 dark:text-indigo-400" /> Manual de Operación: Versión 3.0
+      <h2 className="text-3xl font-extrabold text-gray-800 dark:text-slate-100 mb-2 flex items-center">
+        <FileText className="w-8 h-8 mr-3 text-indigo-600 dark:text-indigo-400" /> Manual de Operación Paso a Paso
       </h2>
-      <div className="space-y-6 text-gray-700 dark:text-slate-300">
-        <section>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">1. Roles del Sistema y Multi-Admin</h3>
-          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
-            <li><strong>Supervisor (Admin):</strong> Tiene acceso total a las configuraciones, auditoría y bitácoras. Puede ascender a cualquier empleado al rol de Admin desde la pestaña <span className="font-bold text-indigo-600 dark:text-indigo-400">Config</span> {' > '} Gestión de Personal {' > '} Editar (lápiz azul).</li>
-            <li><strong>Personal Operativo (Staff):</strong> Solo ven y completan las tareas que han sido asignadas a su departamento (Limpieza, Mantenimiento).</li>
-          </ul>
-        </section>
+      <p className="text-gray-500 dark:text-slate-400 mb-8 border-b dark:border-slate-700 pb-4">Guía detallada e integral para el uso del sistema MediRoom Control (Versión 4.0).</p>
+
+      <div className="space-y-10 text-gray-700 dark:text-slate-300">
         
+        {/* Sección 1 */}
         <section>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">2. Sistema de Evidencias (Checklist y Tareas)</h3>
-          <ul className="list-decimal pl-5 space-y-2 mt-3 text-sm">
-            <li>Al realizar un <strong>Checklist</strong> en una habitación, puedes pulsar "Añadir Foto" usando la cámara de tu móvil para documentar cosas que estén correctas o incorrectas. Si una opción "No Cumple", la foto es obligatoria.</li>
-            <li>El personal operativo recibirá una miniatura de la foto en su tablero de <strong>Tareas</strong>.</li>
-            <li>Una vez que el personal solucione el problema, deben subir una foto de <strong>Cierre/Solución</strong> antes de poder marcar la tarea como Completada.</li>
-            <li>Puedes hacer clic en cualquier imagen de la app para verla en Zoom/Pantalla Completa.</li>
-          </ul>
+          <div className="flex items-center mb-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">1</div>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">Guía para el Personal Operativo (Limpieza, Mantenimiento)</h3>
+          </div>
+          <div className="pl-11 space-y-4 text-sm leading-relaxed">
+            <p>El personal operativo utiliza el sistema principalmente para recibir y resolver tareas. Su flujo de trabajo es el siguiente:</p>
+            <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
+              <p><strong>Paso 1: Iniciar Turno.</strong> Al ingresar al sistema con su usuario y contraseña, su estado se marca automáticamente como <span className="text-emerald-600 font-bold">Disponible</span>. Pueden cambiar su estado en la barra superior si toman un descanso (ej. Almuerzo).</p>
+              <p><strong>Paso 2: Revisar Tareas Asignadas.</strong> En la pestaña "Tareas", verán las alertas específicas de su departamento. Si una tarea tiene la palabra <strong>URGENTE</strong>, su tarjeta será roja.</p>
+              <p><strong>Paso 3: Ver el Problema.</strong> Si el supervisor tomó una foto de un problema al hacer la evaluación, verán una miniatura de la foto en su tarjeta de tarea. Pueden tocarla para verla en pantalla completa.</p>
+              <p><strong>Paso 4: Solucionar y Evidenciar.</strong> Una vez que reparen o limpien la zona, deben presionar el botón <strong>"Añadir Foto"</strong> para tomar una evidencia del trabajo terminado con la cámara del celular. Opcionalmente, añaden un comentario y presionan <strong>"Marcar Completada"</strong>.</p>
+              <p><strong>Paso 5: Fin de Turno.</strong> Al finalizar su jornada, presionan el botón de "Cerrar Sesión" (ícono de puerta en la barra superior). Esto los marcará como <span className="text-gray-500 font-bold">Desconectados</span> en los reportes del sistema.</p>
+            </div>
+          </div>
         </section>
 
+        {/* Sección 2 */}
         <section>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">3. Bitácoras, Logs y Exportación a Excel</h3>
-          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
-            <li>En la pestaña <strong>Bitácora</strong>, encontrarás botones de "Descargar Excel". Estos archivos pueden abrirse directamente en Office o Google Sheets. Los datos descargados respetarán cualquier filtro de fecha/mes/clínica que apliques previamente en pantalla.</li>
-            <li><strong>Auditoría de Sistema:</strong> Cada que un Admin borra a alguien, cambia el tiempo de un SLA o añade una pregunta al checklist, el sistema lo registra en esta pestaña de forma permanente por seguridad.</li>
-          </ul>
+          <div className="flex items-center mb-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">2</div>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">Guía para Supervisores (Control de Habitaciones)</h3>
+          </div>
+          <div className="pl-11 space-y-4 text-sm leading-relaxed">
+            <p>Los Supervisores controlan el ciclo de vida de la habitación y auditan la calidad.</p>
+            <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 shadow-sm">
+              <p><strong>Paso 1: Ingreso y Alta.</strong> En el "Tablero General", haz clic en una habitación Disponible (verde) y presiona <strong>"Marcar como Ocupada"</strong> cuando ingrese un paciente. Cuando el paciente se retire, haz clic y presiona <strong>"Desocupar Habitación"</strong>. La habitación pasará a estado amarillo (Pendiente de Evaluación).</p>
+              <p><strong>Paso 2: Evaluación (Checklist).</strong> Haz clic en la habitación amarilla y selecciona <strong>"Iniciar Evaluación"</strong>. Se abrirá el formulario paso a paso.</p>
+              <p><strong>Paso 3: Registro de Fallas y Evidencias.</strong> Por cada punto a revisar, marca "✓ Cumple" o "✗ No Cumple". Si marcas que NO cumple, el sistema te pedirá obligatoriamente <strong>tomar una foto de evidencia</strong>. Si SÍ cumple, puedes subir foto de manera opcional para dejar constancia del buen trabajo.</p>
+              <p><strong>Paso 4: Comentarios y Urgencias.</strong> En el último paso del checklist, puedes añadir un comentario general o reportar un problema Crítico/Urgente adjuntando su respectiva foto.</p>
+              <p><strong>Paso 5: Asignación.</strong> Al finalizar el checklist, la habitación pasa a "En Tareas" (azul). Ve a la pestaña "Tareas" para asignar responsables a las fallas detectadas.</p>
+            </div>
+          </div>
         </section>
 
+        {/* Sección 3 */}
         <section>
-          <h3 className="text-lg font-bold text-gray-800 dark:text-slate-100 mb-2 border-b dark:border-slate-700 pb-2">4. Personalización y Temas (Dark Mode)</h3>
-          <ul className="list-disc pl-5 space-y-2 mt-3 text-sm">
-            <li><strong>Logo:</strong> Puedes cambiar el logotipo general en la pestaña <span className="font-bold text-indigo-600 dark:text-indigo-400">Config</span>. Solo haz clic en "Subir Imagen" y selecciona un archivo de tu dispositivo; se comprimirá de forma automática.</li>
-            <li><strong>Modo Oscuro (Dark Mode):</strong> En la barra superior, al lado del icono de notificaciones de la campana, encontrarás un icono de Sol / Luna. Haz clic para alternar entre el modo Claro y Oscuro, lo cual es ideal para reducir el cansancio visual durante turnos de noche o auditorías prolongadas. El sistema recordará tu preferencia.</li>
-          </ul>
+          <div className="flex items-center mb-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">3</div>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">Exportación a Excel y Auditoría (Bitácora)</h3>
+          </div>
+          <div className="pl-11 space-y-4 text-sm leading-relaxed">
+            <p>El sistema cuenta con un motor de trazabilidad total en la pestaña de <strong>Bitácora</strong>.</p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li><strong>Filtros Avanzados:</strong> Usa los selectores de "Mes" y el rango "Desde/Hasta" (calendarios) para acotar los datos. Puedes filtrar por Sede, Usuario o Categoría.</li>
+              <li><strong>Descargar a Excel:</strong> Una vez filtrados los datos, haz clic en <strong>"Descargar Excel"</strong> (botón azul). Se descargará un archivo CSV compatible con Excel, Sheets o Numbers.</li>
+              <li><strong>Auditoría Visual (Muro de Evidencias):</strong> En la sub-pestaña "Evidencias", verás una cuadrícula interactiva con todas las fotos tomadas en el hospital para facilitar auditorías visuales rápidas.</li>
+              <li><strong>Auditoría de Sistema:</strong> Rastrea silenciosamente en la sub-pestaña "Auditoría" qué administrador hizo cambios críticos (ej. cambiar contraseñas, borrar usuarios o modificar tiempos SLA).</li>
+            </ul>
+          </div>
         </section>
+
+        {/* Sección 4 */}
+        <section>
+          <div className="flex items-center mb-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400 w-8 h-8 rounded-full flex items-center justify-center font-bold mr-3 shrink-0">4</div>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-slate-100">Configuración del Sistema y Apariencia</h3>
+          </div>
+          <div className="pl-11 space-y-4 text-sm leading-relaxed">
+            <ul className="list-disc pl-5 space-y-2 bg-slate-50 dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <li><strong>Modo Oscuro (Dark Mode):</strong> En la barra superior, junto a la campana de notificaciones, presiona el <strong>icono de la Luna</strong> para activar el Modo Oscuro. Se guardará tu preferencia automáticamente y aplica un fondo oscuro a toda la pantalla en cualquier dispositivo.</li>
+              <li><strong>Personalizar Logo:</strong> En la pestaña "Config", haz clic en el botón <strong>"Subir Imagen"</strong>. Tu imagen se comprimirá automáticamente en el sistema y aparecerá en la cabecera.</li>
+              <li><strong>Tiempos SLA (Service Level Agreement):</strong> Configura cuántos minutos tiene cada departamento para solucionar una tarea antes de que marque "Fuera de SLA" en los reportes de productividad.</li>
+              <li><strong>Permisos y Usuarios:</strong> Usa el ícono del <strong>lápiz azul</strong> en los perfiles de usuario para editar nombres, usuarios o <strong>ascender a un empleado al rol "Supervisor (Admin)"</strong>.</li>
+              <li><strong>Protección Anti-Bloqueo:</strong> El sistema impedirá borrar o degradar al último administrador para que tu hospital nunca quede sin acceso al panel.</li>
+            </ul>
+          </div>
+        </section>
+
       </div>
     </div>
   </div>
@@ -2035,6 +2086,17 @@ export default function App() {
   const [authUser, setAuthUser] = useState<FirebaseAuthUser | null>(null);
   const [dbReady, setDbReady] = useState(false);
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+
+  // --- EFECTO GLOBAL DE TEMA (FORZAR EN RAÍZ HTML) ---
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.style.backgroundColor = '#0f172a'; // slate-900
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.style.backgroundColor = '#f8fafc'; // slate-50
+    }
+  }, [theme]);
 
   // Estados de aplicación
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
